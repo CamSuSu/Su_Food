@@ -519,6 +519,7 @@
         window.timerInterval = null;
         window.isAdminLoggedIn = false;
         window.editingItemId = null; 
+        window.editingStoreName = null; // 新增：用於記錄正在編輯的店家
         window.inactivityTimer = null;
         window.hasInitialLoaded = false;
         window.selectedActivityStores = []; // 用於發起活動時的多選店家清單
@@ -541,7 +542,7 @@
             }
         };
 
-        // 高效圖片壓縮引擊 (防止 Base64 塞爆 Firestore 導致卡頓)
+        // 高效圖片壓縮引擊
         window.compressImage = function(file, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -588,7 +589,6 @@
                         if (!newData.session) newData.session = { isActive: false, endTime: null, storeNames: [] };
                         if (!newData.quickNames) newData.quickNames = ['德', '如', '芬', '禾', '亭', '卉'];
                         
-                        // 確保向後相容舊版的單一店家結構
                         if (newData.session.storeName && (!newData.session.storeNames || newData.session.storeNames.length === 0)) {
                             newData.session.storeNames = [newData.session.storeName];
                         }
@@ -610,7 +610,8 @@
                             }
                         } else {
                             const activeTag = document.activeElement ? document.activeElement.tagName : '';
-                            const isTyping = window.editingItemId !== null || ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag);
+                            // 加入正在編輯店家的判斷，防止強制重置焦點
+                            const isTyping = window.editingItemId !== null || window.editingStoreName !== null || ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag);
 
                             if (isNowActive && !wasActive) {
                                 window.showView('active-order');
@@ -851,18 +852,13 @@
             window.openModal('start-modal');
         };
 
+        // 徹底修正渲染選擇店家的邏輯，避免刪除需要的 DOM 元件導致當機
         window.renderSelectedActivityStores = function() {
             const container = document.getElementById('selected-stores-list');
-            const hint = document.getElementById('empty-store-hint');
-            
             if (window.selectedActivityStores.length === 0) {
-                container.innerHTML = '';
-                container.appendChild(hint);
-                hint.classList.remove('hidden');
+                container.innerHTML = '<span class="text-xs text-slate-400 font-bold mx-auto w-full text-center" id="empty-store-hint">尚無選擇任何店家</span>';
                 return;
             }
-            
-            hint.classList.add('hidden');
             container.innerHTML = window.selectedActivityStores.map(s => `
                 <div class="flex items-center bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg border border-orange-200 shadow-sm font-bold text-sm transform transition animate-[fadeIn_0.3s]">
                     ${s}
@@ -931,7 +927,7 @@
             const newSession = { 
                 isActive: true, 
                 storeNames: [...window.selectedActivityStores], 
-                storeName: window.selectedActivityStores[0], // backward compatibility
+                storeName: window.selectedActivityStores[0], 
                 endTime: new Date().getTime() + (mins * 60000) 
             };
             
@@ -1061,7 +1057,7 @@
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
                 userName: user, 
                 itemName: window.activeItemForModal.name, 
-                storeName: window.activeItemForModal.store, // 紀錄所屬店家
+                storeName: window.activeItemForModal.store, 
                 price: window.activeItemForModal.price, 
                 qty: parseInt(document.getElementById('modal-qty').value), 
                 note 
@@ -1140,7 +1136,6 @@
                     let finalCart = dbState.cart || [];
                     let total = finalCart.reduce((sum, c) => sum + (c.price * c.qty), 0);
                     
-                    // 為了相容歷史紀錄顯示，確保聯合訂單的店家名稱是陣列串聯
                     const storeNamesStr = dbState.session.storeNames ? dbState.session.storeNames.join('、') : dbState.session.storeName;
 
                     history.unshift({ 
@@ -1175,7 +1170,6 @@
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
                 setTimeout(() => alert("活動結束！本次活動無人點餐。"), 500);
             } else {
-                // 將購物車依據店家分組
                 const cartByStore = latestOrder.cart.reduce((acc, c) => {
                     const sName = c.storeName || '綜合店家';
                     if (!acc[sName]) acc[sName] = { items: [], total: 0 };
@@ -1459,7 +1453,6 @@
                 event.target.value = ''; 
                 return;
             }
-            // 使用前端壓縮機制優化資料庫大小
             window.compressImage(file, function(dataUrl) {
                 document.getElementById(urlInputId).value = dataUrl;
                 if(previewId) {
@@ -1518,11 +1511,55 @@
             datalist.innerHTML = window.state.stores.map(s => `<option value="${s.name}">`).join('');
         };
 
-        // 防抖動搜尋，優化效能
         let searchTimeout;
         window.handleSearchInput = function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(window.renderAdmin, 300);
+        };
+
+        // 店家編輯功能邏輯
+        window.setStoreEdit = function(storeName) {
+            window.editingStoreName = storeName;
+            window.renderAdmin();
+        };
+
+        window.saveStoreEdit = async function(oldStoreName) {
+            const newName = document.getElementById(`edit-store-name-${oldStoreName}`).value.trim();
+            const phone = document.getElementById(`edit-store-phone-${oldStoreName}`).value.trim();
+            const address = document.getElementById(`edit-store-address-${oldStoreName}`).value.trim();
+            const coverImg = document.getElementById(`edit-store-img-${oldStoreName}`).value.trim();
+
+            if (!newName) return alert('⚠️ 店家名稱不可為空！');
+
+            if (newName !== oldStoreName && window.state.stores.some(s => s.name === newName)) {
+                return alert('⚠️ 已有相同名稱的店家存在！');
+            }
+
+            let storeObj = window.state.stores.find(s => s.name === oldStoreName);
+            if (storeObj) {
+                storeObj.name = newName;
+                storeObj.phone = phone;
+                storeObj.address = address;
+                storeObj.coverImg = coverImg;
+            } else {
+                window.state.stores.push({name: newName, phone, address, coverImg, hours: {}});
+            }
+
+            // 若店名變更，必須同步更新所有旗下餐點的店名資訊
+            if (newName !== oldStoreName) {
+                window.state.items.forEach(item => {
+                    if (item.store === oldStoreName) {
+                        item.store = newName;
+                    }
+                });
+                window.addAdminLog('修改', `店家名稱「${oldStoreName}」更改為「${newName}」並同步更新相關餐點`);
+            } else {
+                window.addAdminLog('修改', `更新店家「${newName}」的聯絡資訊或圖片`);
+            }
+
+            window.editingStoreName = null;
+            await window.saveState();
+            window.renderAdmin();
         };
 
         window.renderAdmin = function() {
@@ -1532,7 +1569,7 @@
             
             window.renderGlobalOptionsCheckboxes('admin-input-options-container', []);
             if(!document.getElementById('admin-hours-container').innerHTML.trim()) {
-                window.autoFillStoreInfo(); // 初始化營業時間選單
+                window.autoFillStoreInfo(); 
             }
             
             const query = document.getElementById('admin-search-input').value.toLowerCase();
@@ -1558,23 +1595,63 @@
                 const storeMeta = window.state.stores.find(s => s.name === store) || {};
                 const coverImg = storeMeta.coverImg || items.find(i=>i.img && i.img !== DEFAULT_IMG)?.img || DEFAULT_IMG;
                 
-                html += `
-                    <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white">
-                        <div class="store-header p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4" style="background-color: ${catInfo ? catInfo.color : '#f1f5f9'}">
-                            <div class="flex items-center gap-4">
-                                <div class="w-14 h-14 bg-white rounded-2xl shadow-inner bg-cover bg-center border border-slate-200" style="background-image: url('${coverImg}')"></div>
-                                <div>
-                                    <h4 class="text-2xl font-black text-slate-800">${store}</h4>
-                                    <div class="mt-1 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
-                                        ${storeMeta.phone ? `<a href="tel:${storeMeta.phone}" class="bg-white/60 hover:bg-white/90 px-2 py-0.5 rounded transition text-slate-700 shadow-sm"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</a>` : ''}
-                                        ${storeMeta.address ? `<span class="bg-white/60 px-2 py-0.5 rounded shadow-sm"><i class="fa-solid fa-map-location-dot mr-1"></i>${storeMeta.address}</span>` : ''}
+                // 店家編輯模式視圖
+                if (window.editingStoreName === store) {
+                    html += `
+                        <div class="border border-orange-300 rounded-[2rem] overflow-hidden shadow-md mb-8 bg-white ring-4 ring-orange-100">
+                            <div class="store-header p-5 md:p-6 bg-orange-50 border-b border-orange-200 shadow-inner">
+                                <h4 class="font-black text-orange-600 flex items-center mb-4 text-lg border-b border-orange-200/50 pb-2"><i class="fa-solid fa-pen-to-square mr-2"></i>編輯店家資訊</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1">店家名稱 <span class="text-red-500">*</span></label>
+                                        <input type="text" id="edit-store-name-${store}" value="${store}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1">聯絡電話</label>
+                                        <input type="text" id="edit-store-phone-${store}" value="${storeMeta.phone || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 mb-1">詳細地址</label>
+                                        <input type="text" id="edit-store-address-${store}" value="${storeMeta.address || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 mb-1">店家封面圖</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" id="edit-store-img-${store}" value="${storeMeta.coverImg || ''}" class="flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm" placeholder="輸入網址或上傳">
+                                            <input type="file" id="edit-store-file-${store}" accept=".png, .jpg, .jpeg" class="w-48 text-sm text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:font-bold file:bg-slate-200 file:text-slate-700 cursor-pointer shadow-sm transition hover:bg-slate-300" onchange="handleImageUpload(event, 'edit-store-img-${store}', null)">
+                                        </div>
                                     </div>
                                 </div>
+                                <div class="flex gap-3 justify-end mt-5">
+                                    <button onclick="setStoreEdit(null)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-2.5 rounded-xl font-bold transition">取消</button>
+                                    <button onclick="saveStoreEdit('${store}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-2.5 rounded-xl font-black shadow-md transition transform hover:-translate-y-1"><i class="fa-solid fa-check mr-2"></i>確認儲存變更</button>
+                                </div>
                             </div>
-                            <span class="text-sm font-black bg-white/80 px-4 py-2 rounded-xl text-slate-700 shadow-sm whitespace-nowrap border border-white/50"><i class="fa-solid fa-cubes mr-2"></i>共 ${items.length} 筆資料</span>
-                        </div>
-                        <div class="p-0">
-                `;
+                            <div class="p-0 pointer-events-none opacity-40 grayscale">
+                    `;
+                } else {
+                    // 店家一般視圖 (加入編輯按鈕)
+                    html += `
+                        <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white">
+                            <div class="store-header p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4" style="background-color: ${catInfo ? catInfo.color : '#f1f5f9'}">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-14 h-14 bg-white rounded-2xl shadow-inner bg-cover bg-center border border-slate-200" style="background-image: url('${coverImg}')"></div>
+                                    <div>
+                                        <h4 class="text-2xl font-black text-slate-800 flex items-center gap-3">
+                                            ${store}
+                                            <i onclick="setStoreEdit('${store}')" class="fa-solid fa-pen-to-square text-sm text-slate-400 hover:text-orange-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="編輯店家名稱與圖片資訊"></i>
+                                        </h4>
+                                        <div class="mt-1 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+                                            ${storeMeta.phone ? `<a href="tel:${storeMeta.phone}" class="bg-white/60 hover:bg-white/90 px-2 py-0.5 rounded transition text-slate-700 shadow-sm"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</a>` : ''}
+                                            ${storeMeta.address ? `<span class="bg-white/60 px-2 py-0.5 rounded shadow-sm"><i class="fa-solid fa-map-location-dot mr-1"></i>${storeMeta.address}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-black bg-white/80 px-4 py-2 rounded-xl text-slate-700 shadow-sm whitespace-nowrap border border-white/50"><i class="fa-solid fa-cubes mr-2"></i>共 ${items.length} 筆資料</span>
+                            </div>
+                            <div class="p-0">
+                    `;
+                }
                 
                 items.forEach(item => {
                     const lockIcon = item.isLocked ? 'fa-lock text-slate-300' : 'fa-lock-open text-red-500';
@@ -1582,7 +1659,8 @@
                     const imgUrl = item.img || DEFAULT_IMG;
                     const displayUpdateDate = item.updateDate || window.state.menuUpdateDate || '無紀錄';
 
-                    if (window.editingItemId === item.id) {
+                    // 確保使用 String 型別來做精確比對
+                    if (String(window.editingItemId) === String(item.id)) {
                         html += `
                         <div class="p-5 md:p-6 border-b border-orange-200 bg-orange-50/50 shadow-inner">
                             <h5 class="font-black text-orange-600 mb-4 flex items-center text-lg border-b border-orange-200/50 pb-2"><i class="fa-solid fa-pen-to-square mr-2"></i>編輯餐點資料</h5>
@@ -1710,7 +1788,6 @@
             const checkedBoxes = document.querySelectorAll('.new-item-opt-cb:checked');
             const customOptionIds = Array.from(checkedBoxes).map(cb => cb.value);
 
-            // 擷取營業時間資料
             let storeHours = {};
             WEEKDAYS.forEach((d, idx) => {
                 const cb = document.querySelector(`.store-day-cb[value="${idx}"]`);

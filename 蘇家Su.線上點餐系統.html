@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>蘇家Su.線上點餐系統</title>
     <link rel="icon" href="images/sufood.ico" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,18 +22,38 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+        
         .store-header { position: sticky; top: 0; background: #f8fafc; z-index: 10; }
         
         /* 拖曳時的視覺效果 */
         .dragging { opacity: 0.5; border: 2px dashed #10b981; }
 
+        /* 統一各裝置(特別是Android)的下拉選單外觀 */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1em;
+            padding-right: 2.5rem !important;
+        }
+
+        /* 修復行動裝置 PDF 列印樣式 */
         @media print { 
-            body * { visibility: hidden; }
-            #view-receipt, #view-receipt * { visibility: visible; }
-            #view-receipt { position: absolute; left: 0; top: 0; width: 100%; display: block !important; padding: 0; margin: 0; border: none; box-shadow: none;}
+            body { background: white !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body > *:not(main) { display: none !important; }
+            main > *:not(#view-receipt) { display: none !important; }
+            #view-receipt { display: block !important; position: static !important; width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; }
             .no-print { display: none !important; }
-            body { padding: 0; margin: 0; background: white; }
-            tr { break-inside: avoid; page-break-inside: avoid; }
+            * { text-shadow: none !important; box-shadow: none !important; }
+            table { page-break-inside: auto; width: 100% !important; }
+            tr { page-break-inside: avoid; page-break-after: auto; break-inside: avoid; }
+            td, th { break-inside: avoid; page-break-inside: avoid; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
             .print-no-shadow { box-shadow: none !important; border: none !important; }
         }
     </style>
@@ -360,13 +380,7 @@
     </main>
 
     <div id="view-receipt" class="view-section hidden print-no-shadow relative">
-        <div class="max-w-4xl mx-auto mb-4 no-print px-4 pt-4 flex justify-center">
-            <button onclick="closeReceipt()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl font-bold shadow-md transition flex items-center justify-center text-sm active:scale-95 border border-slate-700">
-                <i class="fa-solid fa-arrow-left mr-2"></i>離開點餐活動
-            </button>
-        </div>
-
-        <div class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 print-no-shadow w-full">
+        <div class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
             <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">蘇家Su.線上點餐明細總表</h2>
             <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2 w-full break-words">
                 <p class="font-bold text-lg md:text-xl break-words">結單時間：<span id="receipt-time" class="ml-2 text-slate-600 whitespace-nowrap"></span></p>
@@ -376,7 +390,7 @@
             <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200 break-words whitespace-normal">請依照此表單內容進行點餐與收費作業</div>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
-                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                <button onclick="setTimeout(() => window.print(), 500)" class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
                 <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">

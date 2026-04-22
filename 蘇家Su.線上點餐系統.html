@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px;}
@@ -380,7 +381,7 @@
     </main>
 
     <div id="view-receipt" class="view-section hidden print-no-shadow relative">
-        <div class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
+        <div id="receipt-capture-area" class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
             <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">蘇家Su.線上點餐明細總表</h2>
             <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2 w-full break-words">
                 <p class="font-bold text-lg md:text-xl break-words">結單時間：<span id="receipt-time" class="ml-2 text-slate-600 whitespace-nowrap"></span></p>
@@ -389,14 +390,34 @@
             
             <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200 break-words whitespace-normal">請依照此表單內容進行點餐與收費作業</div>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
-                <button onclick="setTimeout(() => window.print(), 500)" class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+            <div id="receipt-action-buttons" class="flex flex-col sm:flex-row gap-4 justify-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
+                <button onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
+                <button onclick="generateReceiptImage()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                    <i class="fa-solid fa-image mr-2"></i>下載明細圖片
+                </button>
+                
                 <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-house mr-2"></i>結束並返回首頁
                 </button>
             </div>
+        </div>
+    </div>
+
+    <div id="image-modal" class="fixed inset-0 bg-black/90 hidden z-[300] overflow-y-auto transition-opacity no-print">
+        <div class="min-h-full flex flex-col items-center justify-start p-4">
+            <div class="w-full max-w-2xl flex justify-between items-center mb-4 sticky top-0 pt-2 pb-2 z-10">
+                <p class="text-white font-black text-sm md:text-lg bg-black/60 px-4 py-2 rounded-xl backdrop-blur-md shadow-sm border border-white/10"><i class="fa-solid fa-mobile-screen mr-2 text-orange-400"></i>請長按圖片儲存至相簿</p>
+                <button onclick="closeModal('image-modal')" class="bg-white/20 text-white hover:bg-orange-500 w-10 h-10 rounded-full transition flex items-center justify-center backdrop-blur-md shadow-lg shrink-0 border border-white/20"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            
+            <div id="image-modal-loader" class="text-white text-lg font-bold flex flex-col items-center justify-center mt-32">
+                <i class="fa-solid fa-spinner fa-spin text-4xl mb-4 text-orange-500"></i>
+                明細圖片產生中，請稍候...
+            </div>
+            
+            <img id="generated-receipt-img" src="" class="w-full max-w-2xl bg-white rounded-xl shadow-2xl mb-8 hidden border border-slate-200 pointer-events-auto select-none" style="-webkit-touch-callout: default;">
         </div>
     </div>
 
@@ -532,6 +553,45 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
+        // 新增：產生圖片明細的專屬方法
+        window.generateReceiptImage = async function() {
+            const btnArea = document.getElementById('receipt-action-buttons');
+            const captureArea = document.getElementById('receipt-capture-area');
+            
+            // 隱藏最下方按鈕區塊，避免按鈕被截圖進去
+            const originalDisplay = btnArea.style.display;
+            btnArea.style.display = 'none';
+            
+            // 開啟預覽 Modal 並顯示載入中
+            window.openModal('image-modal');
+            document.getElementById('image-modal-loader').classList.remove('hidden');
+            document.getElementById('generated-receipt-img').classList.add('hidden');
+            document.getElementById('generated-receipt-img').src = '';
+            
+            // 給予微小延遲讓 DOM 更新完成
+            setTimeout(async () => {
+                try {
+                    const canvas = await html2canvas(captureArea, {
+                        scale: window.devicePixelRatio > 1 ? window.devicePixelRatio : 2, // 提高圖片解析度
+                        useCORS: true,
+                        backgroundColor: '#ffffff'
+                    });
+                    
+                    const dataUrl = canvas.toDataURL('image/png');
+                    document.getElementById('generated-receipt-img').src = dataUrl;
+                    document.getElementById('image-modal-loader').classList.add('hidden');
+                    document.getElementById('generated-receipt-img').classList.remove('hidden');
+                } catch (e) {
+                    console.error('Image generation failed', e);
+                    alert('圖片產生失敗，請確認您的裝置瀏覽器是否支援此功能。');
+                    window.closeModal('image-modal');
+                } finally {
+                    // 恢復按鈕顯示
+                    btnArea.style.display = originalDisplay;
+                }
+            }, 300);
+        };
+
         // 壓縮與解壓縮演算法模組
         window.compressData = function(data) {
             if (!data) return null;
@@ -640,7 +700,7 @@
                             quality -= 0.2;
                             attemptCompress();
                         } else if (dataUrl.length > 130000) {
-                            alert('⚠️ 圖片過於複雜，壓縮後仍超過系統單檔容量安全限制 (100KB)。請手動更換較簡單或檔案更小的圖片！');
+                            alert('⚠️ 圖片過於複雜，壓縮後仍超過系統單檔容量安全限制 (100KB)。請手 মোক換較簡單或檔案更小的圖片！');
                             if(event && event.target) event.target.value = '';
                         } else {
                             callback(dataUrl);

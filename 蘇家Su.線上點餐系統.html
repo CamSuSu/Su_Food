@@ -12,14 +12,16 @@
         body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px;}
         .admin-action { cursor: pointer; transition: 0.2s; }
         .admin-action.disabled { opacity: 0.3; pointer-events: none; }
-        .category-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s; }
-        .category-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        
+        /* 強化卡片選取視覺回饋 */
+        .category-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .category-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 25px 30px -5px rgba(249, 115, 22, 0.15), 0 15px 15px -5px rgba(249, 115, 22, 0.1); border-color: #fdba74; z-index: 10; }
+        
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
         .store-header { position: sticky; top: 0; background: #f8fafc; z-index: 10; }
         
-        /* 專屬列印排版 (產出完美的 PDF) */
         @media print { 
             body * { visibility: hidden; }
             #view-receipt, #view-receipt * { visibility: visible; }
@@ -35,7 +37,7 @@
 
     <nav class="bg-white shadow-sm border-b sticky top-0 z-40 no-print">
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="showView('home')">
+            <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80" onclick="showView('home')">
                 <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm"><i class="fa-solid fa-store"></i></div>
                 <h1 class="text-xl font-black tracking-tight">蘇家Su.線上點餐系統</h1>
             </div>
@@ -43,7 +45,7 @@
                 <div id="nav-timer" class="hidden bg-red-50 text-red-600 px-3 py-1 rounded-full font-bold animate-pulse border border-red-200 shadow-sm">
                     <i class="fa-solid fa-clock mr-1"></i> <span id="nav-timer-val">00:00</span>
                 </div>
-                <button onclick="promptAdminLogin()" class="text-slate-500 hover:text-orange-500 font-bold transition flex items-center bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-orange-50">
+                <button onclick="promptAdminLogin()" class="text-slate-500 hover:text-orange-500 font-bold transition flex items-center bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-orange-50 hover:shadow-sm">
                     <i class="fa-solid fa-gear sm:mr-1"></i><span class="hidden sm:inline">Su.資料庫管理</span>
                 </button>
             </div>
@@ -79,7 +81,7 @@
         </div>
 
         <div id="view-store-details" class="view-section hidden">
-            <button onclick="showView('home')" class="mb-6 text-slate-500 hover:text-orange-500 font-bold flex items-center transition bg-white px-5 py-2.5 rounded-xl shadow-sm border border-slate-200">
+            <button onclick="showView('home')" class="mb-6 text-slate-500 hover:text-orange-500 font-bold flex items-center transition bg-white px-5 py-2.5 rounded-xl shadow-sm border border-slate-200 hover:bg-orange-50">
                 <i class="fa-solid fa-arrow-left mr-2"></i>返回首頁
             </button>
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row gap-6 items-center md:items-start relative overflow-hidden">
@@ -87,6 +89,7 @@
                 <div class="flex-1 w-full text-center md:text-left">
                     <h2 id="browse-store-name" class="text-3xl md:text-4xl font-black text-slate-800 mb-3">店家名稱</h2>
                     <div id="browse-store-info" class="flex flex-wrap justify-center md:justify-start gap-3 text-slate-600 font-bold mb-4"></div>
+                    <div id="browse-store-hours" class="mb-4 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 hidden"></div>
                     <p class="text-orange-600 bg-orange-50 p-3 rounded-xl inline-block border border-orange-100 font-bold w-full md:w-auto"><i class="fa-solid fa-circle-info mr-2"></i>目前為瀏覽模式，若要訂餐請回首頁「發起點餐活動」。</p>
                 </div>
             </div>
@@ -99,14 +102,14 @@
                     <div class="absolute top-0 left-0 w-full h-2 bg-red-500 animate-pulse"></div>
                     <p class="text-slate-500 font-black mb-2 tracking-widest uppercase"><i class="fa-solid fa-stopwatch mr-2 text-red-500"></i>點餐活動倒數中</p>
                     <div id="big-timer" class="text-6xl md:text-7xl font-black text-red-600 tracking-tighter drop-shadow-sm">00:00</div>
-                    <button onclick="unlockByAdmin()" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
+                    <button onclick="requestPassword('輸入密碼以提早結單', () => window.autoCheckout())" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
                         <i class="fa-solid fa-lock-open mr-2 text-slate-400"></i>提早結單
                     </button>
                 </div>
                 
-                <h2 id="active-store-name" class="text-4xl md:text-5xl font-black text-slate-800 mb-4 drop-shadow-sm">店家名稱</h2>
-                <div id="active-store-info" class="flex flex-wrap justify-center gap-3 text-slate-600 font-bold mb-4"></div>
-                <p class="text-slate-500 text-lg md:text-xl mt-2 bg-orange-100 text-orange-700 inline-block px-6 py-2 rounded-full font-black shadow-sm border border-orange-200">活動期間僅限點購本店家餐點</p>
+                <h2 id="active-store-name" class="text-4xl md:text-5xl font-black text-slate-800 mb-4 drop-shadow-sm">聯合訂餐活動</h2>
+                <div id="active-store-info" class="flex flex-col gap-4 text-slate-600 font-bold mb-4 items-center justify-center"></div>
+                <p class="text-slate-500 text-lg md:text-xl mt-2 bg-orange-100 text-orange-700 inline-block px-6 py-2 rounded-full font-black shadow-sm border border-orange-200">活動期間僅限點購清單內店家之餐點</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -148,7 +151,7 @@
 
             <div id="admin-tab-menu" class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
                 
-                <div class="xl:col-span-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100 xl:sticky xl:top-24">
+                <div class="xl:col-span-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100 xl:sticky xl:top-24 max-h-[85vh] overflow-y-auto custom-scrollbar">
                     <h3 id="admin-form-title" class="text-2xl font-black mb-6 text-orange-600 flex justify-between items-center border-b pb-4">
                         <span><i class="fa-solid fa-square-plus mr-2"></i>新增餐點與店家</span>
                     </h3>
@@ -164,7 +167,7 @@
                                 <div>
                                     <label class="block text-xs font-bold mb-1 text-slate-500">店家封面圖 (選填)</label>
                                     <div class="flex gap-2">
-                                        <input type="text" id="admin-input-store-cover" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold text-sm" placeholder="輸入網址">
+                                        <input type="text" id="admin-input-store-cover" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold text-sm" placeholder="輸入網址或上傳">
                                         <input type="file" id="admin-input-store-cover-file" accept=".png, .jpg, .jpeg" class="hidden" onchange="handleImageUpload(event, 'admin-input-store-cover', null)">
                                         <button type="button" onclick="document.getElementById('admin-input-store-cover-file').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap"><i class="fa-solid fa-upload"></i></button>
                                     </div>
@@ -178,6 +181,11 @@
                                         <label class="block text-xs font-bold mb-1 text-slate-500">詳細地址 (選填)</label>
                                         <input id="admin-input-address" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold text-sm" placeholder="輸入地址">
                                     </div>
+                                </div>
+                                <div class="pt-2 border-t border-slate-200">
+                                    <label class="block text-xs font-black mb-2 text-slate-600"><i class="fa-regular fa-clock mr-1"></i>營業時間 (選填)</label>
+                                    <div id="admin-hours-container" class="space-y-2 border border-slate-200 p-3 rounded-xl bg-white max-h-48 overflow-y-auto custom-scrollbar">
+                                        </div>
                                 </div>
                             </div>
                         </div>
@@ -208,7 +216,7 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-xs font-bold mb-1 text-slate-500">餐點圖片 (選填)</label>
+                                    <label class="block text-xs font-bold mb-1 text-slate-500">餐點圖片 (選填，自動優化壓縮)</label>
                                     <div class="flex gap-2 mb-2">
                                         <input id="admin-input-img-url" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 text-sm font-bold" placeholder="輸入網址或上傳">
                                         <input type="file" id="admin-input-file" accept=".png, .jpg, .jpeg" class="hidden" onchange="handleImageUpload(event, 'admin-input-img-url', 'admin-img-preview')">
@@ -222,7 +230,7 @@
                         <div class="bg-orange-50/50 p-4 rounded-2xl border border-orange-200">
                             <h4 class="font-black text-orange-700 mb-2 text-sm flex items-center justify-between">
                                 <span><i class="fa-solid fa-sliders mr-2"></i>套用客製化選項 (選填)</span>
-                                <span class="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded cursor-pointer hover:bg-orange-200" onclick="switchAdminTab('settings')">管理全域選項</span>
+                                <span class="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded cursor-pointer hover:bg-orange-200 transition" onclick="switchAdminTab('settings')">管理全域選項</span>
                             </h4>
                             <div id="admin-input-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3"></div>
                         </div>
@@ -235,7 +243,7 @@
                     <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
                         <div class="mb-8 relative">
                             <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-400 text-lg"></i>
-                            <input type="text" id="admin-search-input" oninput="renderAdmin()" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-slate-700 text-lg shadow-inner" placeholder="快速搜尋：輸入店家、分類或餐點名稱...">
+                            <input type="text" id="admin-search-input" oninput="handleSearchInput()" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-slate-700 text-lg shadow-inner" placeholder="快速搜尋：輸入店家、分類或餐點名稱...">
                         </div>
                         <div id="admin-data-grouped-list" class="space-y-8"></div>
                     </div>
@@ -288,10 +296,10 @@
                     </div>
                     <div class="flex gap-3 w-full md:w-auto">
                         <button onclick="exportHistoryTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap"><i class="fa-solid fa-file-export mr-2"></i>匯出 TXT</button>
-                        <button onclick="clearHistoryRecords()" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
+                        <button onclick="requestPassword('確認清空歷史紀錄？輸入管理員密碼', pwd => clearHistoryRecords(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
                     </div>
                 </div>
-                <div id="admin-history-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar"></div>
+                <div id="admin-history-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
 
             <div id="admin-tab-logs" class="hidden bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
@@ -302,7 +310,7 @@
                     </div>
                     <div class="flex gap-3 w-full md:w-auto">
                         <button onclick="exportLogsTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap"><i class="fa-solid fa-file-export mr-2"></i>匯出 TXT</button>
-                        <button onclick="clearAdminLogs()" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
+                        <button onclick="requestPassword('確認清空系統紀錄？輸入管理員密碼', pwd => clearAdminLogs(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
                     </div>
                 </div>
                 <div id="admin-logs-list" class="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar"></div>
@@ -313,19 +321,18 @@
     <div id="view-receipt" class="view-section hidden print-no-shadow">
         <div class="max-w-4xl mx-auto bg-white p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 my-8 print-no-shadow">
             <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800">蘇家Su.線上點餐明細總表</h2>
-            <div class="flex justify-between mb-6 text-slate-800">
-                <p class="font-bold text-lg md:text-xl">店家名稱：<span id="receipt-store" class="text-2xl md:text-3xl ml-2 text-orange-600"></span></p>
-                <p class="font-bold text-lg md:text-xl">結單時間：<span id="receipt-time" class="ml-2"></span></p>
+            <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2">
+                <p class="font-bold text-lg md:text-xl">結單時間：<span id="receipt-time" class="ml-2 text-slate-600"></span></p>
             </div>
-            <div class="overflow-x-auto" id="receipt-content"></div>
+            <div class="overflow-x-auto space-y-8" id="receipt-content"></div>
             
-            <div class="text-center mt-10 text-slate-500 font-bold text-lg">請依照此表單內容進行點餐與收費作業</div>
+            <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200">請依照此表單內容進行點餐與收費作業</div>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8">
-                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center text-lg">
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center text-lg hover:-translate-y-1">
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
-                <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg">
+                <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1">
                     <i class="fa-solid fa-house mr-2"></i>結束並返回首頁
                 </button>
             </div>
@@ -349,23 +356,44 @@
         </div>
     </div>
 
+    <div id="pwd-prompt-modal" class="fixed inset-0 bg-black/60 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-md transition-opacity">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100 text-center transform scale-100">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner mx-auto mb-4 border border-red-100"><i class="fa-solid fa-lock"></i></div>
+            <h3 id="pwd-prompt-msg" class="text-lg font-black mb-6 text-slate-800">請輸入密碼以繼續</h3>
+            <input id="pwd-prompt-input" type="password" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 outline-none focus:border-red-500 focus:bg-white text-center tracking-widest font-black text-2xl mb-6 transition shadow-inner" placeholder="●●●●●●●●" onkeypress="if(event.key === 'Enter') submitPwdPrompt()">
+            <div class="flex gap-3">
+                <button onclick="closeModal('pwd-prompt-modal')" class="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition border border-transparent hover:border-slate-200">取消</button>
+                <button onclick="submitPwdPrompt()" class="flex-[2] bg-red-500 text-white py-3 rounded-xl font-black shadow-lg hover:bg-red-600 transition hover:-translate-y-0.5">確認執行</button>
+            </div>
+        </div>
+    </div>
+
     <div id="start-modal" class="fixed inset-0 bg-black/60 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-md no-print transition-opacity">
-        <div class="bg-white w-full max-w-sm rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100">
-            <h3 class="text-2xl font-black mb-5 text-slate-800 flex items-center border-b-2 border-slate-100 pb-3"><i class="fa-solid fa-utensils text-orange-500 mr-3"></i>發起點餐</h3>
+        <div class="bg-white w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100">
+            <h3 class="text-2xl font-black mb-5 text-slate-800 flex items-center border-b-2 border-slate-100 pb-3"><i class="fa-solid fa-utensils text-orange-500 mr-3"></i>發起聯合點餐</h3>
             <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <label class="block text-xs font-bold mb-2 text-slate-500">1. 選擇或隨機決定店家</label>
+                    <label class="block text-xs font-bold mb-2 text-slate-500">1. 將店家加入本次清單 (最多 5 家)</label>
                     <div class="flex gap-2 mb-2">
-                        <select id="random-cat-select" class="bg-white border border-slate-200 p-2 rounded-lg outline-none focus:border-orange-500 font-bold text-xs w-full shadow-sm text-slate-600"></select>
-                        <button onclick="pickRandomStore()" class="w-20 shrink-0 bg-yellow-400 hover:bg-yellow-500 text-slate-800 p-2 rounded-lg font-black shadow-sm transition flex items-center justify-center text-xs"><i class="fa-solid fa-dice mr-1"></i>隨機</button>
+                        <select id="start-store-select" class="w-full bg-white border border-slate-200 p-2.5 rounded-lg outline-none focus:border-orange-500 font-bold text-sm shadow-sm text-slate-700"></select>
+                        <button onclick="addStoreToActivity(document.getElementById('start-store-select').value)" class="shrink-0 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-black shadow-sm transition"><i class="fa-solid fa-plus"></i></button>
                     </div>
-                    <select id="start-store-select" class="w-full bg-white border-2 border-orange-200 p-3 rounded-xl outline-none focus:border-orange-500 transition font-black text-base text-slate-800 cursor-pointer shadow-sm"></select>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-slate-400 font-bold">或隨機從分類抽取：</span>
+                        <div class="flex gap-2">
+                            <select id="random-cat-select" class="bg-white border border-slate-200 p-1 rounded outline-none focus:border-yellow-500 font-bold text-xs shadow-sm text-slate-600"></select>
+                            <button onclick="pickRandomStore()" class="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-slate-800 px-3 py-1 rounded font-black shadow-sm transition text-xs flex items-center"><i class="fa-solid fa-dice mr-1"></i>隨機加入</button>
+                        </div>
+                    </div>
+                    <div id="selected-stores-list" class="flex flex-wrap gap-2 mt-3 min-h-[40px] p-2 bg-white rounded-lg border border-dashed border-slate-200 items-center">
+                        <span class="text-xs text-slate-400 font-bold mx-auto w-full text-center" id="empty-store-hint">尚無選擇任何店家</span>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold mb-2 text-slate-500">2. 設定倒數時間 (結單限制)</label>
                     <div class="grid grid-cols-4 gap-2 mb-2">
                         <button onclick="selectTime(3)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="3">3分</button>
-                        <button onclick="selectTime(5)" class="time-btn bg-orange-500 text-white py-2 rounded-lg font-bold transition text-sm border-2 border-orange-500" data-val="5">5分</button>
+                        <button onclick="selectTime(5)" class="time-btn bg-orange-500 text-white py-2 rounded-lg font-bold transition text-sm border-2 border-orange-500 shadow-sm transform hover:-translate-y-0.5" data-val="5">5分</button>
                         <button onclick="selectTime(10)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="10">10分</button>
                         <button onclick="selectTime(30)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="30">30分</button>
                         <button onclick="selectTime(60)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="60">60分</button>
@@ -373,7 +401,7 @@
                         <button onclick="selectTime('custom')" class="time-btn col-span-2 bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="custom">自訂分鐘</button>
                     </div>
                     <div id="custom-time-container" class="hidden mt-2">
-                        <input id="custom-time-input" type="number" min="1" max="1440" class="w-full bg-orange-50 border-2 border-orange-200 p-3 rounded-xl outline-none focus:border-orange-500 font-bold text-sm text-center text-orange-800" placeholder="輸入自訂分鐘數">
+                        <input id="custom-time-input" type="number" min="1" max="1440" class="w-full bg-orange-50 border-2 border-orange-200 p-3 rounded-xl outline-none focus:border-orange-500 font-bold text-sm text-center text-orange-800 shadow-inner" placeholder="輸入自訂分鐘數">
                     </div>
                 </div>
                 <div class="pt-2 flex gap-3">
@@ -388,8 +416,9 @@
         <div class="bg-white w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh] md:max-h-[85vh]">
             <button onclick="closeModal('order-modal')" class="absolute top-4 right-4 bg-black/50 text-white hover:bg-orange-500 p-2 rounded-full transition z-10 w-10 h-10 flex items-center justify-center backdrop-blur-md shadow-lg"><i class="fa-solid fa-times text-lg"></i></button>
             <div id="modal-image" class="h-48 md:h-64 bg-slate-200 bg-cover bg-center shrink-0 relative">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 <div class="absolute bottom-4 left-6 pr-6">
+                    <span id="modal-store-badge" class="bg-white/90 text-slate-800 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest shadow-sm mb-2 inline-block"></span>
                     <h3 id="modal-title" class="text-3xl font-black text-white leading-tight drop-shadow-md">餐點名稱</h3>
                 </div>
             </div>
@@ -425,11 +454,9 @@
     </div>
 
     <script type="module">
-        // 修正 1：全面升級 SDK 版本至 12.12.0 (與正常運作的電腦系統一致)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-        // Firebase 原始設定 (不變)
         const firebaseConfig = {
             apiKey: "AIzaSyBhLO5Fpv0hQ921p1teY_e9Drmfi9jRsQM",
             authDomain: "sufood-2dc61.firebaseapp.com",
@@ -441,8 +468,6 @@
         
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        // 修正 2：將資料庫目標文件從 "food_order_db" 變更為 "current_db" 以對應您的 Firebase 規則 
         const dbRef = doc(db, "su_system", "current_db");
 
         window.getFormattedDate = function(dateObj = new Date()) {
@@ -454,6 +479,7 @@
 
         const THEME_COLORS = ['#FFF7ED', '#F0F9FF', '#F0FDF4', '#FEF2F2', '#FAF5FF', '#FDF4FF', '#ECFEFF', '#FEFCE8', '#FFF1F2', '#EFF6FF'];
         const DEFAULT_IMG = "images/Default_cover.png";
+        const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
         
         const DEFAULT_CATEGORIES = [
             { id: 'cat_1', name: '便當快餐', color: '#FFF7ED' },
@@ -477,8 +503,8 @@
         window.state = {
             categories: DEFAULT_CATEGORIES,
             items: DEFAULT_ITEMS,
-            stores: [...new Set(DEFAULT_ITEMS.map(i => i.store))].map(s => ({name: s, phone: '', address: '', coverImg: ''})),
-            session: { isActive: false, endTime: null, storeName: null },
+            stores: [...new Set(DEFAULT_ITEMS.map(i => i.store))].map(s => ({name: s, phone: '', address: '', coverImg: '', hours: {}})),
+            session: { isActive: false, endTime: null, storeNames: [] },
             cart: [],
             orderHistory: [],
             adminLogs: [],
@@ -495,40 +521,77 @@
         window.editingItemId = null; 
         window.inactivityTimer = null;
         window.hasInitialLoaded = false;
+        window.selectedActivityStores = []; // 用於發起活動時的多選店家清單
+
+        // 密碼彈窗共用系統
+        window.pendingPwdCallback = null;
+        window.requestPassword = function(msg, callback) {
+            document.getElementById('pwd-prompt-msg').innerText = msg;
+            document.getElementById('pwd-prompt-input').value = '';
+            window.pendingPwdCallback = callback;
+            window.openModal('pwd-prompt-modal');
+            setTimeout(() => document.getElementById('pwd-prompt-input').focus(), 100);
+        };
+        window.submitPwdPrompt = function() {
+            const pwd = document.getElementById('pwd-prompt-input').value;
+            window.closeModal('pwd-prompt-modal');
+            if(window.pendingPwdCallback) {
+                window.pendingPwdCallback(pwd);
+                window.pendingPwdCallback = null;
+            }
+        };
+
+        // 高效圖片壓縮引擊 (防止 Base64 塞爆 Firestore 導致卡頓)
+        window.compressImage = function(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxW = 800; const maxH = 800;
+                    let w = img.width; let h = img.height;
+                    if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
+                    else { if (h > maxH) { w *= maxH / h; h = maxH; } }
+                    canvas.width = w; canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
+                    callback(dataUrl);
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        };
 
         async function initSystem() {
             try {
                 const docSnap = await getDoc(dbRef);
-                // 修正 3：加入 { merge: true }
-                // 避免「線上點餐系統」的資料去蓋掉「Su Computer Studio」的資料 (因為兩者現在共用 current_db 這個文件)
                 if (!docSnap.exists()) {
                     await setDoc(dbRef, window.state, { merge: true });
                 } else {
-                    // 如果存在，補齊遺漏的預設欄位避免錯誤
                     const data = docSnap.data();
-                    if (!data.items) {
-                        await setDoc(dbRef, window.state, { merge: true });
-                    }
+                    if (!data.items) await setDoc(dbRef, window.state, { merge: true });
                 }
 
-                // 監聽遠端資料變化 
                 onSnapshot(dbRef, (snap) => {
                     if (snap.exists()) {
                         const newData = snap.data();
                         
-                        // 確保結構完整 (防止因共用資料庫而抓到電腦系統格式導致的崩潰)
-                        if (!newData.categories || !Array.isArray(newData.categories) || (newData.categories.length > 0 && typeof newData.categories[0] === 'string')) {
-                            newData.categories = DEFAULT_CATEGORIES;
-                        }
+                        if (!newData.categories || !Array.isArray(newData.categories) || (newData.categories.length > 0 && typeof newData.categories[0] === 'string')) newData.categories = DEFAULT_CATEGORIES;
                         if (!newData.items) newData.items = DEFAULT_ITEMS;
-                        if (!newData.stores) newData.stores = [...new Set(newData.items.map(i => i.store || 'Unknown'))].map(s => ({name: s, phone: '', address: '', coverImg: ''}));
+                        if (!newData.stores) newData.stores = [...new Set(newData.items.map(i => i.store || 'Unknown'))].map(s => ({name: s, phone: '', address: '', coverImg: '', hours: {}}));
                         if (!newData.subCategories) newData.subCategories = DEFAULT_SUBCATS;
                         if (!newData.globalOptions) newData.globalOptions = DEFAULT_GLOBAL_OPTIONS;
                         if (!newData.cart) newData.cart = [];
                         if (!newData.orderHistory) newData.orderHistory = [];
                         if (!newData.adminLogs) newData.adminLogs = [];
-                        if (!newData.session) newData.session = { isActive: false, endTime: null, storeName: null };
+                        if (!newData.session) newData.session = { isActive: false, endTime: null, storeNames: [] };
                         if (!newData.quickNames) newData.quickNames = ['德', '如', '芬', '禾', '亭', '卉'];
+                        
+                        // 確保向後相容舊版的單一店家結構
+                        if (newData.session.storeName && (!newData.session.storeNames || newData.session.storeNames.length === 0)) {
+                            newData.session.storeNames = [newData.session.storeName];
+                        }
 
                         const wasActive = window.state.session && window.state.session.isActive;
                         const isNowActive = newData.session.isActive;
@@ -586,7 +649,6 @@
                 });
             } catch(e) {
                 console.error("系統初始化失敗", e);
-                alert("無法連線至 Firebase。請檢查您的網路與資料庫規則。");
             }
         }
         initSystem();
@@ -597,7 +659,6 @@
                 await setDoc(dbRef, safeState, { merge: true });
             } catch(e) {
                 console.error("資料存檔失敗", e);
-                alert("資料庫存檔失敗！請確認網路連線是否正常。");
             }
         };
 
@@ -617,7 +678,7 @@
                 window.inactivityTimer = setTimeout(() => {
                     window.isAdminLoggedIn = false;
                     window.showView('home');
-                    alert('為保護系統安全，您已因閒置超過10分鐘而自動登出。');
+                    alert('為保護系統安全，您已因閒置自動登出。');
                 }, 600000);
             }
         };
@@ -641,10 +702,24 @@
         window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); };
         window.openModal = function(id) { document.getElementById(id).classList.remove('hidden'); };
 
+        window.formatStoreHoursHTML = function(hoursObj) {
+            if (!hoursObj || Object.keys(hoursObj).length === 0) return '';
+            let html = '<div class="flex items-start gap-2"><i class="fa-regular fa-clock text-orange-500 mt-1"></i><div class="flex flex-col text-sm text-slate-600 gap-1">';
+            let hasHours = false;
+            WEEKDAYS.forEach((day, idx) => {
+                if (hoursObj[idx] && hoursObj[idx].length > 0) {
+                    hasHours = true;
+                    html += `<div><span class="font-bold text-slate-700 bg-white px-2 py-0.5 rounded shadow-sm mr-2 border border-slate-200">星期${day}</span> ${hoursObj[idx].join(' , ')}</div>`;
+                }
+            });
+            html += '</div></div>';
+            return hasHours ? html : '';
+        };
+
         window.renderHome = function() {
             let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-transparent">全部店家</button>`;
             window.state.categories.forEach(c => {
-                tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm">${c.name}</button>`;
+                tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5">${c.name}</button>`;
             });
             document.getElementById('category-tabs').innerHTML = tabsHtml;
             window.filterStore('all');
@@ -655,7 +730,7 @@
                 if (btn.dataset.id === catId) {
                     btn.className = 'cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105';
                 } else {
-                    btn.className = 'cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-500 hover:bg-slate-100 transition shadow-sm hover:text-slate-800';
+                    btn.className = 'cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-500 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition shadow-sm hover:-translate-y-0.5';
                 }
             });
 
@@ -677,15 +752,18 @@
                 }
 
                 gridHtml += `
-                    <div class="category-card bg-white rounded-[2rem] overflow-hidden border border-slate-100 flex flex-col cursor-pointer shadow-sm relative group" onclick="openStoreBrowse('${storeName}')">
+                    <div class="category-card bg-white rounded-[2rem] overflow-hidden border-2 border-slate-100 flex flex-col cursor-pointer relative group" onclick="openStoreBrowse('${storeName}')">
                         <div class="h-48 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style="background-image: url('${coverImg}')"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
                         <div class="absolute top-4 left-4">
                             <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm">${cat ? cat.name : '綜合'}</span>
                         </div>
                         <div class="absolute bottom-0 left-0 w-full p-6">
-                            <h3 class="text-2xl font-black text-white mb-1 drop-shadow-md">${storeName}</h3>
-                            <p class="text-sm text-slate-200 font-bold drop-shadow-md"><i class="fa-solid fa-utensils mr-2"></i>共 ${storeItems.length} 項精選餐點</p>
+                            <h3 class="text-2xl font-black text-white mb-1 drop-shadow-md group-hover:text-orange-300 transition-colors">${storeName}</h3>
+                            <p class="text-sm text-slate-200 font-bold drop-shadow-md flex justify-between items-center w-full">
+                                <span><i class="fa-solid fa-utensils mr-2"></i>共 ${storeItems.length} 項</span>
+                                <i class="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all text-orange-400"></i>
+                            </p>
                         </div>
                     </div>`;
             });
@@ -702,6 +780,11 @@
                 ${storeInfo.address ? `<span class="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-sm"><i class="fa-solid fa-map-location-dot text-orange-500 mr-2"></i>${storeInfo.address}</span>` : ''}
             `;
             document.getElementById('browse-store-info').innerHTML = infoHtml;
+
+            const hoursHtml = window.formatStoreHoursHTML(storeInfo.hours);
+            const hoursEl = document.getElementById('browse-store-hours');
+            if (hoursHtml) { hoursEl.innerHTML = hoursHtml; hoursEl.classList.remove('hidden'); }
+            else { hoursEl.classList.add('hidden'); }
             
             const storeItems = window.state.items.filter(i => (i.store || 'Unknown') === storeName);
             let coverImg = storeInfo.coverImg;
@@ -725,22 +808,25 @@
             }, {});
             let html = '';
             for (const [subCat, subItems] of Object.entries(grouped)) {
-                html += `<div class="mb-10 bg-slate-50/70 p-6 md:p-8 rounded-[2rem] border border-slate-100"><h3 class="text-2xl font-black text-slate-800 mb-6 flex items-center"><span class="w-3 h-8 bg-orange-500 rounded-full mr-3 shadow-md"></span>${subCat}</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">`;
+                html += `<div class="mb-10 bg-slate-50/70 p-6 md:p-8 rounded-[2rem] border border-slate-100"><h3 class="text-2xl font-black text-slate-800 mb-6 flex items-center"><span class="w-3 h-8 bg-orange-500 rounded-full mr-3 shadow-md"></span>${subCat}</h3><div class="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6">`;
                 subItems.forEach((item, index) => {
                     const action = isActiveMode ? `onclick="openOrderModal('${item.id}')"` : `onclick="alert('請發起活動才能點餐喔！')"` ;
-                    const pointer = isActiveMode ? 'cursor-pointer hover:bg-orange-50 hover:border-orange-400 hover:shadow-xl hover:-translate-y-1.5 ring-4 ring-transparent hover:ring-orange-100' : 'cursor-default opacity-85 border-slate-100 hover:opacity-100';
+                    const pointer = isActiveMode ? 'cursor-pointer hover:bg-orange-50 hover:shadow-xl hover:-translate-y-1.5 ring-4 ring-transparent hover:ring-orange-300' : 'cursor-default opacity-85 border-slate-100 hover:opacity-100 hover:border-slate-300';
                     const bgColor = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'; 
                     const imgUrl = item.img || DEFAULT_IMG;
                     
                     html += `
                         <div ${action} class="${bgColor} p-4 md:p-5 rounded-[1.5rem] shadow-sm border flex items-center gap-4 md:gap-5 transition-all duration-300 ${pointer} group">
-                            <img src="${imgUrl}" class="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover bg-slate-100 shadow-sm border border-slate-200/50 transition transform group-hover:scale-105">
-                            <div class="flex-1">
-                                <h4 class="font-black text-lg md:text-xl text-slate-800 group-hover:text-orange-700 transition-colors">${item.name}</h4>
-                                <p class="text-orange-600 font-black text-xl md:text-2xl mt-1.5">$${item.price}</p>
-                                ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<p class="text-xs text-slate-400 font-bold mt-1 bg-slate-100 inline-block px-2 py-0.5 rounded border border-slate-200"><i class="fa-solid fa-list-ul mr-1"></i>可客製化</p>` : ''}
+                            <div class="relative w-24 h-24 md:w-28 md:h-28 shrink-0">
+                                <img src="${imgUrl}" class="w-full h-full rounded-2xl object-cover bg-slate-100 shadow-sm border border-slate-200/50 transition transform group-hover:scale-105">
+                                ${isActiveMode ? `<div class="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 transition rounded-2xl"></div>` : ''}
                             </div>
-                            ${isActiveMode ? `<div class="w-12 h-12 bg-slate-100 text-slate-400 group-hover:bg-orange-500 group-hover:text-white rounded-2xl flex items-center justify-center font-bold shadow-sm text-xl transition-all"><i class="fa-solid fa-plus"></i></div>` : ''}
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-black text-lg md:text-xl text-slate-800 group-hover:text-orange-700 transition-colors truncate">${item.name}</h4>
+                                <p class="text-orange-600 font-black text-xl md:text-2xl mt-1">$${item.price}</p>
+                                ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<p class="text-[10px] md:text-xs text-blue-500 font-bold mt-1.5 bg-blue-50 inline-block px-2 py-0.5 rounded border border-blue-100"><i class="fa-solid fa-list-ul mr-1"></i>含客製選項</p>` : ''}
+                            </div>
+                            ${isActiveMode ? `<div class="w-12 h-12 bg-slate-100 text-slate-400 group-hover:bg-orange-500 group-hover:text-white rounded-2xl flex items-center justify-center font-bold shadow-sm text-xl transition-all transform group-hover:rotate-90 shrink-0"><i class="fa-solid fa-plus"></i></div>` : ''}
                         </div>`;
                 });
                 html += `</div></div>`;
@@ -750,19 +836,57 @@
 
         window.openStartOrderModal = function() {
             if(window.state.session.isActive) return alert('目前已有活動進行中！');
-            
+            window.selectedActivityStores = [];
+            window.renderSelectedActivityStores();
+
             const sel = document.getElementById('start-store-select');
             sel.innerHTML = [...new Set(window.state.items.map(i => i.store || 'Unknown'))].map(s => `<option value="${s}">${s}</option>`).join('');
 
             const catSel = document.getElementById('random-cat-select');
             let catOptions = `<option value="all">全部分類</option>`;
-            window.state.categories.forEach(c => {
-                catOptions += `<option value="${c.id}">${c.name}</option>`;
-            });
+            window.state.categories.forEach(c => { catOptions += `<option value="${c.id}">${c.name}</option>`; });
             catSel.innerHTML = catOptions;
 
             window.selectTime(5); 
             window.openModal('start-modal');
+        };
+
+        window.renderSelectedActivityStores = function() {
+            const container = document.getElementById('selected-stores-list');
+            const hint = document.getElementById('empty-store-hint');
+            
+            if (window.selectedActivityStores.length === 0) {
+                container.innerHTML = '';
+                container.appendChild(hint);
+                hint.classList.remove('hidden');
+                return;
+            }
+            
+            hint.classList.add('hidden');
+            container.innerHTML = window.selectedActivityStores.map(s => `
+                <div class="flex items-center bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg border border-orange-200 shadow-sm font-bold text-sm transform transition animate-[fadeIn_0.3s]">
+                    ${s}
+                    <i class="fa-solid fa-circle-xmark ml-2 text-orange-400 hover:text-red-500 cursor-pointer transition" onclick="removeActivityStore('${s}')"></i>
+                </div>
+            `).join('');
+        };
+
+        window.addStoreToActivity = function(storeName) {
+            if (!storeName) return;
+            if (window.selectedActivityStores.length >= 5) {
+                alert('⚠️ 系統限制：一次聯合訂餐最多只能選擇 5 家不同店家！');
+                return;
+            }
+            if (window.selectedActivityStores.includes(storeName)) {
+                return; 
+            }
+            window.selectedActivityStores.push(storeName);
+            window.renderSelectedActivityStores();
+        };
+
+        window.removeActivityStore = function(storeName) {
+            window.selectedActivityStores = window.selectedActivityStores.filter(s => s !== storeName);
+            window.renderSelectedActivityStores();
         };
 
         window.pickRandomStore = function() {
@@ -774,11 +898,8 @@
             if (stores.length === 0) return alert('此分類目前沒有任何店家資料！');
             
             const randomStore = stores[Math.floor(Math.random() * stores.length)];
+            window.addStoreToActivity(randomStore);
             document.getElementById('start-store-select').value = randomStore;
-            
-            const storeSelectElement = document.getElementById('start-store-select');
-            storeSelectElement.classList.add('ring-4', 'ring-orange-300', 'bg-orange-50');
-            setTimeout(() => storeSelectElement.classList.remove('ring-4', 'ring-orange-300', 'bg-orange-50'), 600);
         };
 
         window.selectTime = function(val) {
@@ -787,21 +908,32 @@
                 b.classList.replace('bg-orange-500', 'bg-slate-100');
                 b.classList.replace('text-white', 'text-slate-600');
                 b.classList.replace('border-orange-500', 'border-transparent');
+                b.classList.remove('shadow-sm', 'transform', 'hover:-translate-y-0.5');
                 
                 if(b.dataset.val == val) { 
                     b.classList.replace('bg-slate-100', 'bg-orange-500'); 
                     b.classList.replace('text-slate-600', 'text-white'); 
                     b.classList.replace('border-transparent', 'border-orange-500');
+                    b.classList.add('shadow-sm', 'transform', 'hover:-translate-y-0.5');
                 }
             });
             document.getElementById('custom-time-container').classList.toggle('hidden', val !== 'custom');
         };
 
         window.executeStartOrder = async function() {
+            if (window.selectedActivityStores.length === 0) {
+                return alert('請至少選擇一家店加入清單才能開始活動！');
+            }
+
             let mins = window.selectedTimeLimit === 'custom' ? parseInt(document.getElementById('custom-time-input').value) : parseInt(window.selectedTimeLimit);
             if (!mins || mins < 1 || mins > 1440) return alert('請輸入 1 到 1440 的有效分鐘數！');
             
-            const newSession = { isActive: true, storeName: document.getElementById('start-store-select').value, endTime: new Date().getTime() + (mins * 60000) };
+            const newSession = { 
+                isActive: true, 
+                storeNames: [...window.selectedActivityStores], 
+                storeName: window.selectedActivityStores[0], // backward compatibility
+                endTime: new Date().getTime() + (mins * 60000) 
+            };
             
             window.state.session = newSession;
             window.state.cart = [];
@@ -841,22 +973,45 @@
         };
 
         window.renderActiveOrder = function() {
-            const storeName = window.state.session.storeName;
-            document.getElementById('active-store-name').innerText = storeName;
+            const stores = window.state.session.storeNames || [window.state.session.storeName];
             
-            const storeInfo = window.state.stores.find(s => s.name === storeName) || {};
-            const infoHtml = `
-                ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-white hover:bg-slate-50 px-4 py-2 rounded-xl border border-slate-200 text-sm shadow-sm transition text-slate-700"><i class="fa-solid fa-phone text-orange-500 mr-2"></i>${storeInfo.phone}</a>` : ''}
-                ${storeInfo.address ? `<span class="bg-white px-4 py-2 rounded-xl border border-slate-200 text-sm shadow-sm"><i class="fa-solid fa-map-location-dot text-orange-500 mr-2"></i>${storeInfo.address}</span>` : ''}
-            `;
+            let infoHtml = '';
+            let menuHtml = '';
+
+            stores.forEach((storeName, idx) => {
+                const storeInfo = window.state.stores.find(s => s.name === storeName) || {};
+                infoHtml += `
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-3 w-full max-w-2xl transform transition hover:scale-[1.01]">
+                        <span class="bg-slate-800 text-white font-black px-3 py-1 rounded-lg text-sm shrink-0">店家 ${idx+1}</span>
+                        <span class="text-xl font-black text-slate-800 shrink-0">${storeName}</span>
+                        <div class="flex flex-wrap justify-center md:justify-start gap-2 text-xs w-full">
+                            ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-slate-50 hover:bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 transition text-slate-700"><i class="fa-solid fa-phone text-orange-500 mr-1"></i>${storeInfo.phone}</a>` : ''}
+                            ${storeInfo.address ? `<span class="bg-slate-50 px-2 py-1 rounded-lg border border-slate-200"><i class="fa-solid fa-map-location-dot text-orange-500 mr-1"></i>${storeInfo.address}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                menuHtml += `
+                    <div class="mb-12">
+                        <div class="bg-slate-800 text-white p-5 rounded-t-[2rem] flex items-center justify-between border-b-4 border-orange-500">
+                            <h2 class="text-2xl font-black"><i class="fa-solid fa-store mr-3 text-orange-400"></i>${storeName}</h2>
+                        </div>
+                        <div class="bg-white p-2 md:p-6 rounded-b-[2rem] border border-t-0 border-slate-100 shadow-sm">
+                            ${window.generateMenuHtml(storeName, true)}
+                        </div>
+                    </div>
+                `;
+            });
+
             document.getElementById('active-store-info').innerHTML = infoHtml;
-            document.getElementById('active-menu-container').innerHTML = window.generateMenuHtml(storeName, true);
+            document.getElementById('active-menu-container').innerHTML = menuHtml;
             window.updateCartUI();
         };
 
         window.openOrderModal = function(id) {
             window.activeItemForModal = window.state.items.find(i => String(i.id) === String(id));
             document.getElementById('modal-image').style.backgroundImage = `url('${window.activeItemForModal.img || DEFAULT_IMG}')`;
+            document.getElementById('modal-store-badge').innerText = window.activeItemForModal.store;
             document.getElementById('modal-title').innerText = window.activeItemForModal.name;
             document.getElementById('modal-price').innerText = `$${window.activeItemForModal.price}`;
             document.getElementById('modal-qty').value = 1; 
@@ -871,7 +1026,7 @@
             if (appliedOptions.length > 0) {
                 appliedOptions.forEach((opt, idx) => {
                     optionsHtml += `
-                        <div class="bg-orange-50/50 p-5 rounded-2xl border border-orange-100">
+                        <div class="bg-orange-50/50 p-5 rounded-2xl border border-orange-100 shadow-inner">
                             <label class="block text-sm font-black text-orange-800 mb-3"><i class="fa-solid fa-caret-right text-orange-500 mr-2"></i>${opt.name}</label>
                             <select class="modal-dynamic-opt w-full bg-white border-2 border-orange-200 rounded-xl p-4 outline-none focus:border-orange-500 transition font-bold text-lg text-slate-800 shadow-sm appearance-none cursor-pointer">
                                 ${opt.choices.map(c => `<option value="${c}">${c}</option>`).join('')}
@@ -906,6 +1061,7 @@
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
                 userName: user, 
                 itemName: window.activeItemForModal.name, 
+                storeName: window.activeItemForModal.store, // 紀錄所屬店家
                 price: window.activeItemForModal.price, 
                 qty: parseInt(document.getElementById('modal-qty').value), 
                 note 
@@ -934,18 +1090,19 @@
             (window.state.cart || []).forEach((c) => {
                 total += c.price * c.qty; count += c.qty;
                 html += `
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3 relative shadow-sm group hover:border-red-200 transition">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 mb-3 relative shadow-sm hover:shadow-md group hover:border-orange-300 transition-all transform hover:-translate-y-1">
                         <div class="flex justify-between items-start mb-2">
                             <span class="text-sm font-black text-white bg-slate-800 px-3 py-1 rounded-lg">${c.userName}</span>
                             <span class="font-black text-slate-800 text-lg">$${c.price * c.qty}</span>
                         </div>
-                        <p class="font-bold text-slate-700 text-lg">${c.itemName} <span class="text-sm font-black text-slate-400 ml-1 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">x${c.qty}</span></p>
+                        <div class="text-[10px] text-orange-600 font-bold mb-1"><i class="fa-solid fa-store mr-1"></i>${c.storeName || '店家'}</div>
+                        <p class="font-bold text-slate-700 text-lg">${c.itemName} <span class="text-sm font-black text-slate-400 ml-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 shadow-sm">x${c.qty}</span></p>
                         ${c.note ? `<p class="text-sm text-blue-600 mt-2 bg-blue-50 p-2 rounded-lg font-bold border border-blue-100"><i class="fa-solid fa-pen mr-1"></i>${c.note}</p>` : ''}
                         
                         <button onclick="removeCartItem('${c.id}')" class="absolute top-2 right-12 text-slate-300 hover:text-red-500 bg-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm border border-slate-100"><i class="fa-solid fa-trash-can text-sm"></i></button>
                     </div>`;
             });
-            document.getElementById('active-cart-list').innerHTML = html || '<div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl"><p class="text-slate-400 font-bold"><i class="fa-solid fa-basket-shopping text-3xl mb-3 opacity-50 block"></i>目前購物車空空如也</p></div>';
+            document.getElementById('active-cart-list').innerHTML = html || '<div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50"><p class="text-slate-400 font-bold"><i class="fa-solid fa-basket-shopping text-3xl mb-3 opacity-50 block"></i>目前購物車空空如也</p></div>';
             document.getElementById('active-cart-total').innerText = `$${total}`; 
             document.getElementById('cart-count').innerText = `${count} 份`;
         };
@@ -967,11 +1124,6 @@
             } catch(e) { console.error(e); }
         };
 
-        window.unlockByAdmin = function() {
-            if (prompt("輸入密碼以提早結單") === "81160530") window.autoCheckout();
-            else alert("密碼錯誤，拒絕結單！");
-        };
-
         window.autoCheckout = async function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.add('hidden');
@@ -988,11 +1140,14 @@
                     let finalCart = dbState.cart || [];
                     let total = finalCart.reduce((sum, c) => sum + (c.price * c.qty), 0);
                     
+                    // 為了相容歷史紀錄顯示，確保聯合訂單的店家名稱是陣列串聯
+                    const storeNamesStr = dbState.session.storeNames ? dbState.session.storeNames.join('、') : dbState.session.storeName;
+
                     history.unshift({ 
                         id: Date.now().toString(),
                         date: window.getFormattedDate(), 
                         time: new Date().toLocaleTimeString('zh-TW'), 
-                        store: dbState.session.storeName, 
+                        store: storeNamesStr, 
                         total: total, 
                         cart: [...finalCart] 
                     });
@@ -1014,50 +1169,71 @@
                 return;
             }
             const latestOrder = window.state.orderHistory[0];
-            
-            document.getElementById('receipt-store').innerText = latestOrder.store;
             document.getElementById('receipt-time').innerText = `${latestOrder.date} ${latestOrder.time}`;
             
             if (latestOrder.cart.length === 0) {
-                document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem]">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
+                document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
                 setTimeout(() => alert("活動結束！本次活動無人點餐。"), 500);
             } else {
-                const sortedCart = [...latestOrder.cart].sort((a,b) => a.userName.localeCompare(b.userName));
-                let tbody = '';
-                sortedCart.forEach(c => {
-                    const sub = c.price * c.qty;
-                    tbody += `
-                        <tr class="border-b border-slate-200">
-                            <td class="py-4 px-2 md:px-4 font-bold text-slate-800">${c.userName}</td>
-                            <td class="py-4 px-2 md:px-4 font-bold text-slate-800">${c.itemName}</td>
-                            <td class="py-4 px-2 md:px-4 font-bold text-center text-slate-800">${c.qty}</td>
-                            <td class="py-4 px-2 md:px-4 text-slate-600 text-sm">${c.note || ''}</td>
-                            <td class="py-4 px-2 md:px-4 font-bold text-right text-slate-800">$${sub}</td>
-                        </tr>
+                // 將購物車依據店家分組
+                const cartByStore = latestOrder.cart.reduce((acc, c) => {
+                    const sName = c.storeName || '綜合店家';
+                    if (!acc[sName]) acc[sName] = { items: [], total: 0 };
+                    acc[sName].items.push(c);
+                    acc[sName].total += (c.price * c.qty);
+                    return acc;
+                }, {});
+
+                let tablesHtml = '';
+                let grandTotal = 0;
+
+                for (const [storeName, storeData] of Object.entries(cartByStore)) {
+                    grandTotal += storeData.total;
+                    const sortedCart = [...storeData.items].sort((a,b) => a.userName.localeCompare(b.userName));
+                    let tbody = '';
+                    sortedCart.forEach(c => {
+                        const sub = c.price * c.qty;
+                        tbody += `
+                            <tr class="border-b border-slate-200 hover:bg-slate-50 transition">
+                                <td class="py-4 px-2 md:px-4 font-black text-slate-800 whitespace-nowrap"><span class="bg-slate-100 border border-slate-200 px-2 py-1 rounded shadow-sm">${c.userName}</span></td>
+                                <td class="py-4 px-2 md:px-4 font-bold text-slate-800">${c.itemName}</td>
+                                <td class="py-4 px-2 md:px-4 font-black text-center text-slate-800">${c.qty}</td>
+                                <td class="py-4 px-2 md:px-4 text-blue-600 text-sm font-bold">${c.note ? `[${c.note}]` : ''}</td>
+                                <td class="py-4 px-2 md:px-4 font-black text-right text-slate-800">$${sub}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tablesHtml += `
+                        <div class="mb-8 border-2 border-slate-800 rounded-2xl overflow-hidden print-no-shadow">
+                            <div class="bg-slate-800 text-white p-4 font-black text-xl flex justify-between items-center">
+                                <span><i class="fa-solid fa-store mr-2 text-orange-400"></i>${storeName}</span>
+                                <span class="bg-white/20 px-3 py-1 rounded-lg text-sm">小計: $${storeData.total}</span>
+                            </div>
+                            <table class="w-full text-left border-collapse min-w-[500px] bg-white">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 text-sm md:text-base border-b-2 border-slate-300">
+                                        <th class="py-3 px-2 md:px-4 font-black w-1/5">點餐人</th>
+                                        <th class="py-3 px-2 md:px-4 font-black w-1/3">餐點名稱</th>
+                                        <th class="py-3 px-2 md:px-4 font-black text-center w-1/12">數量</th>
+                                        <th class="py-3 px-2 md:px-4 font-black">備註</th>
+                                        <th class="py-3 px-2 md:px-4 font-black text-right w-1/6">小計</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-base md:text-lg">
+                                    ${tbody}
+                                </tbody>
+                            </table>
+                        </div>
                     `;
-                });
-                
+                }
+
                 document.getElementById('receipt-content').innerHTML = `
-                    <table class="w-full text-left border-collapse min-w-[500px]">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-sm md:text-base border-y border-slate-200">
-                                <th class="py-3 px-2 md:px-4 font-black w-1/5">點餐人</th>
-                                <th class="py-3 px-2 md:px-4 font-black w-1/3">餐點名稱</th>
-                                <th class="py-3 px-2 md:px-4 font-black text-center w-1/12">數量</th>
-                                <th class="py-3 px-2 md:px-4 font-black">備註</th>
-                                <th class="py-3 px-2 md:px-4 font-black text-right w-1/6">小計</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-base md:text-lg">
-                            ${tbody}
-                        </tbody>
-                        <tfoot>
-                             <tr class="border-t-2 border-slate-300 bg-orange-50/50">
-                                <td colspan="4" class="py-5 px-4 text-right font-black text-xl md:text-2xl text-slate-700">結算總金額：</td>
-                                <td class="py-5 px-4 text-right font-black text-2xl md:text-3xl text-red-600">$${latestOrder.total}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    ${tablesHtml}
+                    <div class="bg-orange-50 border-4 border-orange-200 rounded-2xl p-6 flex justify-between items-center mt-4">
+                        <span class="font-black text-2xl md:text-3xl text-slate-800">全部店家總結算：</span>
+                        <span class="font-black text-4xl md:text-5xl text-red-600 drop-shadow-sm">$${grandTotal}</span>
+                    </div>
                 `;
                 setTimeout(() => alert("活動順利結束！已產生結單明細。"), 500);
             }
@@ -1127,7 +1303,7 @@
         window.renderAdminLogs = function() {
             let html = '';
             if(!window.state.adminLogs || window.state.adminLogs.length === 0) {
-                document.getElementById('admin-logs-list').innerHTML = '<div class="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-[2rem]"><p class="text-slate-400 font-bold text-2xl"><i class="fa-solid fa-clipboard-list block text-5xl mb-4 opacity-50"></i>目前尚無任何系統操作紀錄。</p></div>';
+                document.getElementById('admin-logs-list').innerHTML = '<div class="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50"><p class="text-slate-400 font-bold text-2xl"><i class="fa-solid fa-clipboard-list block text-5xl mb-4 opacity-50"></i>目前尚無任何系統操作紀錄。</p></div>';
                 return;
             }
             
@@ -1138,7 +1314,7 @@
                 if (log.action === '刪除') actionColor = "bg-red-100 text-red-700";
 
                 html += `
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-3 hover:bg-slate-100 transition">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-3 hover:bg-slate-50 hover:shadow-sm transition">
                         <div class="flex items-center gap-3">
                             <span class="${actionColor} px-3 py-1 rounded-lg text-sm font-black shadow-sm whitespace-nowrap">${log.action}</span>
                             <span class="font-bold text-slate-700">${log.detail}</span>
@@ -1162,9 +1338,9 @@
             a.download = `系統操作紀錄_${window.getFormattedDate()}.txt`; a.click();
         };
 
-        window.clearAdminLogs = async function() {
+        window.clearAdminLogs = async function(pwd) {
             if(!window.state.adminLogs || window.state.adminLogs.length === 0) return alert('紀錄已經是空的，無需清空。');
-            if(prompt("🚨 此動作無法復原！請輸入管理員密碼以確認清空：") === "kora1992") {
+            if(pwd === "kora1992") {
                 window.state.adminLogs = [];
                 window.addAdminLog('清空', '最高權限管理員已手動清空所有操作紀錄');
                 await window.saveState(); window.renderAdminLogs(); alert("✅ 系統操作紀錄已成功清空！");
@@ -1175,22 +1351,22 @@
             document.getElementById('admin-quick-names').value = window.state.quickNames.join(',');
             
             document.getElementById('setting-subcat-list').innerHTML = window.state.subCategories.map((s, idx) => `
-                <div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-bold border border-emerald-100 shadow-sm">
+                <div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-bold border border-emerald-100 shadow-sm transition hover:bg-emerald-100 hover:-translate-y-0.5">
                     <span>${s}</span>
                     <i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition ml-2" onclick="deleteSubcat(${idx})"></i>
                 </div>
             `).join('');
 
             if (window.state.globalOptions.length === 0) {
-                document.getElementById('setting-global-opt-list').innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 font-bold">目前無任何自訂客製化選項。</div>';
+                document.getElementById('setting-global-opt-list').innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 font-bold bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">目前無任何自訂客製化選項。</div>';
             } else {
                 document.getElementById('setting-global-opt-list').innerHTML = window.state.globalOptions.map(opt => `
-                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group hover:border-blue-200 transition">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group hover:border-blue-300 transition hover:shadow-md transform hover:-translate-y-0.5">
                         <h4 class="font-black text-slate-800 text-lg mb-2 flex items-center"><i class="fa-solid fa-caret-right text-blue-500 mr-2"></i>${opt.name}</h4>
                         <div class="flex flex-wrap gap-2">
-                            ${opt.choices.map(c => `<span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">${c}</span>`).join('')}
+                            ${opt.choices.map(c => `<span class="text-xs font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 shadow-sm">${c}</span>`).join('')}
                         </div>
-                        <button onclick="deleteGlobalOption('${opt.id}')" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="requestPassword('輸入密碼確認刪除選項模組', pwd => { if(pwd==='kora1992') deleteGlobalOption('${opt.id}'); else alert('密碼錯誤') })" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100 bg-white rounded-full p-1 shadow-sm border border-slate-100"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `).join('');
             }
@@ -1240,37 +1416,36 @@
         };
 
         window.deleteGlobalOption = function(id) {
-            if(confirm('確定刪除此全域選項？(若有套用該選項的餐點，將自動取消套用)')) {
-                const optInfo = window.state.globalOptions.find(o => o.id === id);
-                if (optInfo) window.addAdminLog('設定', `刪除全域客製化選項模組「${optInfo.name}」`);
-                
-                window.state.globalOptions = window.state.globalOptions.filter(o => o.id !== id);
-                window.state.items.forEach(i => {
-                    if(i.customOptionIds) {
-                        i.customOptionIds = i.customOptionIds.filter(optId => optId !== id);
-                    }
-                });
-                window.saveState();
-                window.renderAdminSettings();
-            }
+            const optInfo = window.state.globalOptions.find(o => o.id === id);
+            if (optInfo) window.addAdminLog('設定', `刪除全域客製化選項模組「${optInfo.name}」`);
+            
+            window.state.globalOptions = window.state.globalOptions.filter(o => o.id !== id);
+            window.state.items.forEach(i => {
+                if(i.customOptionIds) {
+                    i.customOptionIds = i.customOptionIds.filter(optId => optId !== id);
+                }
+            });
+            window.saveState();
+            window.renderAdminSettings();
+            alert("選項模組已刪除！");
         };
 
         window.renderGlobalOptionsCheckboxes = function(containerId, checkedIds = [], isInline = false, itemId = null) {
             const container = document.getElementById(containerId);
             if(!container) return;
             if(window.state.globalOptions.length === 0) {
-                 container.innerHTML = '<div class="col-span-full py-4 text-sm text-orange-600/80 font-bold border-2 border-dashed border-orange-200 rounded-xl text-center">目前無全域客製化選項可供勾選。<br>請至上方點擊「管理全域選項」建立。</div>';
+                 container.innerHTML = '<div class="col-span-full py-4 text-sm text-orange-600/80 font-bold border-2 border-dashed border-orange-200 rounded-xl text-center bg-orange-50/50">目前無全域客製化選項。<br>請至上方點擊「管理全域選項」建立。</div>';
                  return;
             }
             
             const checkboxClass = isInline ? `inline-opt-cb-${itemId}` : 'new-item-opt-cb';
 
             container.innerHTML = window.state.globalOptions.map(opt => `
-                <label class="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-xl border border-orange-100 hover:border-orange-400 hover:shadow-sm transition">
+                <label class="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-xl border border-orange-100 hover:border-orange-400 hover:shadow-sm transition transform hover:-translate-y-0.5">
                     <input type="checkbox" value="${opt.id}" class="${checkboxClass} w-5 h-5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" ${checkedIds.includes(opt.id) ? 'checked' : ''}>
-                    <div class="flex flex-col">
-                        <span class="text-sm font-black text-slate-800">${opt.name}</span>
-                        <span class="text-[10px] font-bold text-slate-400 truncate max-w-[120px] md:max-w-[200px]" title="${opt.choices.join(', ')}">${opt.choices.join(', ')}</span>
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-sm font-black text-slate-800 truncate">${opt.name}</span>
+                        <span class="text-[10px] font-bold text-slate-400 truncate w-full" title="${opt.choices.join(', ')}">${opt.choices.join(', ')}</span>
                     </div>
                 </label>
             `).join('');
@@ -1284,15 +1459,42 @@
                 event.target.value = ''; 
                 return;
             }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById(urlInputId).value = e.target.result;
+            // 使用前端壓縮機制優化資料庫大小
+            window.compressImage(file, function(dataUrl) {
+                document.getElementById(urlInputId).value = dataUrl;
                 if(previewId) {
-                    document.getElementById(previewId).src = e.target.result;
+                    document.getElementById(previewId).src = dataUrl;
                     document.getElementById(previewId).classList.remove('hidden');
                 }
-            };
-            reader.readAsDataURL(file);
+            });
+        };
+
+        window.renderAdminStoreHours = function(storeHours = {}) {
+            let html = '';
+            WEEKDAYS.forEach((d, idx) => {
+                const dayData = storeHours[idx] || [];
+                const checked = dayData.length > 0 ? 'checked' : '';
+                const display = checked ? 'flex' : 'none';
+                const t1 = dayData[0] || ''; const t2 = dayData[1] || ''; const t3 = dayData[2] || '';
+                html += `
+                <div class="flex flex-col gap-2 border-b border-slate-100 pb-3 mb-2 last:border-0 last:pb-0 last:mb-0 hover:bg-slate-50 p-2 rounded-lg transition">
+                    <label class="flex items-center gap-2 cursor-pointer font-black text-sm text-slate-700">
+                        <input type="checkbox" class="store-day-cb w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500" value="${idx}" onchange="toggleDayInput(${idx})" ${checked}> 星期${d}
+                    </label>
+                    <div id="day-slots-${idx}" class="gap-2 pl-6 flex-wrap" style="display: ${display}">
+                        <input type="text" id="slot-${idx}-0" value="${t1}" placeholder="例: 09:00-12:00" class="w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
+                        <input type="text" id="slot-${idx}-1" value="${t2}" placeholder="例: 13:00-17:00" class="w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
+                        <input type="text" id="slot-${idx}-2" value="${t3}" placeholder="例: 18:00-21:00" class="w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
+                    </div>
+                </div>`;
+            });
+            const container = document.getElementById('admin-hours-container');
+            if(container) container.innerHTML = html;
+        };
+
+        window.toggleDayInput = function(idx) {
+            const cb = document.querySelector(`.store-day-cb[value="${idx}"]`);
+            document.getElementById(`day-slots-${idx}`).style.display = cb.checked ? 'flex' : 'none';
         };
 
         window.autoFillStoreInfo = function() {
@@ -1302,10 +1504,12 @@
                 document.getElementById('admin-input-phone').value = storeInfo.phone || '';
                 document.getElementById('admin-input-address').value = storeInfo.address || '';
                 document.getElementById('admin-input-store-cover').value = storeInfo.coverImg || '';
+                window.renderAdminStoreHours(storeInfo.hours || {});
             } else {
                 document.getElementById('admin-input-phone').value = '';
                 document.getElementById('admin-input-address').value = '';
                 document.getElementById('admin-input-store-cover').value = '';
+                window.renderAdminStoreHours({});
             }
         };
 
@@ -1314,12 +1518,22 @@
             datalist.innerHTML = window.state.stores.map(s => `<option value="${s.name}">`).join('');
         };
 
+        // 防抖動搜尋，優化效能
+        let searchTimeout;
+        window.handleSearchInput = function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(window.renderAdmin, 300);
+        };
+
         window.renderAdmin = function() {
             window.updateStoreDatalist();
             document.getElementById('admin-input-cat').innerHTML = window.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             document.getElementById('admin-input-subcat').innerHTML = window.state.subCategories.map(s => `<option value="${s}">${s}</option>`).join('');
             
             window.renderGlobalOptionsCheckboxes('admin-input-options-container', []);
+            if(!document.getElementById('admin-hours-container').innerHTML.trim()) {
+                window.autoFillStoreInfo(); // 初始化營業時間選單
+            }
             
             const query = document.getElementById('admin-search-input').value.toLowerCase();
             let filteredItems = window.state.items;
@@ -1345,19 +1559,19 @@
                 const coverImg = storeMeta.coverImg || items.find(i=>i.img && i.img !== DEFAULT_IMG)?.img || DEFAULT_IMG;
                 
                 html += `
-                    <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm mb-8 bg-white">
+                    <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white">
                         <div class="store-header p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4" style="background-color: ${catInfo ? catInfo.color : '#f1f5f9'}">
                             <div class="flex items-center gap-4">
                                 <div class="w-14 h-14 bg-white rounded-2xl shadow-inner bg-cover bg-center border border-slate-200" style="background-image: url('${coverImg}')"></div>
                                 <div>
                                     <h4 class="text-2xl font-black text-slate-800">${store}</h4>
                                     <div class="mt-1 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
-                                        ${storeMeta.phone ? `<a href="tel:${storeMeta.phone}" class="bg-white/60 hover:bg-white/90 px-2 py-0.5 rounded transition text-slate-700"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</a>` : ''}
-                                        ${storeMeta.address ? `<span class="bg-white/60 px-2 py-0.5 rounded"><i class="fa-solid fa-map-location-dot mr-1"></i>${storeMeta.address}</span>` : ''}
+                                        ${storeMeta.phone ? `<a href="tel:${storeMeta.phone}" class="bg-white/60 hover:bg-white/90 px-2 py-0.5 rounded transition text-slate-700 shadow-sm"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</a>` : ''}
+                                        ${storeMeta.address ? `<span class="bg-white/60 px-2 py-0.5 rounded shadow-sm"><i class="fa-solid fa-map-location-dot mr-1"></i>${storeMeta.address}</span>` : ''}
                                     </div>
                                 </div>
                             </div>
-                            <span class="text-sm font-black bg-white/80 px-4 py-2 rounded-xl text-slate-700 shadow-sm whitespace-nowrap"><i class="fa-solid fa-cubes mr-2"></i>共 ${items.length} 筆資料</span>
+                            <span class="text-sm font-black bg-white/80 px-4 py-2 rounded-xl text-slate-700 shadow-sm whitespace-nowrap border border-white/50"><i class="fa-solid fa-cubes mr-2"></i>共 ${items.length} 筆資料</span>
                         </div>
                         <div class="p-0">
                 `;
@@ -1397,14 +1611,14 @@
                                 <div class="md:col-span-2">
                                     <label class="block text-xs font-bold text-slate-500 mb-1">餐點圖片 (輸入 images/圖檔名.jpg、網址或上傳)</label>
                                     <div class="flex gap-2">
-                                        <input type="text" id="inline-img-${item.id}" value="${item.img === DEFAULT_IMG ? '' : item.img}" class="flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm" placeholder="輸入 images/圖檔名.jpg 或網址">
-                                        <input type="file" id="inline-file-${item.id}" accept=".png, .jpg, .jpeg" class="w-48 text-sm text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:font-bold file:bg-slate-200 file:text-slate-700 cursor-pointer shadow-sm" onchange="handleImageUpload(event, 'inline-img-${item.id}', 'inline-preview-${item.id}')">
+                                        <input type="text" id="inline-img-${item.id}" value="${item.img === DEFAULT_IMG ? '' : item.img}" class="flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm" placeholder="輸入網址或上傳">
+                                        <input type="file" id="inline-file-${item.id}" accept=".png, .jpg, .jpeg" class="w-48 text-sm text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:font-bold file:bg-slate-200 file:text-slate-700 cursor-pointer shadow-sm transition hover:bg-slate-300" onchange="handleImageUpload(event, 'inline-img-${item.id}', 'inline-preview-${item.id}')">
                                     </div>
                                     <img id="inline-preview-${item.id}" src="${imgUrl}" class="mt-3 h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm">
                                 </div>
-                                <div class="md:col-span-2 bg-white p-4 rounded-xl border border-orange-200 mt-2">
+                                <div class="md:col-span-2 bg-white p-4 rounded-xl border border-orange-200 mt-2 shadow-sm">
                                     <label class="block text-xs font-bold text-orange-600 mb-3"><i class="fa-solid fa-sliders mr-2"></i>勾選欲套用的客製化選項模組 (選填)</label>
-                                    <div id="inline-opt-container-${item.id}" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                                    <div id="inline-opt-container-${item.id}" class="grid grid-cols-1 lg:grid-cols-2 gap-2"></div>
                                 </div>
                             </div>
                             <div class="flex gap-3 justify-end mt-4">
@@ -1419,29 +1633,29 @@
                     } 
                     else {
                         html += `
-                        <div class="flex items-center justify-between p-4 pl-5 md:pl-6 border-b border-slate-100 hover:bg-slate-50 transition group">
+                        <div class="flex items-center justify-between p-4 pl-5 md:pl-6 border-b border-slate-100 hover:bg-orange-50/30 transition group">
                             <div class="flex items-center gap-4 md:gap-5">
-                                <img src="${imgUrl}" class="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-200 shadow-sm bg-white p-0.5">
-                                <div>
-                                    <p class="font-black text-slate-800 text-lg md:text-xl">${item.name} <span class="text-sm md:text-base text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-lg ml-2 font-black border border-orange-100">$${item.price}</span></p>
+                                <img src="${imgUrl}" class="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-200 shadow-sm bg-white p-0.5 group-hover:border-orange-300 transition-colors">
+                                <div class="min-w-0">
+                                    <p class="font-black text-slate-800 text-lg md:text-xl truncate group-hover:text-orange-700 transition-colors">${item.name} <span class="text-sm md:text-base text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-lg ml-2 font-black border border-orange-100">$${item.price}</span></p>
                                     <p class="text-sm text-slate-400 mt-1.5 font-bold flex flex-wrap gap-2 items-center">
                                         <span class="bg-slate-100 px-2 py-0.5 rounded text-xs border border-slate-200 text-slate-600">${item.subCat || '無細項分類'}</span>
                                         ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100"><i class="fa-solid fa-list-ul mr-1"></i>含選項 (${item.customOptionIds.length})</span>` : ''}
-                                        <span class="bg-slate-50 px-2 py-0.5 rounded text-xs border border-slate-200 text-slate-400" title="最後更新日期"><i class="fa-regular fa-clock mr-1"></i>${displayUpdateDate}</span>
+                                        <span class="bg-slate-50 px-2 py-0.5 rounded text-xs border border-slate-200 text-slate-400 truncate" title="最後更新日期"><i class="fa-regular fa-clock mr-1"></i>${displayUpdateDate}</span>
                                     </p>
                                 </div>
                             </div>
-                            <div class="flex gap-4 md:gap-6 text-xl md:text-2xl pr-4">
-                                <i onclick="toggleLock('${item.id}')" class="fa-solid ${lockIcon} admin-action hover:scale-110" title="解鎖以啟用編輯與刪除功能"></i>
-                                <i onclick="setInlineEdit('${item.id}')" class="fa-solid fa-pen-to-square text-slate-300 admin-action ${actionCls} hover:text-orange-500" title="行內直接編輯"></i>
-                                <i onclick="deleteItem('${item.id}')" class="fa-solid fa-trash-can text-slate-300 admin-action ${actionCls} hover:!text-red-600" title="刪除此餐點"></i>
+                            <div class="flex gap-4 md:gap-6 text-xl md:text-2xl pr-4 shrink-0">
+                                <i onclick="toggleLock('${item.id}')" class="fa-solid ${lockIcon} admin-action hover:scale-125 transform transition-transform" title="解鎖以啟用編輯與刪除功能"></i>
+                                <i onclick="setInlineEdit('${item.id}')" class="fa-solid fa-pen-to-square text-slate-300 admin-action ${actionCls} hover:text-orange-500 hover:scale-110 transform transition-transform" title="行內直接編輯"></i>
+                                <i onclick="requestPassword('輸入密碼確認刪除餐點', pwd => { if(pwd==='kora1992') deleteItem('${item.id}'); else alert('密碼錯誤') })" class="fa-solid fa-trash-can text-slate-300 admin-action ${actionCls} hover:!text-red-600 hover:scale-110 transform transition-transform" title="刪除此餐點"></i>
                             </div>
                         </div>`;
                     }
                 });
                 html += `</div></div>`;
             }
-            document.getElementById('admin-data-grouped-list').innerHTML = html || '<div class="p-10 text-center border-2 border-dashed border-slate-200 rounded-[2rem]"><p class="text-slate-400 font-bold text-xl"><i class="fa-solid fa-box-open text-4xl mb-4 block opacity-50"></i>目前資料庫無符合的商品資料</p></div>';
+            document.getElementById('admin-data-grouped-list').innerHTML = html || '<div class="p-10 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50"><p class="text-slate-400 font-bold text-xl"><i class="fa-solid fa-box-open text-4xl mb-4 block opacity-50"></i>目前資料庫無符合的商品資料</p></div>';
         };
 
         window.setInlineEdit = function(id) {
@@ -1496,13 +1710,30 @@
             const checkedBoxes = document.querySelectorAll('.new-item-opt-cb:checked');
             const customOptionIds = Array.from(checkedBoxes).map(cb => cb.value);
 
+            // 擷取營業時間資料
+            let storeHours = {};
+            WEEKDAYS.forEach((d, idx) => {
+                const cb = document.querySelector(`.store-day-cb[value="${idx}"]`);
+                if(cb && cb.checked) {
+                    const s1 = document.getElementById(`slot-${idx}-0`).value.trim();
+                    const s2 = document.getElementById(`slot-${idx}-1`).value.trim();
+                    const s3 = document.getElementById(`slot-${idx}-2`).value.trim();
+                    let slots = [];
+                    if(s1) slots.push(s1);
+                    if(s2) slots.push(s2);
+                    if(s3) slots.push(s3);
+                    if(slots.length > 0) storeHours[idx] = slots;
+                }
+            });
+
             let storeIdx = window.state.stores.findIndex(s => s.name === store);
             if(storeIdx === -1) {
-                window.state.stores.push({ name: store, phone, address, coverImg });
+                window.state.stores.push({ name: store, phone, address, coverImg, hours: storeHours });
             } else {
                 if(phone) window.state.stores[storeIdx].phone = phone;
                 if(address) window.state.stores[storeIdx].address = address;
                 if(coverImg) window.state.stores[storeIdx].coverImg = coverImg;
+                window.state.stores[storeIdx].hours = storeHours;
             }
 
             const updateDate = window.getFormattedDate();
@@ -1512,7 +1743,7 @@
             
             alert("✅ 新增成功！資料已自動上鎖保護，如需修改請點擊該行鎖頭解鎖。");
 
-            ['admin-input-item', 'admin-input-price', 'admin-input-img-url', 'admin-input-file', 'admin-input-store-cover', 'admin-input-store-cover-file'].forEach(id => document.getElementById(id).value = '');
+            ['admin-input-item', 'admin-input-price', 'admin-input-img-url', 'admin-input-file'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('admin-img-preview').classList.add('hidden');
             document.querySelectorAll('.new-item-opt-cb').forEach(cb => cb.checked = false);
 
@@ -1527,20 +1758,15 @@
         };
         
         window.deleteItem = async function(id) {
-            if (prompt("⚠️ 安全確認：請輸入管理員密碼以刪除此餐點") !== "kora1992") {
-                return alert("❌ 密碼錯誤，拒絕刪除操作！");
+            const itemToDelete = window.state.items.find(i => String(i.id) === String(id));
+            if (itemToDelete) {
+                window.addAdminLog('刪除', `永久刪除餐點「${itemToDelete.name}」(原屬店家: ${itemToDelete.store})`);
             }
-            if (confirm("🚨 最終警告！確定永久刪除此餐點？此動作無法復原！")) {
-                const itemToDelete = window.state.items.find(i => String(i.id) === String(id));
-                if (itemToDelete) {
-                    window.addAdminLog('刪除', `永久刪除餐點「${itemToDelete.name}」(原屬店家: ${itemToDelete.store})`);
-                }
-                
-                window.state.items = window.state.items.filter(i => String(i.id) !== String(id));
-                if(String(window.editingItemId) === String(id)) window.editingItemId = null;
-                window.state.menuUpdateDate = window.getFormattedDate();
-                await window.saveState(); window.renderAdmin();
-            }
+            
+            window.state.items = window.state.items.filter(i => String(i.id) !== String(id));
+            if(String(window.editingItemId) === String(id)) window.editingItemId = null;
+            window.state.menuUpdateDate = window.getFormattedDate();
+            await window.saveState(); window.renderAdmin();
         };
 
         window.addNewCategoryPrompt = async function() {
@@ -1555,13 +1781,13 @@
         window.renderHistory = function() {
             let html = '';
             if(window.state.orderHistory.length === 0) {
-                document.getElementById('admin-history-list').innerHTML = '<div class="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-[2rem]"><p class="text-slate-400 font-bold text-2xl"><i class="fa-solid fa-receipt block text-5xl mb-4 opacity-50"></i>目前尚無任何歷史結單紀錄。</p></div>';
+                document.getElementById('admin-history-list').innerHTML = '<div class="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50"><p class="text-slate-400 font-bold text-2xl"><i class="fa-solid fa-receipt block text-5xl mb-4 opacity-50"></i>目前尚無任何歷史結單紀錄。</p></div>';
                 return;
             }
             
             window.state.orderHistory.forEach((order, idx) => {
                 html += `
-                    <div class="border border-slate-200 rounded-[2rem] p-6 md:p-8 bg-white shadow-sm hover:shadow-lg transition flex flex-col">
+                    <div class="border border-slate-200 rounded-[2rem] p-6 md:p-8 bg-white shadow-sm hover:shadow-lg transition flex flex-col transform hover:-translate-y-1">
                         <div class="flex flex-col xl:flex-row justify-between xl:items-center border-b border-slate-100 pb-5 mb-5 gap-4">
                             <div class="flex items-center gap-3">
                                 <span class="bg-slate-800 text-white px-4 py-1.5 rounded-xl text-sm font-black shadow-sm">#${window.state.orderHistory.length - idx}</span>
@@ -1570,8 +1796,9 @@
                             <span class="font-black text-red-600 bg-red-50 px-5 py-2 rounded-xl text-xl border border-red-100 shadow-inner whitespace-nowrap">結算 $${order.total}</span>
                         </div>
                         
-                        <div class="text-slate-800 font-black text-2xl mb-5 flex items-center">
-                            <i class="fa-solid fa-store mr-3 text-orange-500 bg-orange-50 p-2 rounded-lg"></i>${order.store}
+                        <div class="text-slate-800 font-black text-xl md:text-2xl mb-5 flex items-start gap-3">
+                            <i class="fa-solid fa-store mt-1 text-orange-500 bg-orange-50 p-2 rounded-lg shrink-0"></i>
+                            <span class="leading-tight">${order.store}</span>
                         </div>
                         
                         <div class="space-y-2 bg-slate-50 p-5 rounded-2xl text-sm border border-slate-100 flex-1">
@@ -1608,9 +1835,9 @@
             a.download = `點餐紀錄_${window.getFormattedDate()}.txt`; a.click();
         };
 
-        window.clearHistoryRecords = async function() {
-            if(window.state.orderHistory.length === 0) return alert('紀錄已經是空的，無需清空。');
-            if(prompt("🚨 此動作無法復原！請輸入管理員密碼 (81160530) 以確認清空：") === "81160530") {
+        window.clearHistoryRecords = async function(pwd) {
+            if(!window.state.orderHistory || window.state.orderHistory.length === 0) return alert('紀錄已經是空的，無需清空。');
+            if(pwd === "81160530") {
                 window.state.orderHistory = [];
                 window.addAdminLog('清空', '最高權限管理員已手動清空歷史結單紀錄');
                 await window.saveState(); window.renderHistory(); alert("✅ 歷史紀錄已成功清空！");

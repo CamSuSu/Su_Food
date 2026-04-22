@@ -100,7 +100,7 @@
                     <p class="text-slate-500 font-black mb-2 tracking-widest uppercase"><i class="fa-solid fa-stopwatch mr-2 text-red-500"></i>點餐活動倒數中</p>
                     <div id="big-timer" class="text-6xl md:text-7xl font-black text-red-600 tracking-tighter drop-shadow-sm">00:00</div>
                     <button onclick="unlockByAdmin()" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
-                        <i class="fa-solid fa-lock-open mr-2 text-slate-400"></i>提早強制結單 (需密碼)
+                        <i class="fa-solid fa-lock-open mr-2 text-slate-400"></i>提早結單
                     </button>
                 </div>
                 
@@ -368,8 +368,8 @@
                         <button onclick="selectTime(5)" class="time-btn bg-orange-500 text-white py-2 rounded-lg font-bold transition text-sm border-2 border-orange-500" data-val="5">5分</button>
                         <button onclick="selectTime(10)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="10">10分</button>
                         <button onclick="selectTime(30)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="30">30分</button>
-                        <button onclick="selectTime(60)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="60">1時</button>
-                        <button onclick="selectTime(180)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="180">3時</button>
+                        <button onclick="selectTime(60)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="60">60分</button>
+                        <button onclick="selectTime(180)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="180">180分</button>
                         <button onclick="selectTime('custom')" class="time-btn col-span-2 bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="custom">自訂分鐘</button>
                     </div>
                     <div id="custom-time-container" class="hidden mt-2">
@@ -968,7 +968,7 @@
         };
 
         window.unlockByAdmin = function() {
-            if (prompt("輸入管理員密碼以強制提早結單 (密碼: 81160530)") === "81160530") window.autoCheckout();
+            if (prompt("輸入密碼以提早結單") === "81160530") window.autoCheckout();
             else alert("密碼錯誤，拒絕結單！");
         };
 
@@ -1075,7 +1075,7 @@
         };
 
         window.handleLogin = function() {
-            if (document.getElementById('login-user').value === 'koralba' && document.getElementById('login-pwd').value === 'kora1992') {
+            if (document.getElementById('login-user').value === 'Koralba' && document.getElementById('login-pwd').value === 'kora1992') {
                 window.isAdminLoggedIn = true;
                 window.resetInactivityTimer();
                 window.closeModal('login-modal'); 
@@ -1164,7 +1164,7 @@
 
         window.clearAdminLogs = async function() {
             if(!window.state.adminLogs || window.state.adminLogs.length === 0) return alert('紀錄已經是空的，無需清空。');
-            if(prompt("🚨 此動作無法復原！請輸入管理員密碼 (81160530) 以確認清空：") === "81160530") {
+            if(prompt("🚨 此動作無法復原！請輸入管理員密碼以確認清空：") === "kora1992") {
                 window.state.adminLogs = [];
                 window.addAdminLog('清空', '最高權限管理員已手動清空所有操作紀錄');
                 await window.saveState(); window.renderAdminLogs(); alert("✅ 系統操作紀錄已成功清空！");
@@ -1527,7 +1527,7 @@
         };
         
         window.deleteItem = async function(id) {
-            if (prompt("⚠️ 安全確認：請輸入管理員密碼以刪除此餐點 (密碼: 81160530)") !== "81160530") {
+            if (prompt("⚠️ 安全確認：請輸入管理員密碼以刪除此餐點") !== "kora1992") {
                 return alert("❌ 密碼錯誤，拒絕刪除操作！");
             }
             if (confirm("🚨 最終警告！確定永久刪除此餐點？此動作無法復原！")) {

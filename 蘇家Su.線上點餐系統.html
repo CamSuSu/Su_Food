@@ -194,7 +194,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold mb-1 text-slate-500">菜單子分類 <span class="text-red-500">*</span></label>
+                                    <label class="block text-xs font-bold mb-1 text-slate-500">菜單子分類 <span class="text-red-500">*</span> <span class="font-normal text-slate-400">(可至全域設定新增)</span></label>
                                     <select id="admin-input-subcat" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold cursor-pointer"></select>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3">
@@ -225,8 +225,7 @@
                                 <span><i class="fa-solid fa-sliders mr-2"></i>套用客製化選項 (選填)</span>
                                 <span class="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded cursor-pointer hover:bg-orange-200" onclick="switchAdminTab('settings')">管理全域選項</span>
                             </h4>
-                            <div id="admin-input-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
-                                </div>
+                            <div id="admin-input-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3"></div>
                         </div>
 
                         <button onclick="saveNewItemData()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-4 md:py-5 rounded-2xl shadow-xl hover:from-orange-600 hover:to-amber-600 transition transform hover:-translate-y-1 text-xl"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>確認新增至資料庫</button>
@@ -245,7 +244,6 @@
             </div>
 
             <div id="admin-tab-settings" class="hidden space-y-6 max-w-4xl mx-auto pb-10">
-                
                 <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100">
                     <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center"><i class="fa-solid fa-tags text-orange-500 mr-3"></i>快捷姓名標籤設定</h3>
                     <label class="block text-sm font-bold mb-3 text-slate-500">編輯點餐時可快速點選的姓名標籤 (請以「半形逗號」分隔)</label>
@@ -279,10 +277,8 @@
                         </div>
                         <button onclick="addGlobalOption()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-md transition"><i class="fa-solid fa-folder-plus mr-2"></i>建立新選項模組</button>
                     </div>
-                    
                     <div id="setting-global-opt-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
-
             </div>
 
             <div id="admin-tab-history" class="hidden bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
@@ -312,7 +308,6 @@
                 </div>
                 <div id="admin-logs-list" class="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
-
         </div>
     </main>
 
@@ -323,8 +318,7 @@
                 <p class="font-bold text-lg md:text-xl">店家名稱：<span id="receipt-store" class="text-2xl md:text-3xl ml-2 text-orange-600"></span></p>
                 <p class="font-bold text-lg md:text-xl">結單時間：<span id="receipt-time" class="ml-2"></span></p>
             </div>
-            <div class="overflow-x-auto" id="receipt-content">
-                </div>
+            <div class="overflow-x-auto" id="receipt-content"></div>
             
             <div class="text-center mt-10 text-slate-500 font-bold text-lg">請依照此表單內容進行點餐與收費作業</div>
             
@@ -359,12 +353,12 @@
     <div id="start-modal" class="fixed inset-0 bg-black/60 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-md no-print transition-opacity">
         <div class="bg-white w-full max-w-sm rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100">
             <h3 class="text-2xl font-black mb-5 text-slate-800 flex items-center border-b-2 border-slate-100 pb-3"><i class="fa-solid fa-utensils text-orange-500 mr-3"></i>發起點餐</h3>
-            <div class="space-y-5">
+            <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
                     <label class="block text-xs font-bold mb-2 text-slate-500">1. 選擇或隨機決定店家</label>
                     <div class="flex gap-2 mb-2">
-                        <select id="random-cat-select" class="bg-white border border-slate-200 p-2 rounded-lg outline-none focus:border-orange-500 font-bold text-xs w-2/3 shadow-sm text-slate-600"></select>
-                        <button onclick="pickRandomStore()" class="w-1/3 bg-yellow-400 hover:bg-yellow-500 text-slate-800 p-2 rounded-lg font-black shadow-sm transition flex items-center justify-center text-xs"><i class="fa-solid fa-dice mr-1"></i>隨機</button>
+                        <select id="random-cat-select" class="bg-white border border-slate-200 p-2 rounded-lg outline-none focus:border-orange-500 font-bold text-xs w-full shadow-sm text-slate-600"></select>
+                        <button onclick="pickRandomStore()" class="w-20 shrink-0 bg-yellow-400 hover:bg-yellow-500 text-slate-800 p-2 rounded-lg font-black shadow-sm transition flex items-center justify-center text-xs"><i class="fa-solid fa-dice mr-1"></i>隨機</button>
                     </div>
                     <select id="start-store-select" class="w-full bg-white border-2 border-orange-200 p-3 rounded-xl outline-none focus:border-orange-500 transition font-black text-base text-slate-800 cursor-pointer shadow-sm"></select>
                 </div>
@@ -417,8 +411,7 @@
                         <input id="modal-user" type="text" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 focus:border-orange-500 focus:bg-white outline-none transition font-bold text-lg" placeholder="點擊上方按鈕或輸入姓名">
                     </div>
                     
-                    <div id="dynamic-options-container" class="space-y-4">
-                        </div>
+                    <div id="dynamic-options-container" class="space-y-4"></div>
 
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                         <label class="block text-sm font-black text-slate-700 mb-3 border-b border-slate-100 pb-2"><i class="fa-solid fa-pen text-orange-500 mr-2"></i>客製化文字備註</label>
@@ -433,21 +426,20 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+        // 您的 Firebase 設定
         const firebaseConfig = {
             apiKey: "AIzaSyBhLO5Fpv0hQ921p1teY_e9Drmfi9jRsQM",
             authDomain: "sufood-2dc61.firebaseapp.com",
             projectId: "sufood-2dc61",
             storageBucket: "sufood-2dc61.firebasestorage.app",
             messagingSenderId: "15294829611",
-            appId: "1:15294829611:web:f7f244a5be5dcfc69b066e",
-            measurementId: "G-QNMQNM15PY"
+            appId: "1:15294829611:web:f7f244a5be5dcfc69b066e"
         };
+        
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "food_order_db");
 
@@ -476,11 +468,8 @@
         ];
         const DEFAULT_ITEMS = [
             { id: 1, cat: 'cat_1', store: '老王香雞排飯', subCat: '飯類', name: '巨無霸雞排飯', price: 110, img: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: [], updateDate: window.getFormattedDate() },
-            { id: 2, cat: 'cat_1', store: '老王香雞排飯', subCat: '飯類', name: '古早味排骨飯', price: 95, img: 'https://images.unsplash.com/photo-1598514982205-f36b96d1e8d4?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: [], updateDate: window.getFormattedDate() },
-            { id: 3, cat: 'cat_1', store: '老王香雞排飯', subCat: '單點', name: '滷鴨蛋', price: 15, img: 'https://images.unsplash.com/photo-1626202166318-725350352de6?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: [], updateDate: window.getFormattedDate() },
             { id: 4, cat: 'cat_2', store: '米蘭義式工坊', subCat: '麵類', name: '白醬海鮮麵', price: 180, img: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: ['gopt_3'], updateDate: window.getFormattedDate() },
-            { id: 5, cat: 'cat_3', store: '五十嵐', subCat: '飲料', name: '波霸奶茶', price: 55, img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: ['gopt_1', 'gopt_2'], updateDate: window.getFormattedDate() },
-            { id: 6, cat: 'cat_4', store: '築地海鮮丼', subCat: '主餐', name: '特上生魚海鮮丼', price: 250, img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: [], updateDate: window.getFormattedDate() }
+            { id: 5, cat: 'cat_3', store: '五十嵐', subCat: '飲料', name: '波霸奶茶', price: 55, img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: ['gopt_1', 'gopt_2'], updateDate: window.getFormattedDate() }
         ];
 
         window.state = {
@@ -507,18 +496,18 @@
 
         async function initSystem() {
             try {
-                // 第一步：檢查資料庫文件是否存在，沒有的話自動建立，解決首次使用存檔報錯問題
+                // 確保文件存在，避免 runTransaction 報錯
                 const docSnap = await getDoc(dbRef);
                 if (!docSnap.exists()) {
-                    await setDoc(dbRef, JSON.parse(JSON.stringify(window.state)));
+                    await setDoc(dbRef, window.state);
                 }
 
-                // 註冊全局同步監聽器
-                onSnapshot(dbRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const newData = docSnap.data();
+                // 監聽遠端資料變化 (防呆與效能優化)
+                onSnapshot(dbRef, (snap) => {
+                    if (snap.exists()) {
+                        const newData = snap.data();
                         
-                        // 結構相容性防呆
+                        // 確保結構完整
                         if (!newData.categories) newData.categories = DEFAULT_CATEGORIES;
                         if (!newData.items) newData.items = DEFAULT_ITEMS;
                         if (!newData.stores) newData.stores = [...new Set(newData.items.map(i => i.store || 'Unknown'))].map(s => ({name: s, phone: '', address: '', coverImg: ''}));
@@ -537,9 +526,9 @@
                         window.state = newData;
                         window.updateGlobalDateDisplay();
 
+                        // 初始化處理
                         if (!window.hasInitialLoaded) {
                             window.hasInitialLoaded = true;
-                            // 第一次進入網站，若活動正在進行中，強制跳轉進點餐畫面
                             if (isNowActive) {
                                 window.showView('active-order');
                                 window.startTimer();
@@ -547,26 +536,25 @@
                                 window.showView('home');
                             }
                         } else {
+                            // 【效能優化防呆】：如果使用者正在輸入框打字，不要強制重新渲染後台表單，以免輸入中斷 (死當感)
                             const activeTag = document.activeElement ? document.activeElement.tagName : '';
-                            const isTyping = window.editingItemId !== null || activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+                            const isTyping = window.editingItemId !== null || ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag);
 
-                            // 同步發起活動 / 結單行為
+                            // 同步發起活動與結單的跳轉邏輯
                             if (isNowActive && !wasActive) {
                                 window.showView('active-order');
                                 window.startTimer();
                             } else if (justFinished) {
-                                // 結單剛剛發生！清除計時器，並顯示網頁版結單明細
                                 clearInterval(window.timerInterval);
                                 document.getElementById('nav-timer').classList.add('hidden');
                                 window.closeModal('order-modal');
                                 window.closeModal('start-modal');
                                 window.showReceiptFromHistory();
-                            } else if (!isNowActive && document.getElementById('view-active-order').classList.contains('hidden') === false) {
-                                // 異常保底：已經沒活動了，但畫面卡在點餐頁面
-                                window.showView('home');
+                            } else if (!isNowActive && !document.getElementById('view-active-order').classList.contains('hidden')) {
+                                window.showView('home'); // 例外恢復
                             }
 
-                            // 即時渲染當前畫面數據 (若非打字中)
+                            // 根據當前畫面進行更新渲染
                             const viewHome = !document.getElementById('view-home').classList.contains('hidden');
                             const viewStoreDetails = !document.getElementById('view-store-details').classList.contains('hidden');
                             const viewActiveOrder = !document.getElementById('view-active-order').classList.contains('hidden');
@@ -591,22 +579,19 @@
                 });
             } catch(e) {
                 console.error("系統初始化失敗", e);
-                alert("無法連線至 Firebase 或權限不足！請確認 Firebase 的「規則 (Rules)」設定是否為 allow read, write: if true;");
+                alert("無法連線至 Firebase。請檢查您的網路與資料庫規則。");
             }
         }
         initSystem();
 
         window.saveState = async function() {
             try {
+                // 深拷貝，確保無 Proxy 或奇怪的參照
                 const safeState = JSON.parse(JSON.stringify(window.state));
-                await setDoc(dbRef, safeState);
+                await setDoc(dbRef, safeState, { merge: true });
             } catch(e) {
                 console.error("資料存檔失敗", e);
-                if(e.code === 'permission-denied') {
-                    alert("⚠️ 資料庫存檔失敗！\n您的 Firebase 權限規則設定阻擋了寫入，請至 Firebase 控制台將規則設為 allow read, write: if true;");
-                } else {
-                    alert(`資料庫存檔失敗！請確認網路狀態。(${e.code || '未知錯誤'})`);
-                }
+                alert("資料庫存檔失敗！請確認網路連線是否正常。");
             }
         };
 
@@ -633,13 +618,12 @@
         ['click', 'scroll', 'keydown'].forEach(evt => document.addEventListener(evt, window.resetInactivityTimer, {passive: true}));
 
         window.showView = function(viewName) {
-            // 如果活動進行中，且試圖前往「首頁」或「預覽店家」，則強制鎖定在活動頁面 (管理員頁面則放行)
+            // 活動進行中，除了管理員與明細外，強制鎖在活動頁面
             if (window.state.session && window.state.session.isActive && viewName !== 'admin' && viewName !== 'active-order' && viewName !== 'receipt') {
                 viewName = 'active-order';
             }
 
             document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
-            
             const targetView = document.getElementById(`view-${viewName}`);
             if(targetView) targetView.classList.remove('hidden');
             
@@ -683,11 +667,8 @@
                 let coverImg = storeInfo.coverImg;
                 if (!coverImg) {
                     const firstImgItem = storeItems.find(i => i.img && i.img !== DEFAULT_IMG);
-                    if (firstImgItem) {
-                        coverImg = firstImgItem.img;
-                    } else {
-                        coverImg = DEFAULT_IMG;
-                    }
+                    if (firstImgItem) coverImg = firstImgItem.img;
+                    else coverImg = DEFAULT_IMG;
                 }
 
                 gridHtml += `
@@ -824,18 +805,12 @@
             window.startTimer();
 
             try {
-                await runTransaction(db, async (transaction) => {
-                    const sfDoc = await transaction.get(dbRef);
-                    if (sfDoc.exists()) {
-                        transaction.update(dbRef, { session: newSession, cart: [] });
-                    } else {
-                        // 萬一資料庫完全為空，此步驟可補救
-                        transaction.set(dbRef, JSON.parse(JSON.stringify(window.state)));
-                    }
-                });
+                // 安全地將活動狀態寫入 Firebase
+                await updateDoc(dbRef, { session: newSession, cart: [] });
             } catch(e) { 
                 console.error(e); 
-                alert("活動發起同步失敗！請確認網路狀態。");
+                // 若找不到文件則重新建立
+                await setDoc(dbRef, window.state, { merge: true });
             }
         };
 
@@ -843,7 +818,12 @@
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.remove('hidden');
             window.timerInterval = setInterval(() => {
-                const diff = window.state.session.endTime - new Date().getTime();
+                if (!window.state.session || !window.state.session.isActive) {
+                    clearInterval(window.timerInterval);
+                    return;
+                }
+
+                const diff = window.state.session.endTime - Date.now();
                 if (diff <= 0) { 
                     clearInterval(window.timerInterval); 
                     return window.autoCheckout(); 
@@ -1000,7 +980,7 @@
                     if (!sfDoc.exists()) return;
                     let dbState = sfDoc.data();
                     
-                    // 如果其他人的客戶端已經先一步結單了，這裡就提早終止，避免重複寫入
+                    // 如果其他人的客戶端已經先一步結單了，這裡就提早終止，避免重複寫入歷史
                     if (!dbState.session || !dbState.session.isActive) return; 
                     
                     let history = dbState.orderHistory || [];
@@ -1020,6 +1000,7 @@
                     
                     dbState.session.isActive = false;
 
+                    // 寫入並清空購物車
                     transaction.update(dbRef, { session: dbState.session, orderHistory: history, cart: [] });
                 });
             } catch(e) { 
@@ -1028,7 +1009,7 @@
             }
         };
 
-        // 將最新結單明細呈現於網頁 (結單後大家都能立刻看到)
+        // 將最新結單明細呈現於網頁 (結單後大家都能立刻看到，但不強制印出)
         window.showReceiptFromHistory = function() {
             if(!window.state.orderHistory || window.state.orderHistory.length === 0) {
                 window.showView('home');
@@ -1041,7 +1022,7 @@
             
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem]">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
-                setTimeout(() => alert("活動結束！本次活動無人點餐。"), 300);
+                setTimeout(() => alert("活動結束！本次活動無人點餐。"), 500);
             } else {
                 const sortedCart = [...latestOrder.cart].sort((a,b) => a.userName.localeCompare(b.userName));
                 let tbody = '';
@@ -1080,7 +1061,7 @@
                         </tfoot>
                     </table>
                 `;
-                setTimeout(() => alert("活動順利結束！已產生結單明細。"), 300);
+                setTimeout(() => alert("活動順利結束！已產生結單明細。"), 500);
             }
             
             window.showView('receipt');

@@ -43,24 +43,24 @@
     <nav class="bg-white shadow-sm border-b sticky top-0 z-40 no-print">
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80" onclick="showView('home')">
-                <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm"><i class="fa-solid fa-store"></i></div>
-                <h1 class="text-xl font-black tracking-tight">蘇家Su.線上點餐系統</h1>
+                <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm shrink-0"><i class="fa-solid fa-store"></i></div>
+                <h1 class="text-xl font-black tracking-tight truncate">蘇家Su.線上點餐系統</h1>
             </div>
-            <div class="flex items-center gap-4">
-                <div id="nav-timer" class="hidden bg-red-50 text-red-600 px-3 py-1 rounded-full font-bold animate-pulse border border-red-200 shadow-sm">
+            <div class="flex items-center gap-3 shrink-0">
+                <div id="nav-timer" class="hidden bg-red-50 text-red-600 px-3 py-1 rounded-full font-bold animate-pulse border border-red-200 shadow-sm text-sm md:text-base whitespace-nowrap">
                     <i class="fa-solid fa-clock mr-1"></i> <span id="nav-timer-val">00:00</span>
                 </div>
-                <button onclick="promptAdminLogin()" class="text-slate-500 hover:text-orange-500 font-bold transition flex items-center bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-orange-50 hover:shadow-sm">
+                <button onclick="promptAdminLogin()" class="text-slate-500 hover:text-orange-500 font-bold transition flex items-center bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-orange-50 hover:shadow-sm whitespace-nowrap">
                     <i class="fa-solid fa-gear sm:mr-1"></i><span class="hidden sm:inline">Su.資料庫管理</span>
                 </button>
             </div>
         </div>
     </nav>
 
-    <div class="fixed bottom-4 left-4 bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 rounded-xl p-3 text-xs text-slate-600 z-30 no-print">
+    <div class="fixed bottom-4 left-4 bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 rounded-xl p-3 text-xs text-slate-600 z-30 no-print max-w-[calc(100vw-5rem)] break-words">
         <div class="flex items-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left text-orange-500"></i>
-            <span>線上菜單更新日期：<span id="global-update-date" class="font-bold text-slate-800"></span></span>
+            <i class="fa-solid fa-clock-rotate-left text-orange-500 shrink-0"></i>
+            <span>線上菜單更新：<span id="global-update-date" class="font-bold text-slate-800"></span></span>
         </div>
     </div>
 
@@ -75,7 +75,7 @@
                 <div class="relative z-10">
                     <h2 class="text-3xl md:text-4xl font-black mb-3">今天想吃什麼？</h2>
                     <p class="opacity-95 text-lg font-bold mb-6">瀏覽各類精選店家，或發起新的點餐活動</p>
-                    <button onclick="openStartOrderModal()" class="bg-white text-orange-600 px-8 py-3.5 rounded-xl font-black shadow-lg hover:bg-orange-50 transition transform hover:-translate-y-1 hover:shadow-xl text-lg flex items-center w-max">
+                    <button onclick="openStartOrderModal()" class="bg-white text-orange-600 px-6 py-3.5 rounded-xl font-black shadow-lg hover:bg-orange-50 transition transform hover:-translate-y-1 hover:shadow-xl text-lg flex items-center w-full md:w-max justify-center">
                         <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>發起點餐活動
                     </button>
                 </div>
@@ -92,10 +92,10 @@
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row gap-6 items-center md:items-start relative overflow-hidden">
                 <div id="browse-store-cover" class="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-cover bg-center shadow-inner shrink-0 border border-slate-100"></div>
                 <div class="flex-1 w-full text-center md:text-left">
-                    <h2 id="browse-store-name" class="text-3xl md:text-4xl font-black text-slate-800 mb-3">店家名稱</h2>
+                    <h2 id="browse-store-name" class="text-3xl md:text-4xl font-black text-slate-800 mb-3 break-words">店家名稱</h2>
                     <div id="browse-store-info" class="flex flex-wrap justify-center md:justify-start gap-3 text-slate-600 font-bold mb-4"></div>
                     <div id="browse-store-hours" class="mb-4 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 hidden"></div>
-                    <p class="text-orange-600 bg-orange-50 p-3 rounded-xl inline-block border border-orange-100 font-bold w-full md:w-auto"><i class="fa-solid fa-circle-info mr-2"></i>目前為瀏覽模式，若要訂餐請回首頁「發起點餐活動」。</p>
+                    <p class="text-orange-600 bg-orange-50 p-3 rounded-xl inline-block border border-orange-100 font-bold w-full md:w-auto break-words whitespace-normal"><i class="fa-solid fa-circle-info mr-2"></i>目前為瀏覽模式，若要訂餐請回首頁「發起點餐活動」。</p>
                 </div>
             </div>
             <div id="browse-menu-container"></div>
@@ -103,7 +103,7 @@
 
         <div id="view-active-order" class="view-section hidden">
             <div class="max-w-4xl mx-auto text-center mb-10">
-                <div class="inline-block bg-white border-4 border-red-500 px-8 py-5 md:px-12 md:py-8 rounded-[2.5rem] shadow-2xl mb-8 relative overflow-hidden transform hover:scale-[1.02] transition duration-300">
+                <div class="inline-block w-full max-w-[90vw] md:w-auto bg-white border-4 border-red-500 px-6 py-5 md:px-12 md:py-8 rounded-[2.5rem] shadow-2xl mb-8 relative overflow-hidden transform hover:scale-[1.02] transition duration-300">
                     <div class="absolute top-0 left-0 w-full h-2 bg-red-500 animate-pulse"></div>
                     <p class="text-slate-500 font-black mb-2 tracking-widest uppercase"><i class="fa-solid fa-stopwatch mr-2 text-red-500"></i>點餐活動倒數中</p>
                     <div id="big-timer" class="text-6xl md:text-7xl font-black text-red-600 tracking-tighter drop-shadow-sm">00:00</div>
@@ -112,9 +112,9 @@
                     </button>
                 </div>
                 
-                <h2 id="active-store-name" class="text-4xl md:text-5xl font-black text-slate-800 mb-4 drop-shadow-sm">聯合訂餐活動</h2>
-                <div id="active-store-info" class="flex flex-col gap-4 text-slate-600 font-bold mb-4 items-center justify-center"></div>
-                <p class="text-slate-500 text-lg md:text-xl mt-2 bg-orange-100 text-orange-700 inline-block px-6 py-2 rounded-full font-black shadow-sm border border-orange-200">活動期間僅限點購清單內店家之餐點</p>
+                <h2 id="active-store-name" class="text-4xl md:text-5xl font-black text-slate-800 mb-4 drop-shadow-sm break-words">聯合訂餐活動</h2>
+                <div id="active-store-info" class="flex flex-col gap-4 text-slate-600 font-bold mb-4 items-center justify-center w-full px-2"></div>
+                <p class="text-slate-500 text-sm md:text-lg mt-2 bg-orange-100 text-orange-700 inline-block px-4 py-2 md:px-6 md:py-2 rounded-full font-black shadow-sm border border-orange-200 max-w-full break-words whitespace-normal">活動期間僅限點購清單內店家之餐點</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -125,9 +125,9 @@
                     <div class="bg-white rounded-[2rem] shadow-xl p-6 md:p-8 border border-slate-100">
                         <h3 class="text-2xl font-black mb-6 border-b-2 border-slate-100 pb-4 flex justify-between items-center text-slate-800">
                             <span><i class="fa-solid fa-basket-shopping text-orange-500 mr-2"></i>已點餐點</span>
-                            <span class="text-white bg-orange-500 px-4 py-1.5 rounded-xl text-sm font-black shadow-sm" id="cart-count">0 份</span>
+                            <span class="text-white bg-orange-500 px-4 py-1.5 rounded-xl text-sm font-black shadow-sm shrink-0" id="cart-count">0 份</span>
                         </h3>
-                        <div id="active-cart-list" class="space-y-4 mb-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar"></div>
+                        <div id="active-cart-list" class="space-y-4 mb-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
                         <div class="border-t-2 border-slate-100 pt-6">
                             <div class="flex justify-between items-end mb-2">
                                 <span class="text-xl font-bold text-slate-500">總計金額</span>
@@ -141,7 +141,7 @@
 
         <div id="view-admin" class="view-section hidden">
             <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4 border-b-2 border-slate-200 pb-4">
-                <h2 class="text-3xl font-black text-slate-800 flex items-center"><i class="fa-solid fa-database text-orange-500 mr-3 text-3xl"></i>系統資料庫管理</h2>
+                <h2 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-database text-orange-500 mr-3 text-3xl"></i>系統資料庫管理</h2>
                 <div class="flex flex-wrap gap-3 w-full xl:w-auto">
                     <button onclick="exportDatabaseExcel()" class="flex-1 xl:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center whitespace-nowrap"><i class="fa-solid fa-file-excel mr-2"></i>匯出 Excel</button>
                     <label class="flex-1 xl:flex-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center cursor-pointer whitespace-nowrap mb-0">
@@ -179,7 +179,7 @@
                                     <label class="block text-xs font-bold mb-1 text-slate-500">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label>
                                     <div class="flex gap-2">
                                         <select id="admin-input-cat" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold"></select>
-                                        <button onclick="addNewCategoryPrompt()" class="bg-orange-100 hover:bg-orange-200 text-orange-600 px-4 rounded-xl font-bold transition shadow-sm" title="大分類管理請至設定頁"><i class="fa-solid fa-gear"></i></button>
+                                        <button onclick="addNewCategoryPrompt()" class="bg-orange-100 hover:bg-orange-200 text-orange-600 px-4 rounded-xl font-bold transition shadow-sm shrink-0" title="大分類管理請至設定頁"><i class="fa-solid fa-gear"></i></button>
                                     </div>
                                 </div>
 
@@ -188,7 +188,7 @@
                                     <div class="flex gap-2">
                                         <input type="text" id="admin-input-store-cover" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold text-sm" placeholder="輸入網址或上傳">
                                         <input type="file" id="admin-input-store-cover-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'admin-input-store-cover', null)">
-                                        <button type="button" onclick="document.getElementById('admin-input-store-cover-file').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap"><i class="fa-solid fa-upload"></i></button>
+                                        <button type="button" onclick="document.getElementById('admin-input-store-cover-file').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3">
@@ -219,7 +219,7 @@
                                 <div class="grid grid-cols-2 gap-3">
                                     <div class="col-span-2 sm:col-span-1">
                                         <label class="block text-xs font-bold mb-1 text-slate-500">餐點名稱 <span class="text-red-500">*</span></label>
-                                        <input id="admin-input-item" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold" placeholder="例如：經典肉醬麵">
+                                        <input id="admin-input-item" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold break-words" placeholder="例如：經典肉醬麵">
                                     </div>
                                     <div class="col-span-2 sm:col-span-1">
                                         <label class="block text-xs font-bold mb-1 text-slate-500">價格 <span class="text-red-500">*</span></label>
@@ -232,7 +232,7 @@
                                     <div class="flex gap-2 mb-2">
                                         <input id="admin-input-img-url" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 text-sm font-bold" placeholder="輸入網址或上傳">
                                         <input type="file" id="admin-input-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'admin-input-img-url', 'admin-img-preview')">
-                                        <button type="button" onclick="document.getElementById('admin-input-file').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap"><i class="fa-solid fa-upload"></i></button>
+                                        <button type="button" onclick="document.getElementById('admin-input-file').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
                                     </div>
                                     <img id="admin-img-preview" src="" class="hidden mt-2 h-32 w-full object-cover rounded-xl border border-slate-200 shadow-sm">
                                 </div>
@@ -240,140 +240,146 @@
                         </div>
 
                         <div class="bg-orange-50/50 p-4 rounded-2xl border border-orange-200">
-                            <h4 class="font-black text-orange-700 mb-2 text-sm flex items-center justify-between">
+                            <h4 class="font-black text-orange-700 mb-2 text-sm flex items-center justify-between flex-wrap gap-2">
                                 <span><i class="fa-solid fa-sliders mr-2"></i>套用客製化選項 (選填)</span>
                                 <span class="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded cursor-pointer hover:bg-orange-200 transition" onclick="switchAdminTab('settings')">管理全域選項</span>
                             </h4>
-                            <div id="admin-input-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3"></div>
+                            <div id="admin-input-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 w-full"></div>
                         </div>
 
                         <button onclick="saveNewItemData()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-4 md:py-5 rounded-2xl shadow-xl hover:from-orange-600 hover:to-amber-600 transition transform hover:-translate-y-1 text-xl"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>確認新增至資料庫</button>
                     </div>
                 </div>
 
-                <div class="xl:col-span-8">
-                    <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
-                        <div class="mb-8 relative">
+                <div class="xl:col-span-8 w-full max-w-full">
+                    <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 p-4 md:p-8 w-full">
+                        <div class="mb-8 relative w-full">
                             <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-400 text-lg"></i>
                             <input type="text" id="admin-search-input" oninput="handleSearchInput()" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-slate-700 text-lg shadow-inner" placeholder="快速搜尋：輸入店家、分類或餐點名稱...">
                         </div>
-                        <div id="admin-data-grouped-list" class="space-y-8"></div>
+                        <div id="admin-data-grouped-list" class="space-y-8 w-full"></div>
                     </div>
                 </div>
             </div>
 
             <div id="admin-tab-settings" class="hidden space-y-6 max-w-4xl mx-auto pb-10">
                 
-                <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between">
+                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-2">
                         <div class="flex items-center"><i class="fa-solid fa-layer-group text-orange-500 mr-3"></i>系統大分類管理</div>
                     </h3>
-                    <p class="text-slate-500 font-bold mb-4 text-sm">管理首頁與店家的主分類。「其他」為系統保留分類，不可刪除。</p>
+                    <p class="text-slate-500 font-bold mb-4 text-sm break-words">管理首頁與店家的主分類。「其他」為系統保留分類，不可刪除。</p>
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col md:flex-row gap-3">
-                        <input id="setting-new-cat" type="text" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold" placeholder="輸入新的大分類 (例如: 飲料、日式)">
+                        <input id="setting-new-cat" type="text" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold break-words" placeholder="輸入新的大分類 (例如: 飲料、日式)">
                         <button onclick="addSysCat()" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i>新增大分類</button>
                     </div>
-                    <div id="setting-syscat-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner"></div>
+                    <div id="setting-syscat-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner w-full"></div>
                 </div>
 
-                <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between">
+                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-2">
                         <div class="flex items-center"><i class="fa-solid fa-list text-emerald-500 mr-3"></i>菜單子分類統一管理</div>
-                        <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100"><i class="fa-solid fa-arrows-up-down mr-1"></i>支援滑鼠拖曳變更排序</span>
+                        <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100 shrink-0"><i class="fa-solid fa-arrows-up-down mr-1"></i>支援滑鼠拖曳排序</span>
                     </h3>
-                    <p class="text-slate-500 font-bold mb-4 text-sm">在此處調整的上下順序，將會全域套用到前台的菜單呈現順序。</p>
+                    <p class="text-slate-500 font-bold mb-4 text-sm break-words">在此處調整的上下順序，將會全域套用到前台的菜單呈現順序。</p>
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col md:flex-row gap-3">
-                        <input id="setting-new-subcat" type="text" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-emerald-500 font-bold" placeholder="輸入新的子分類 (例如: 燒烤、炸物)">
+                        <input id="setting-new-subcat" type="text" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-emerald-500 font-bold break-words" placeholder="輸入新的子分類 (例如: 燒烤、炸物)">
                         <button onclick="addSubcat()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i>新增子分類</button>
                     </div>
-                    <div id="setting-subcat-list" class="flex flex-col gap-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner"></div>
+                    <div id="setting-subcat-list" class="flex flex-col gap-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner w-full"></div>
                 </div>
 
-                <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
                     <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center"><i class="fa-solid fa-sliders text-blue-500 mr-3"></i>全域客製化選項管理</h3>
-                    <p class="text-slate-500 font-bold mb-4 text-sm">在此建立的下拉選單模組，可在新增/編輯餐點時自由勾選套用。</p>
+                    <p class="text-slate-500 font-bold mb-4 text-sm break-words">在此建立的下拉選單模組，可在新增/編輯餐點時自由勾選套用。</p>
                     
                     <div class="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 mb-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-blue-800 mb-1">選項群組名稱</label>
-                                <input id="setting-opt-name" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm" placeholder="例如: 甜度、加飯">
+                                <input id="setting-opt-name" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 甜度、加飯">
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-bold text-blue-800 mb-1">下拉選單內容 (請以半形逗號 , 分隔)</label>
-                                <input id="setting-opt-choices" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm" placeholder="例如: 正常甜,少糖,半糖,無糖">
+                                <input id="setting-opt-choices" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 正常甜,少糖,半糖,無糖">
                             </div>
                         </div>
                         <button onclick="addGlobalOption()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-md transition"><i class="fa-solid fa-folder-plus mr-2"></i>建立新選項模組</button>
                     </div>
-                    <div id="setting-global-opt-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    <div id="setting-global-opt-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"></div>
                 </div>
 
-                <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
                     <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center"><i class="fa-solid fa-tags text-purple-500 mr-3"></i>快捷姓名標籤設定</h3>
-                    <label class="block text-sm font-bold mb-3 text-slate-500">編輯點餐時可快速點選的姓名標籤 (請以「半形逗號」分隔)</label>
-                    <textarea id="admin-quick-names" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-lg mb-6 resize-none h-24" placeholder="例如：德,如,芬,禾,亭,卉"></textarea>
+                    <label class="block text-sm font-bold mb-3 text-slate-500 break-words">編輯點餐時可快速點選的姓名標籤 (請以「半形逗號」分隔)</label>
+                    <textarea id="admin-quick-names" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-lg mb-6 resize-none h-32 break-words whitespace-pre-wrap" placeholder="例如：德,如,芬,禾,亭,卉"></textarea>
                     <button onclick="saveQuickNames()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-2xl font-black shadow-lg transition text-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>儲存標籤設定</button>
                 </div>
             </div>
 
-            <div id="admin-tab-history" class="hidden bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+            <div id="admin-tab-history" class="hidden bg-white p-4 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 border-b-2 border-slate-100 pb-6 gap-4">
                     <div>
-                        <h3 class="text-3xl font-black text-slate-800 flex items-center"><i class="fa-solid fa-clock-rotate-left text-orange-500 mr-3"></i>歷史訂單紀錄</h3>
-                        <p class="text-slate-500 font-bold mt-2 bg-slate-100 px-3 py-1 rounded-lg inline-block text-sm">系統結單後自動保留最新的 1000 筆紀錄</p>
+                        <h3 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-clock-rotate-left text-orange-500 mr-3"></i>歷史訂單紀錄</h3>
+                        <p class="text-slate-500 font-bold mt-2 bg-slate-100 px-3 py-1 rounded-lg inline-block text-sm break-words whitespace-normal">系統結單後自動保留最新的 1000 筆紀錄</p>
                     </div>
                     
                     <div class="flex flex-col md:flex-row gap-3 w-full xl:w-auto items-center">
                         <div class="flex gap-2 w-full md:w-auto">
-                            <select id="history-filter-year" onchange="renderHistory()" class="flex-1 md:flex-none bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm text-slate-700">
+                            <select id="history-filter-year" onchange="renderHistory()" class="flex-1 md:flex-none bg-slate-50 border border-slate-200 px-3 py-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm text-slate-700">
                                 <option value="all">全部年份</option>
                             </select>
-                            <select id="history-filter-month" onchange="renderHistory()" class="flex-1 md:flex-none bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm text-slate-700">
+                            <select id="history-filter-month" onchange="renderHistory()" class="flex-1 md:flex-none bg-slate-50 border border-slate-200 px-3 py-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm text-slate-700">
                                 <option value="all">全部月份</option>
                             </select>
                         </div>
                         <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                            <button onclick="exportAllHistoryExcel()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap"><i class="fa-solid fa-file-excel xl:mr-2"></i><span class="hidden xl:inline">全部匯出</span></button>
-                            <button onclick="exportHistoryTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap"><i class="fa-solid fa-file-export xl:mr-2"></i><span class="hidden xl:inline">匯出 TXT</span></button>
-                            <button onclick="requestPassword('確認清空歷史紀錄？輸入通用密碼', pwd => clearHistoryRecords(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-4 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can xl:mr-2"></i><span class="hidden xl:inline">清空</span></button>
+                            <button onclick="exportAllHistoryExcel()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap text-sm md:text-base"><i class="fa-solid fa-file-excel xl:mr-2"></i><span class="hidden xl:inline">全部匯出</span></button>
+                            <button onclick="exportHistoryTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap text-sm md:text-base"><i class="fa-solid fa-file-export xl:mr-2"></i><span class="hidden xl:inline">匯出 TXT</span></button>
+                            <button onclick="requestPassword('確認清空歷史紀錄？輸入管理員密碼', pwd => clearHistoryRecords(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-3 md:px-4 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap text-sm md:text-base"><i class="fa-solid fa-trash-can xl:mr-2"></i><span class="hidden xl:inline">清空</span></button>
                         </div>
                     </div>
                 </div>
-                <div id="admin-history-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar"></div>
+                <div id="admin-history-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
             </div>
 
-            <div id="admin-tab-logs" class="hidden bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+            <div id="admin-tab-logs" class="hidden bg-white p-4 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b-2 border-slate-100 pb-6 gap-4">
                     <div>
-                        <h3 class="text-3xl font-black text-slate-800 flex items-center"><i class="fa-solid fa-clipboard-list text-indigo-500 mr-3"></i>系統操作紀錄</h3>
-                        <p class="text-slate-500 font-bold mt-2 bg-slate-100 px-3 py-1 rounded-lg inline-block text-sm">詳細記錄管理員對系統的操作動作 (最多保留 1000 筆)</p>
+                        <h3 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-clipboard-list text-indigo-500 mr-3"></i>系統操作紀錄</h3>
+                        <p class="text-slate-500 font-bold mt-2 bg-slate-100 px-3 py-1 rounded-lg inline-block text-sm break-words whitespace-normal max-w-full">詳細記錄管理員對系統的操作動作 (最多保留 1000 筆)</p>
                     </div>
                     <div class="flex gap-3 w-full md:w-auto">
                         <button onclick="exportLogsTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap"><i class="fa-solid fa-file-export mr-2"></i>匯出 TXT</button>
-                        <button onclick="requestPassword('確認清空系統紀錄？輸入通用密碼', pwd => clearAdminLogs(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
+                        <button onclick="requestPassword('確認清空系統紀錄？輸入管理員密碼', pwd => clearAdminLogs(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
                     </div>
                 </div>
-                <div id="admin-logs-list" class="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar"></div>
+                <div id="admin-logs-list" class="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
             </div>
         </div>
     </main>
 
-    <div id="view-receipt" class="view-section hidden print-no-shadow">
-        <div class="max-w-4xl mx-auto bg-white p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 my-8 print-no-shadow">
-            <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800">蘇家Su.線上點餐明細總表</h2>
-            <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2">
-                <p class="font-bold text-lg md:text-xl">結單時間：<span id="receipt-time" class="ml-2 text-slate-600"></span></p>
+    <div id="view-receipt" class="view-section hidden print-no-shadow relative">
+        <div class="max-w-4xl mx-auto mb-6 no-print px-4 pt-4">
+            <button onclick="closeReceipt()" class="w-full bg-slate-800 hover:bg-slate-900 text-white px-6 py-4 rounded-2xl font-black shadow-xl transition flex items-center justify-center text-xl active:scale-95 border-2 border-slate-700">
+                <i class="fa-solid fa-arrow-left mr-2"></i>結束瀏覽，返回首頁
+            </button>
+        </div>
+
+        <div class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 print-no-shadow w-full">
+            <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">蘇家Su.線上點餐明細總表</h2>
+            <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2 w-full break-words">
+                <p class="font-bold text-lg md:text-xl break-words">結單時間：<span id="receipt-time" class="ml-2 text-slate-600 whitespace-nowrap"></span></p>
             </div>
-            <div class="overflow-x-auto space-y-8" id="receipt-content"></div>
+            <div class="overflow-x-auto space-y-8 w-full" id="receipt-content"></div>
             
-            <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200">請依照此表單內容進行點餐與收費作業</div>
+            <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200 break-words whitespace-normal">請依照此表單內容進行點餐與收費作業</div>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8">
-                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center text-lg hover:-translate-y-1">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
-                <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1">
+                <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-house mr-2"></i>結束並返回首頁
                 </button>
             </div>
@@ -386,12 +392,12 @@
                 <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center text-3xl shadow-sm"><i class="fa-solid fa-shield-halved"></i></div>
                 管理員登入
             </h3>
-            <div class="space-y-5">
-                <input id="login-user" type="text" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-lg text-center tracking-widest" placeholder="管理者帳號">
-                <input id="login-pwd" type="password" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-lg text-center tracking-widest" placeholder="安全密碼" onkeypress="if(event.key === 'Enter') window.handleLogin()">
+            <div class="space-y-5 w-full">
+                <input id="login-user" type="text" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-lg text-center tracking-widest break-words" placeholder="管理者帳號">
+                <input id="login-pwd" type="password" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-lg text-center tracking-widest break-words" placeholder="安全密碼" onkeypress="if(event.key === 'Enter') window.handleLogin()">
                 <div class="flex gap-3 pt-4">
                     <button onclick="closeModal('login-modal')" class="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-100 rounded-2xl transition border border-transparent hover:border-slate-200">取消</button>
-                    <button onclick="handleLogin()" class="flex-[2] bg-slate-800 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-slate-900 transition text-lg transform hover:-translate-y-1">安全登入</button>
+                    <button onclick="handleLogin()" class="flex-[2] bg-slate-800 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-slate-900 transition text-lg transform hover:-translate-y-1 whitespace-nowrap">安全登入</button>
                 </div>
             </div>
         </div>
@@ -400,55 +406,55 @@
     <div id="pwd-prompt-modal" class="fixed inset-0 bg-black/60 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-md transition-opacity">
         <div class="bg-white w-full max-w-sm rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100 text-center transform scale-100">
             <div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-3xl shadow-inner mx-auto mb-4 border border-red-100"><i class="fa-solid fa-lock"></i></div>
-            <h3 id="pwd-prompt-msg" class="text-lg font-black mb-6 text-slate-800">請輸入密碼以繼續</h3>
+            <h3 id="pwd-prompt-msg" class="text-lg font-black mb-6 text-slate-800 break-words whitespace-pre-wrap">請輸入密碼以繼續</h3>
             <input id="pwd-prompt-input" type="password" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 outline-none focus:border-red-500 focus:bg-white text-center tracking-widest font-black text-2xl mb-6 transition shadow-inner" placeholder="●●●●●●●●" onkeypress="if(event.key === 'Enter') submitPwdPrompt()">
             <div class="flex gap-3">
                 <button onclick="closeModal('pwd-prompt-modal')" class="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition border border-transparent hover:border-slate-200">取消</button>
-                <button onclick="submitPwdPrompt()" class="flex-[2] bg-red-500 text-white py-3 rounded-xl font-black shadow-lg hover:bg-red-600 transition hover:-translate-y-0.5">確認執行</button>
+                <button onclick="submitPwdPrompt()" class="flex-[2] bg-red-500 text-white py-3 rounded-xl font-black shadow-lg hover:bg-red-600 transition hover:-translate-y-0.5 whitespace-nowrap">確認執行</button>
             </div>
         </div>
     </div>
 
     <div id="start-modal" class="fixed inset-0 bg-black/60 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-md no-print transition-opacity">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100">
-            <h3 class="text-2xl font-black mb-5 text-slate-800 flex items-center border-b-2 border-slate-100 pb-3"><i class="fa-solid fa-utensils text-orange-500 mr-3"></i>發起聯合點餐</h3>
+        <div class="bg-white w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-black mb-5 text-slate-800 flex items-center border-b-2 border-slate-100 pb-3 break-words"><i class="fa-solid fa-utensils text-orange-500 mr-3"></i>發起聯合點餐</h3>
             <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
                     <label class="block text-xs font-bold mb-2 text-slate-500">1. 將店家加入本次清單 (最多 5 家)</label>
                     <div class="flex gap-2 mb-2">
-                        <select id="start-store-select" class="w-full bg-white border border-slate-200 p-2.5 rounded-lg outline-none focus:border-orange-500 font-bold text-sm shadow-sm text-slate-700"></select>
+                        <select id="start-store-select" class="w-full bg-white border border-slate-200 p-2.5 rounded-lg outline-none focus:border-orange-500 font-bold text-sm shadow-sm text-slate-700 break-words whitespace-normal"></select>
                         <button onclick="addStoreToActivity(document.getElementById('start-store-select').value)" class="shrink-0 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-black shadow-sm transition"><i class="fa-solid fa-plus"></i></button>
                     </div>
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-slate-400 font-bold">過濾 / 隨機抽取：</span>
-                        <div class="flex gap-2">
-                            <select id="random-cat-select" onchange="updateStartStoreDropdown()" class="bg-white border border-slate-200 p-1 rounded outline-none focus:border-yellow-500 font-bold text-xs shadow-sm text-slate-600"></select>
-                            <button onclick="pickRandomStore()" class="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-slate-800 px-3 py-1 rounded font-black shadow-sm transition text-xs flex items-center"><i class="fa-solid fa-dice mr-1"></i>隨機加入</button>
+                    <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+                        <span class="text-xs text-slate-400 font-bold shrink-0">過濾 / 隨機抽取：</span>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <select id="random-cat-select" onchange="updateStartStoreDropdown()" class="flex-1 bg-white border border-slate-200 p-1.5 rounded outline-none focus:border-yellow-500 font-bold text-xs shadow-sm text-slate-600 break-words whitespace-normal"></select>
+                            <button onclick="pickRandomStore()" class="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-slate-800 px-3 py-1.5 rounded font-black shadow-sm transition text-xs flex items-center whitespace-nowrap"><i class="fa-solid fa-dice mr-1"></i>隨機加入</button>
                         </div>
                     </div>
-                    <div id="selected-stores-list" class="flex flex-wrap gap-2 mt-3 min-h-[40px] p-2 bg-white rounded-lg border border-dashed border-slate-200 items-center">
+                    <div id="selected-stores-list" class="flex flex-wrap gap-2 mt-3 min-h-[40px] p-2 bg-white rounded-lg border border-dashed border-slate-200 items-center w-full">
                         <span class="text-xs text-slate-400 font-bold mx-auto w-full text-center" id="empty-store-hint">尚無選擇任何店家</span>
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold mb-2 text-slate-500">2. 設定倒數時間 (結單限制)</label>
-                    <div class="grid grid-cols-4 gap-2 mb-2">
-                        <button onclick="selectTime(3)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="3">3分</button>
-                        <button onclick="selectTime(5)" class="time-btn bg-orange-500 text-white py-2 rounded-lg font-bold transition text-sm border-2 border-orange-500 shadow-sm transform hover:-translate-y-0.5" data-val="5">5分</button>
-                        <button onclick="selectTime(10)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="10">10分</button>
-                        <button onclick="selectTime(30)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="30">30分</button>
-                        <button onclick="selectTime(60)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="60">60分</button>
-                        <button onclick="selectTime(180)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="180">180分</button>
-                        <button onclick="selectTime(300)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="300">300分</button>
-                        <button onclick="selectTime('custom')" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="custom">自訂</button>
+                    <div class="grid grid-cols-4 gap-2 mb-2 w-full">
+                        <button onclick="selectTime(3)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="3">3分</button>
+                        <button onclick="selectTime(5)" class="time-btn bg-orange-500 text-white py-2 rounded-lg font-bold transition text-sm border-2 border-orange-500 shadow-sm transform hover:-translate-y-0.5 shrink-0" data-val="5">5分</button>
+                        <button onclick="selectTime(10)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="10">10分</button>
+                        <button onclick="selectTime(30)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="30">30分</button>
+                        <button onclick="selectTime(60)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="60">60分</button>
+                        <button onclick="selectTime(180)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="180">180分</button>
+                        <button onclick="selectTime(300)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="300">300分</button>
+                        <button onclick="selectTime('custom')" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="custom">自訂</button>
                     </div>
-                    <div id="custom-time-container" class="hidden mt-2">
-                        <input id="custom-time-input" type="number" min="1" max="1440" class="w-full bg-orange-50 border-2 border-orange-200 p-3 rounded-xl outline-none focus:border-orange-500 font-bold text-sm text-center text-orange-800 shadow-inner" placeholder="輸入自訂分鐘數">
+                    <div id="custom-time-container" class="hidden mt-2 w-full">
+                        <input id="custom-time-input" type="number" min="1" max="1440" class="w-full bg-orange-50 border-2 border-orange-200 p-3 rounded-xl outline-none focus:border-orange-500 font-bold text-sm text-center text-orange-800 shadow-inner break-words" placeholder="輸入自訂分鐘數">
                     </div>
                 </div>
-                <div class="pt-2 flex gap-3">
+                <div class="pt-2 flex gap-3 w-full">
                     <button onclick="closeModal('start-modal')" class="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition border border-transparent hover:border-slate-200">取消</button>
-                    <button onclick="executeStartOrder()" class="flex-[2] bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-xl font-black shadow-lg hover:from-orange-600 hover:to-amber-600 transition text-base transform hover:-translate-y-0.5"><i class="fa-solid fa-rocket mr-2"></i>開始活動</button>
+                    <button onclick="executeStartOrder()" class="flex-[2] bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-xl font-black shadow-lg hover:from-orange-600 hover:to-amber-600 transition text-base transform hover:-translate-y-0.5 whitespace-nowrap"><i class="fa-solid fa-rocket mr-2"></i>開始活動</button>
                 </div>
             </div>
         </div>
@@ -457,16 +463,16 @@
     <div id="order-modal" class="fixed inset-0 bg-black/60 hidden z-[110] flex items-center justify-center p-4 backdrop-blur-md no-print transition-opacity">
         <div class="bg-white w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh] md:max-h-[85vh]">
             <button onclick="closeModal('order-modal')" class="absolute top-4 right-4 bg-black/50 text-white hover:bg-orange-500 p-2 rounded-full transition z-10 w-10 h-10 flex items-center justify-center backdrop-blur-md shadow-lg"><i class="fa-solid fa-times text-lg"></i></button>
-            <div id="modal-image" class="h-48 md:h-64 bg-slate-200 bg-cover bg-center shrink-0 relative">
+            <div id="modal-image" class="h-40 md:h-64 bg-slate-200 bg-cover bg-center shrink-0 relative w-full">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                <div class="absolute bottom-4 left-6 pr-6">
-                    <span id="modal-store-badge" class="bg-white/90 text-slate-800 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest shadow-sm mb-2 inline-block"></span>
-                    <h3 id="modal-title" class="text-3xl font-black text-white leading-tight drop-shadow-md">餐點名稱</h3>
+                <div class="absolute bottom-4 left-4 md:left-6 pr-6 w-full">
+                    <span id="modal-store-badge" class="bg-white/90 text-slate-800 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest shadow-sm mb-2 inline-block break-words max-w-full"></span>
+                    <h3 id="modal-title" class="text-2xl md:text-3xl font-black text-white leading-tight drop-shadow-md break-words whitespace-normal max-w-full pr-4">餐點名稱</h3>
                 </div>
             </div>
-            <div class="p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar bg-slate-50">
-                <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                    <p id="modal-price" class="text-3xl font-black text-orange-500 ml-2">$0</p>
+            <div class="p-5 md:p-8 overflow-y-auto flex-1 custom-scrollbar bg-slate-50 w-full">
+                <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 gap-3">
+                    <p id="modal-price" class="text-2xl md:text-3xl font-black text-orange-500 ml-2 shrink-0">$0</p>
                     <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 shadow-inner shrink-0">
                         <button onclick="adjQty(-1)" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center font-bold text-2xl hover:bg-white hover:shadow rounded-lg transition text-slate-600 active:bg-slate-200">-</button>
                         <input id="modal-qty" type="number" value="1" readonly class="w-12 md:w-14 text-center bg-transparent font-black text-2xl outline-none text-slate-800">
@@ -474,21 +480,21 @@
                     </div>
                 </div>
 
-                <div class="space-y-6 mb-8">
+                <div class="space-y-6 mb-8 w-full">
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                         <label class="block text-sm font-black text-slate-700 mb-3 border-b border-slate-100 pb-2"><i class="fa-solid fa-user-tag text-orange-500 mr-2"></i>點餐人姓名 <span class="text-red-500">*</span></label>
                         <div id="quick-name-tags" class="flex flex-wrap gap-2 mb-3"></div>
-                        <input id="modal-user" type="text" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 focus:border-orange-500 focus:bg-white outline-none transition font-bold text-lg" placeholder="點擊上方按鈕或輸入姓名">
+                        <input id="modal-user" type="text" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 focus:border-orange-500 focus:bg-white outline-none transition font-bold text-lg break-words" placeholder="點擊上方按鈕或輸入姓名">
                     </div>
                     
-                    <div id="dynamic-options-container" class="space-y-4"></div>
+                    <div id="dynamic-options-container" class="space-y-4 w-full"></div>
 
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 w-full">
                         <label class="block text-sm font-black text-slate-700 mb-3 border-b border-slate-100 pb-2"><i class="fa-solid fa-pen text-orange-500 mr-2"></i>客製化文字備註</label>
-                        <input id="modal-note" type="text" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 focus:border-orange-500 focus:bg-white outline-none transition font-bold" placeholder="加辣、飯少、去洋蔥等特殊需求...">
+                        <input id="modal-note" type="text" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 focus:border-orange-500 focus:bg-white outline-none transition font-bold break-words whitespace-normal" placeholder="加辣、飯少、去洋蔥等特殊需求...">
                     </div>
                 </div>
-                <button onclick="confirmAddToCart()" class="w-full bg-slate-800 text-white font-black py-4 md:py-5 rounded-2xl shadow-xl hover:bg-orange-500 transition-all duration-300 text-xl transform hover:-translate-y-1 flex items-center justify-center">
+                <button onclick="confirmAddToCart()" class="w-full bg-slate-800 text-white font-black py-4 md:py-5 rounded-2xl shadow-xl hover:bg-orange-500 transition-all duration-300 text-xl transform hover:-translate-y-1 flex items-center justify-center whitespace-nowrap active:scale-95">
                     <i class="fa-solid fa-cart-plus mr-2"></i>確認加入購物車
                 </button>
             </div>
@@ -497,7 +503,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-        // 匯入 deleteField 用於刪除舊版過大的欄位
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -513,7 +518,7 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
-        // 壓縮與解壓縮演算法模組 (解決 Firebase 1MB 崩潰)
+        // 壓縮與解壓縮演算法模組
         window.compressData = function(data) {
             if (!data) return null;
             return LZString.compressToUTF16(JSON.stringify(data));
@@ -596,7 +601,7 @@
             }
         };
 
-        // 圖片破壞性極限壓縮：限制最大 400x400，並攔截超過容量限制的大圖
+        // 圖片破壞性極限壓縮
         window.compressImage = function(file, event, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -610,7 +615,6 @@
                     else { if (h > maxH) { w *= maxH / h; h = maxH; } }
                     canvas.width = w; canvas.height = h;
                     
-                    // 填滿白色背景以防止 PNG 透明壓縮為 JPEG 時變黑
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, w, h);
                     ctx.drawImage(img, 0, 0, w, h);
@@ -618,7 +622,6 @@
                     let quality = 0.7;
                     const attemptCompress = () => {
                         const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        // 防護：確保 Base64 長度不大於約 130KB (解碼後約 100KB)
                         if (dataUrl.length > 130000 && quality > 0.1) {
                             quality -= 0.2;
                             attemptCompress();
@@ -650,7 +653,6 @@
                     if (snap.exists()) {
                         const newData = snap.data();
                         
-                        // 動態解壓大資料，並相容舊版未壓縮結構
                         newData.orderHistory = window.decompressData(newData.orderHistoryStr, newData.orderHistory || []);
                         newData.adminLogs = window.decompressData(newData.adminLogsStr, newData.adminLogs || []);
                         newData.items = window.decompressData(newData.itemsStr, newData.items || DEFAULT_ITEMS);
@@ -669,7 +671,6 @@
 
                         if (!newData.categories || !Array.isArray(newData.categories) || (newData.categories.length > 0 && typeof newData.categories[0] === 'string')) newData.categories = DEFAULT_CATEGORIES;
                         
-                        // 確保「其他」分類永遠存在
                         if (!newData.categories.some(c => c.id === 'cat_other')) {
                             newData.categories.push({ id: 'cat_other', name: '其他', color: '#F8FAFC' });
                         }
@@ -755,19 +756,16 @@
             try {
                 const safeState = JSON.parse(JSON.stringify(window.state));
                 
-                // 【終極壓縮儲存邏輯】全面壓縮以大幅節省單一文件容量，防止 Firebase 1MB 崩潰
                 safeState.orderHistoryStr = window.compressData(safeState.orderHistory);
                 safeState.adminLogsStr = window.compressData(safeState.adminLogs);
                 safeState.itemsStr = window.compressData(safeState.items);
                 safeState.storesStr = window.compressData(safeState.stores);
                 
-                // 刪除未壓縮的舊欄位騰出空間
                 safeState.orderHistory = deleteField();
                 safeState.adminLogs = deleteField();
                 safeState.items = deleteField();
                 safeState.stores = deleteField();
 
-                // 【安全容量守門員】計算將要寫入的容量大小 (1MB = 1,048,576 bytes)
                 const jsonString = JSON.stringify(safeState);
                 const sizeInBytes = new Blob([jsonString]).size;
                 
@@ -827,12 +825,12 @@
 
         window.formatStoreHoursHTML = function(hoursObj) {
             if (!hoursObj || Object.keys(hoursObj).length === 0) return '';
-            let html = '<div class="flex items-start gap-2"><i class="fa-regular fa-clock text-orange-500 mt-1"></i><div class="flex flex-col text-sm text-slate-600 gap-1">';
+            let html = '<div class="flex items-start gap-2 w-full"><i class="fa-regular fa-clock text-orange-500 mt-1 shrink-0"></i><div class="flex flex-col text-sm text-slate-600 gap-1 w-full break-words">';
             let hasHours = false;
             WEEKDAYS.forEach((day, idx) => {
                 if (hoursObj[idx] && hoursObj[idx].length > 0) {
                     hasHours = true;
-                    html += `<div><span class="font-bold text-slate-700 bg-white px-2 py-0.5 rounded shadow-sm mr-2 border border-slate-200">星期${day}</span> ${hoursObj[idx].join(' , ')}</div>`;
+                    html += `<div class="break-words whitespace-normal"><span class="font-bold text-slate-700 bg-white px-2 py-0.5 rounded shadow-sm mr-2 border border-slate-200 shrink-0">星期${day}</span> ${hoursObj[idx].join(' , ')}</div>`;
                 }
             });
             html += '</div></div>';
@@ -840,9 +838,9 @@
         };
 
         window.renderHome = function() {
-            let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-transparent">全部店家</button>`;
+            let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-transparent shrink-0">全部店家</button>`;
             window.state.categories.forEach(c => {
-                tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5">${c.name}</button>`;
+                tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${c.name}</button>`;
             });
             document.getElementById('category-tabs').innerHTML = tabsHtml;
             window.filterStore('all');
@@ -851,9 +849,9 @@
         window.filterStore = function(catId) {
             document.querySelectorAll('.cat-tab').forEach(btn => {
                 if (btn.dataset.id === catId) {
-                    btn.className = 'cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105';
+                    btn.className = 'cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0';
                 } else {
-                    btn.className = 'cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-500 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition shadow-sm hover:-translate-y-0.5';
+                    btn.className = 'cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-500 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition shadow-sm hover:-translate-y-0.5 shrink-0';
                 }
             });
 
@@ -878,11 +876,11 @@
                     <div class="category-card bg-white rounded-[2rem] overflow-hidden border-2 border-slate-100 flex flex-col cursor-pointer relative group" onclick="openStoreBrowse('${storeName}')">
                         <div class="h-48 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style="background-image: url('${coverImg}')"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                        <div class="absolute top-4 left-4">
-                            <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm">${cat ? cat.name : '綜合'}</span>
+                        <div class="absolute top-4 left-4 max-w-[calc(100%-2rem)]">
+                            <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm break-words whitespace-normal block">${cat ? cat.name : '綜合'}</span>
                         </div>
                         <div class="absolute bottom-0 left-0 w-full p-6">
-                            <h3 class="text-2xl font-black text-white mb-1 drop-shadow-md group-hover:text-orange-300 transition-colors">${storeName}</h3>
+                            <h3 class="text-2xl font-black text-white mb-1 drop-shadow-md group-hover:text-orange-300 transition-colors break-words">${storeName}</h3>
                             <p class="text-sm text-slate-200 font-bold drop-shadow-md flex justify-between items-center w-full">
                                 <span><i class="fa-solid fa-utensils mr-2"></i>共 ${storeItems.length} 項</span>
                                 <i class="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all text-orange-400"></i>
@@ -899,8 +897,8 @@
             
             const storeInfo = window.state.stores.find(s => s.name === storeName) || {};
             const infoHtml = `
-                ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-sm transition text-slate-700"><i class="fa-solid fa-phone text-orange-500 mr-2"></i>${storeInfo.phone}</a>` : ''}
-                ${storeInfo.address ? `<span class="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-sm"><i class="fa-solid fa-map-location-dot text-orange-500 mr-2"></i>${storeInfo.address}</span>` : ''}
+                ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-sm transition text-slate-700 break-all"><i class="fa-solid fa-phone text-orange-500 mr-2"></i>${storeInfo.phone}</a>` : ''}
+                ${storeInfo.address ? `<span class="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-sm break-words whitespace-normal"><i class="fa-solid fa-map-location-dot text-orange-500 mr-2"></i>${storeInfo.address}</span>` : ''}
             `;
             document.getElementById('browse-store-info').innerHTML = infoHtml;
 
@@ -945,7 +943,7 @@
             let html = '';
             sortedKeys.forEach(subCat => {
                 const subItems = grouped[subCat];
-                html += `<div class="mb-10 bg-slate-50/70 p-6 md:p-8 rounded-[2rem] border border-slate-100"><h3 class="text-2xl font-black text-slate-800 mb-6 flex items-center"><span class="w-3 h-8 bg-orange-500 rounded-full mr-3 shadow-md"></span>${subCat}</h3><div class="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6">`;
+                html += `<div class="mb-10 bg-slate-50/70 p-6 md:p-8 rounded-[2rem] border border-slate-100"><h3 class="text-2xl font-black text-slate-800 mb-6 flex items-center break-words"><span class="w-3 h-8 bg-orange-500 rounded-full mr-3 shadow-md shrink-0"></span>${subCat}</h3><div class="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6">`;
                 subItems.forEach((item, index) => {
                     const action = isActiveMode ? `onclick="openOrderModal('${item.id}')"` : `onclick="alert('請發起活動才能點餐喔！')"` ;
                     const pointer = isActiveMode ? 'cursor-pointer hover:bg-orange-50 hover:shadow-xl hover:-translate-y-1.5 ring-4 ring-transparent hover:ring-orange-300' : 'cursor-default opacity-85 border-slate-100 hover:opacity-100 hover:border-slate-300';
@@ -959,9 +957,9 @@
                                 ${isActiveMode ? `<div class="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 transition rounded-2xl"></div>` : ''}
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h4 class="font-black text-lg md:text-xl text-slate-800 group-hover:text-orange-700 transition-colors truncate">${item.name}</h4>
+                                <h4 class="font-black text-lg md:text-xl text-slate-800 group-hover:text-orange-700 transition-colors break-words">${item.name}</h4>
                                 <p class="text-orange-600 font-black text-xl md:text-2xl mt-1">$${item.price}</p>
-                                ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<p class="text-[10px] md:text-xs text-blue-500 font-bold mt-1.5 bg-blue-50 inline-block px-2 py-0.5 rounded border border-blue-100"><i class="fa-solid fa-list-ul mr-1"></i>含客製選項</p>` : ''}
+                                ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<p class="text-[10px] md:text-xs text-blue-500 font-bold mt-1.5 bg-blue-50 inline-block px-2 py-0.5 rounded border border-blue-100 whitespace-nowrap"><i class="fa-solid fa-list-ul mr-1"></i>含客製選項</p>` : ''}
                             </div>
                             ${isActiveMode ? `<div class="w-12 h-12 bg-slate-100 text-slate-400 group-hover:bg-orange-500 group-hover:text-white rounded-2xl flex items-center justify-center font-bold shadow-sm text-xl transition-all transform group-hover:rotate-90 shrink-0"><i class="fa-solid fa-plus"></i></div>` : ''}
                         </div>`;
@@ -1007,13 +1005,13 @@
         window.renderSelectedActivityStores = function() {
             const container = document.getElementById('selected-stores-list');
             if (window.selectedActivityStores.length === 0) {
-                container.innerHTML = '<span class="text-xs text-slate-400 font-bold mx-auto w-full text-center" id="empty-store-hint">尚無選擇任何店家</span>';
+                container.innerHTML = '<span class="text-xs text-slate-400 font-bold mx-auto w-full text-center break-words" id="empty-store-hint">尚無選擇任何店家</span>';
                 return;
             }
             container.innerHTML = window.selectedActivityStores.map(s => `
-                <div class="flex items-center bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg border border-orange-200 shadow-sm font-bold text-sm transform transition animate-[fadeIn_0.3s]">
-                    ${s}
-                    <i class="fa-solid fa-circle-xmark ml-2 text-orange-400 hover:text-red-500 cursor-pointer transition" onclick="removeActivityStore('${s}')"></i>
+                <div class="flex items-center bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg border border-orange-200 shadow-sm font-bold text-sm transform transition animate-[fadeIn_0.3s] break-words whitespace-normal max-w-full">
+                    <span class="break-words">${s}</span>
+                    <i class="fa-solid fa-circle-xmark ml-2 text-orange-400 hover:text-red-500 cursor-pointer transition shrink-0" onclick="removeActivityStore('${s}')"></i>
                 </div>
             `).join('');
         };
@@ -1131,22 +1129,22 @@
             stores.forEach((storeName, idx) => {
                 const storeInfo = window.state.stores.find(s => s.name === storeName) || {};
                 infoHtml += `
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-3 w-full max-w-2xl transform transition hover:scale-[1.01]">
-                        <span class="bg-slate-800 text-white font-black px-3 py-1 rounded-lg text-sm shrink-0">店家 ${idx+1}</span>
-                        <span class="text-xl font-black text-slate-800 shrink-0">${storeName}</span>
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-3 w-full max-w-2xl transform transition hover:scale-[1.01]">
+                        <span class="bg-slate-800 text-white font-black px-3 py-1 rounded-lg text-sm shrink-0 whitespace-nowrap">店家 ${idx+1}</span>
+                        <span class="text-xl font-black text-slate-800 shrink-0 break-words w-full sm:w-auto text-center sm:text-left">${storeName}</span>
                         <div class="flex flex-wrap justify-center md:justify-start gap-2 text-xs w-full">
-                            ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-slate-50 hover:bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 transition text-slate-700"><i class="fa-solid fa-phone text-orange-500 mr-1"></i>${storeInfo.phone}</a>` : ''}
-                            ${storeInfo.address ? `<span class="bg-slate-50 px-2 py-1 rounded-lg border border-slate-200"><i class="fa-solid fa-map-location-dot text-orange-500 mr-1"></i>${storeInfo.address}</span>` : ''}
+                            ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-slate-50 hover:bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 transition text-slate-700 break-all"><i class="fa-solid fa-phone text-orange-500 mr-1"></i>${storeInfo.phone}</a>` : ''}
+                            ${storeInfo.address ? `<span class="bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 break-words whitespace-normal"><i class="fa-solid fa-map-location-dot text-orange-500 mr-1"></i>${storeInfo.address}</span>` : ''}
                         </div>
                     </div>
                 `;
 
                 menuHtml += `
                     <div class="mb-12">
-                        <div class="bg-slate-800 text-white p-5 rounded-t-[2rem] flex items-center justify-between border-b-4 border-orange-500">
-                            <h2 class="text-2xl font-black"><i class="fa-solid fa-store mr-3 text-orange-400"></i>${storeName}</h2>
+                        <div class="bg-slate-800 text-white p-5 rounded-t-[2rem] flex items-center justify-between border-b-4 border-orange-500 w-full">
+                            <h2 class="text-xl sm:text-2xl font-black break-words"><i class="fa-solid fa-store mr-3 text-orange-400"></i>${storeName}</h2>
                         </div>
-                        <div class="bg-white p-2 md:p-6 rounded-b-[2rem] border border-t-0 border-slate-100 shadow-sm">
+                        <div class="bg-white p-3 md:p-6 rounded-b-[2rem] border border-t-0 border-slate-100 shadow-sm w-full">
                             ${window.generateMenuHtml(storeName, true)}
                         </div>
                     </div>
@@ -1168,7 +1166,7 @@
             document.getElementById('modal-user').value = ''; 
             document.getElementById('modal-note').value = '';
             
-            document.getElementById('quick-name-tags').innerHTML = window.state.quickNames.map(n => `<button type="button" onclick="document.getElementById('modal-user').value='${n}'" class="bg-orange-50 hover:bg-orange-500 hover:text-white text-orange-700 px-4 py-2 rounded-xl font-black text-sm transition border border-orange-200 shadow-sm active:scale-95">${n}</button>`).join('');
+            document.getElementById('quick-name-tags').innerHTML = window.state.quickNames.map(n => `<button type="button" onclick="document.getElementById('modal-user').value='${n}'" class="bg-orange-50 hover:bg-orange-500 hover:text-white text-orange-700 px-4 py-2 rounded-xl font-black text-sm transition border border-orange-200 shadow-sm active:scale-95 whitespace-nowrap">${n}</button>`).join('');
             
             let optionsHtml = '';
             const appliedOptions = (window.activeItemForModal.customOptionIds || []).map(optId => window.state.globalOptions.find(g => g.id === optId)).filter(g => g);
@@ -1176,9 +1174,9 @@
             if (appliedOptions.length > 0) {
                 appliedOptions.forEach((opt, idx) => {
                     optionsHtml += `
-                        <div class="bg-orange-50/50 p-5 rounded-2xl border border-orange-100 shadow-inner">
-                            <label class="block text-sm font-black text-orange-800 mb-3"><i class="fa-solid fa-caret-right text-orange-500 mr-2"></i>${opt.name}</label>
-                            <select class="modal-dynamic-opt w-full bg-white border-2 border-orange-200 rounded-xl p-4 outline-none focus:border-orange-500 transition font-bold text-lg text-slate-800 shadow-sm appearance-none cursor-pointer">
+                        <div class="bg-orange-50/50 p-5 rounded-2xl border border-orange-100 shadow-inner w-full">
+                            <label class="block text-sm font-black text-orange-800 mb-3 break-words"><i class="fa-solid fa-caret-right text-orange-500 mr-2"></i>${opt.name}</label>
+                            <select class="modal-dynamic-opt w-full bg-white border-2 border-orange-200 rounded-xl p-4 outline-none focus:border-orange-500 transition font-bold text-lg text-slate-800 shadow-sm appearance-none cursor-pointer break-words whitespace-normal">
                                 ${opt.choices.map(c => `<option value="${c}">${c}</option>`).join('')}
                             </select>
                         </div>`;
@@ -1241,15 +1239,18 @@
                 total += c.price * c.qty; count += c.qty;
                 html += `
                     <div class="bg-white p-4 rounded-2xl border border-slate-200 mb-3 relative shadow-sm hover:shadow-md group hover:border-orange-300 transition-all transform hover:-translate-y-1">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-sm font-black text-white bg-slate-800 px-3 py-1 rounded-lg">${c.userName}</span>
-                            <span class="font-black text-slate-800 text-lg">$${c.price * c.qty}</span>
+                        <div class="flex justify-between items-start mb-2 gap-2 pr-8">
+                            <span class="text-sm font-black text-white bg-slate-800 px-3 py-1 rounded-lg break-words whitespace-normal max-w-full">${c.userName}</span>
+                            <span class="font-black text-slate-800 text-lg shrink-0">$${c.price * c.qty}</span>
                         </div>
-                        <div class="text-[10px] text-orange-600 font-bold mb-1"><i class="fa-solid fa-store mr-1"></i>${c.storeName || '店家'}</div>
-                        <p class="font-bold text-slate-700 text-lg">${c.itemName} <span class="text-sm font-black text-slate-400 ml-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 shadow-sm">x${c.qty}</span></p>
-                        ${c.note ? `<p class="text-sm text-blue-600 mt-2 bg-blue-50 p-2 rounded-lg font-bold border border-blue-100"><i class="fa-solid fa-pen mr-1"></i>${c.note}</p>` : ''}
+                        <div class="text-[10px] text-orange-600 font-bold mb-1 break-words pr-8"><i class="fa-solid fa-store mr-1"></i>${c.storeName || '店家'}</div>
+                        <p class="font-bold text-slate-700 text-lg flex flex-wrap items-center gap-2 pr-8 leading-tight">
+                            <span class="break-words">${c.itemName}</span> 
+                            <span class="text-sm font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 shadow-sm shrink-0">x${c.qty}</span>
+                        </p>
+                        ${c.note ? `<p class="text-sm text-blue-600 mt-2 bg-blue-50 p-2.5 rounded-xl font-bold border border-blue-100 break-words whitespace-pre-wrap leading-snug"><i class="fa-solid fa-pen mr-1"></i>${c.note}</p>` : ''}
                         
-                        <button onclick="removeCartItem('${c.id}')" class="absolute top-2 right-12 text-slate-300 hover:text-red-500 bg-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm border border-slate-100"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                        <button onclick="removeCartItem('${c.id}')" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 bg-white rounded-full w-8 h-8 flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 transition shadow-sm border border-slate-100 shrink-0"><i class="fa-solid fa-trash-can text-sm"></i></button>
                     </div>`;
             });
             document.getElementById('active-cart-list').innerHTML = html || '<div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50"><p class="text-slate-400 font-bold"><i class="fa-solid fa-basket-shopping text-3xl mb-3 opacity-50 block"></i>目前購物車空空如也</p></div>';
@@ -1286,7 +1287,6 @@
                     
                     if (!dbState.session || !dbState.session.isActive) return; 
                     
-                    // 解壓縮取出完整記錄，以進行寫入操作
                     let history = window.decompressData(dbState.orderHistoryStr, dbState.orderHistory || []);
                     if (!Array.isArray(history)) history = [];
                     
@@ -1313,12 +1313,10 @@
                         cart: safeCart 
                     });
                     
-                    // 提升紀錄上限至 1000 筆
                     if (history.length > 1000) history.pop();
                     
                     dbState.session.isActive = false;
 
-                    // 使用 LZString 壓縮後覆寫，並將未壓縮的欄位清除確保體積
                     transaction.update(dbRef, { 
                         session: dbState.session, 
                         orderHistoryStr: window.compressData(history),
@@ -1341,7 +1339,7 @@
             document.getElementById('receipt-time').innerText = `${latestOrder.date} ${latestOrder.time}`;
             
             if (latestOrder.cart.length === 0) {
-                document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
+                document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
                 setTimeout(() => alert("活動結束！本次活動無人點餐。"), 500);
             } else {
                 const cartByStore = latestOrder.cart.reduce((acc, c) => {
@@ -1363,44 +1361,46 @@
                         const sub = c.price * c.qty;
                         tbody += `
                             <tr class="border-b border-slate-200 hover:bg-slate-50 transition">
-                                <td class="py-4 px-2 md:px-4 font-black text-slate-800 whitespace-nowrap"><span class="bg-slate-100 border border-slate-200 px-2 py-1 rounded shadow-sm">${c.userName}</span></td>
-                                <td class="py-4 px-2 md:px-4 font-bold text-slate-800">${c.itemName}</td>
-                                <td class="py-4 px-2 md:px-4 font-black text-center text-slate-800">${c.qty}</td>
-                                <td class="py-4 px-2 md:px-4 text-blue-600 text-sm font-bold">${c.note ? `[${c.note}]` : ''}</td>
-                                <td class="py-4 px-2 md:px-4 font-black text-right text-slate-800">$${sub}</td>
+                                <td class="py-4 px-2 md:px-4 font-black text-slate-800 break-words whitespace-normal min-w-[80px]"><span class="bg-slate-100 border border-slate-200 px-2 py-1 rounded shadow-sm inline-block break-words max-w-full">${c.userName}</span></td>
+                                <td class="py-4 px-2 md:px-4 font-bold text-slate-800 break-words whitespace-normal min-w-[120px]">${c.itemName}</td>
+                                <td class="py-4 px-2 md:px-4 font-black text-center text-slate-800 shrink-0">${c.qty}</td>
+                                <td class="py-4 px-2 md:px-4 text-blue-600 text-sm font-bold break-words whitespace-pre-wrap min-w-[150px] max-w-[250px] md:max-w-none">${c.note ? `[${c.note}]` : ''}</td>
+                                <td class="py-4 px-2 md:px-4 font-black text-right text-slate-800 shrink-0">$${sub}</td>
                             </tr>
                         `;
                     });
 
                     tablesHtml += `
-                        <div class="mb-8 border-2 border-slate-800 rounded-2xl overflow-hidden print-no-shadow">
-                            <div class="bg-slate-800 text-white p-4 font-black text-xl flex justify-between items-center">
-                                <span><i class="fa-solid fa-store mr-2 text-orange-400"></i>${storeName}</span>
-                                <span class="bg-white/20 px-3 py-1 rounded-lg text-sm">小計: $${storeData.total}</span>
+                        <div class="mb-8 border-2 border-slate-800 rounded-2xl overflow-hidden print-no-shadow w-full">
+                            <div class="bg-slate-800 text-white p-4 font-black text-lg md:text-xl flex flex-wrap justify-between items-center gap-2">
+                                <span class="break-words"><i class="fa-solid fa-store mr-2 text-orange-400"></i>${storeName}</span>
+                                <span class="bg-white/20 px-3 py-1 rounded-lg text-sm shrink-0">小計: $${storeData.total}</span>
                             </div>
-                            <table class="w-full text-left border-collapse min-w-[500px] bg-white">
-                                <thead>
-                                    <tr class="bg-slate-100 text-slate-600 text-sm md:text-base border-b-2 border-slate-300">
-                                        <th class="py-3 px-2 md:px-4 font-black w-1/5">點餐人</th>
-                                        <th class="py-3 px-2 md:px-4 font-black w-1/3">餐點名稱</th>
-                                        <th class="py-3 px-2 md:px-4 font-black text-center w-1/12">數量</th>
-                                        <th class="py-3 px-2 md:px-4 font-black">備註</th>
-                                        <th class="py-3 px-2 md:px-4 font-black text-right w-1/6">小計</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-base md:text-lg">
-                                    ${tbody}
-                                </tbody>
-                            </table>
+                            <div class="overflow-x-auto w-full custom-scrollbar">
+                                <table class="w-full text-left border-collapse min-w-[500px] md:min-w-full bg-white table-auto">
+                                    <thead>
+                                        <tr class="bg-slate-100 text-slate-600 text-sm md:text-base border-b-2 border-slate-300">
+                                            <th class="py-3 px-2 md:px-4 font-black w-[15%] md:w-1/5 whitespace-nowrap">點餐人</th>
+                                            <th class="py-3 px-2 md:px-4 font-black w-[35%] md:w-1/3 whitespace-nowrap">餐點名稱</th>
+                                            <th class="py-3 px-2 md:px-4 font-black text-center w-[10%] whitespace-nowrap">數量</th>
+                                            <th class="py-3 px-2 md:px-4 font-black w-[25%] md:w-auto whitespace-nowrap">備註</th>
+                                            <th class="py-3 px-2 md:px-4 font-black text-right w-[15%] whitespace-nowrap">小計</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-sm md:text-lg">
+                                        ${tbody}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     `;
                 }
 
                 document.getElementById('receipt-content').innerHTML = `
                     ${tablesHtml}
-                    <div class="bg-orange-50 border-4 border-orange-200 rounded-2xl p-6 flex justify-between items-center mt-4">
-                        <span class="font-black text-2xl md:text-3xl text-slate-800">全部店家總結算：</span>
-                        <span class="font-black text-4xl md:text-5xl text-red-600 drop-shadow-sm">$${grandTotal}</span>
+                    <div class="bg-orange-50 border-4 border-orange-200 rounded-2xl p-6 flex flex-wrap justify-between items-center mt-4 gap-4">
+                        <span class="font-black text-2xl md:text-3xl text-slate-800 shrink-0">全部店家總結算：</span>
+                        <span class="font-black text-4xl md:text-5xl text-red-600 drop-shadow-sm shrink-0">$${grandTotal}</span>
                     </div>
                 `;
                 setTimeout(() => alert("活動順利結束！已產生結單明細。"), 500);
@@ -1465,7 +1465,6 @@
                 action: action,
                 detail: detail
             });
-            // 提升系統操作紀錄至 1000 筆
             if (window.state.adminLogs.length > 1000) window.state.adminLogs.pop();
         };
 
@@ -1484,12 +1483,12 @@
                 if (log.action === '匯入') actionColor = "bg-purple-100 text-purple-700";
 
                 html += `
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-3 hover:bg-slate-50 hover:shadow-sm transition">
-                        <div class="flex items-center gap-3">
-                            <span class="${actionColor} px-3 py-1 rounded-lg text-sm font-black shadow-sm whitespace-nowrap">${log.action}</span>
-                            <span class="font-bold text-slate-700">${log.detail}</span>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between md:items-start gap-3 hover:bg-slate-50 hover:shadow-sm transition">
+                        <div class="flex items-start gap-3 w-full">
+                            <span class="${actionColor} px-3 py-1 rounded-lg text-sm font-black shadow-sm whitespace-nowrap shrink-0">${log.action}</span>
+                            <span class="font-bold text-slate-700 break-words whitespace-normal flex-1 leading-snug">${log.detail}</span>
                         </div>
-                        <span class="font-bold text-slate-400 text-sm whitespace-nowrap"><i class="fa-regular fa-clock mr-1"></i>${log.date} ${log.time}</span>
+                        <span class="font-bold text-slate-400 text-sm whitespace-nowrap shrink-0 md:mt-1"><i class="fa-regular fa-clock mr-1"></i>${log.date} ${log.time}</span>
                     </div>`;
             });
             document.getElementById('admin-logs-list').innerHTML = html;
@@ -1520,44 +1519,41 @@
         window.renderAdminSettings = function() {
             document.getElementById('admin-quick-names').value = window.state.quickNames.join(',');
             
-            // 渲染系統大分類 (可刪除)
             document.getElementById('setting-syscat-list').innerHTML = window.state.categories.map((c) => `
-                <div class="flex items-center justify-between bg-orange-50 text-orange-800 px-4 py-3 rounded-lg font-bold border border-orange-100 shadow-sm transition group">
-                    <div class="flex items-center gap-3">
-                        <span class="w-3 h-3 rounded-full" style="background-color: ${c.color}"></span>
-                        <span>${c.name}</span>
+                <div class="flex items-center justify-between bg-orange-50 text-orange-800 px-4 py-3 rounded-lg font-bold border border-orange-100 shadow-sm transition group w-full">
+                    <div class="flex items-center gap-3 pr-2 w-full">
+                        <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${c.color}"></span>
+                        <span class="break-words whitespace-normal leading-snug">${c.name}</span>
                     </div>
-                    ${c.id !== 'cat_other' ? `<i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition" onclick="deleteSysCat('${c.id}')"></i>` : '<span class="text-xs text-slate-400 bg-white px-2 py-0.5 rounded shadow-sm">保留</span>'}
+                    ${c.id !== 'cat_other' ? `<i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition shrink-0" onclick="deleteSysCat('${c.id}')"></i>` : '<span class="text-xs text-slate-400 bg-white px-2 py-0.5 rounded shadow-sm shrink-0">保留</span>'}
                 </div>
             `).join('');
 
-            // 加上 HTML5 拖曳功能子分類
             document.getElementById('setting-subcat-list').innerHTML = window.state.subCategories.map((s, idx) => `
-                <div class="flex items-center justify-between bg-emerald-50 text-emerald-700 px-4 py-3 rounded-lg font-bold border border-emerald-100 shadow-sm cursor-move hover:bg-emerald-100 hover:shadow-md transition group" draggable="true" ondragstart="handleDragStart(event, ${idx})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${idx})">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-grip-lines text-emerald-300 group-hover:text-emerald-500 transition"></i>
-                        <span>${s}</span>
+                <div class="flex items-center justify-between bg-emerald-50 text-emerald-700 px-4 py-3 rounded-lg font-bold border border-emerald-100 shadow-sm cursor-move hover:bg-emerald-100 hover:shadow-md transition group w-full" draggable="true" ondragstart="handleDragStart(event, ${idx})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${idx})">
+                    <div class="flex items-center gap-3 pr-2 w-full">
+                        <i class="fa-solid fa-grip-lines text-emerald-300 group-hover:text-emerald-500 transition shrink-0"></i>
+                        <span class="break-words whitespace-normal leading-snug">${s}</span>
                     </div>
-                    <i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition" onclick="deleteSubcat(${idx})"></i>
+                    <i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition shrink-0" onclick="deleteSubcat(${idx})"></i>
                 </div>
             `).join('');
 
             if (window.state.globalOptions.length === 0) {
-                document.getElementById('setting-global-opt-list').innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 font-bold bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">目前無任何自訂客製化選項。</div>';
+                document.getElementById('setting-global-opt-list').innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 font-bold bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 break-words whitespace-normal px-4">目前無任何自訂客製化選項。</div>';
             } else {
                 document.getElementById('setting-global-opt-list').innerHTML = window.state.globalOptions.map(opt => `
-                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group hover:border-blue-300 transition hover:shadow-md transform hover:-translate-y-0.5">
-                        <h4 class="font-black text-slate-800 text-lg mb-2 flex items-center"><i class="fa-solid fa-caret-right text-blue-500 mr-2"></i>${opt.name}</h4>
-                        <div class="flex flex-wrap gap-2">
-                            ${opt.choices.map(c => `<span class="text-xs font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 shadow-sm">${c}</span>`).join('')}
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group hover:border-blue-300 transition hover:shadow-md transform hover:-translate-y-0.5 w-full">
+                        <h4 class="font-black text-slate-800 text-lg mb-2 flex items-center pr-6 break-words"><i class="fa-solid fa-caret-right text-blue-500 mr-2 shrink-0"></i>${opt.name}</h4>
+                        <div class="flex flex-wrap gap-2 w-full">
+                            ${opt.choices.map(c => `<span class="text-xs font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 shadow-sm break-words whitespace-normal max-w-full leading-tight">${c}</span>`).join('')}
                         </div>
-                        <button onclick="requestPassword('輸入通用密碼確認刪除選項模組', pwd => { if(pwd==='suting') deleteGlobalOption('${opt.id}'); else alert('密碼錯誤') })" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100 bg-white rounded-full p-1 shadow-sm border border-slate-100"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="requestPassword('輸入通用密碼確認刪除選項模組', pwd => { if(pwd==='suting') deleteGlobalOption('${opt.id}'); else alert('密碼錯誤') })" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition opacity-100 md:opacity-0 md:group-hover:opacity-100 bg-white rounded-full p-1 shadow-sm border border-slate-100 shrink-0"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `).join('');
             }
         };
 
-        // 系統大分類相關方法
         window.addSysCat = function() {
             const name = document.getElementById('setting-new-cat').value.trim();
             if(!name) return alert('請輸入大分類名稱');
@@ -1590,7 +1586,6 @@
             });
         };
 
-        // 拖曳排序實作邏輯
         let draggedSubcatIndex = null;
         window.handleDragStart = function(e, idx) {
             draggedSubcatIndex = idx;
@@ -1683,18 +1678,18 @@
             const container = document.getElementById(containerId);
             if(!container) return;
             if(window.state.globalOptions.length === 0) {
-                 container.innerHTML = '<div class="col-span-full py-4 text-sm text-orange-600/80 font-bold border-2 border-dashed border-orange-200 rounded-xl text-center bg-orange-50/50">目前無全域客製化選項。<br>請至上方點擊「管理全域選項」建立。</div>';
+                 container.innerHTML = '<div class="col-span-full py-4 text-sm text-orange-600/80 font-bold border-2 border-dashed border-orange-200 rounded-xl text-center bg-orange-50/50 break-words whitespace-normal px-2">目前無全域客製化選項。<br>請至上方點擊「管理全域選項」建立。</div>';
                  return;
             }
             
             const checkboxClass = isInline ? `inline-opt-cb-${itemId}` : 'new-item-opt-cb';
 
             container.innerHTML = window.state.globalOptions.map(opt => `
-                <label class="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-xl border border-orange-100 hover:border-orange-400 hover:shadow-sm transition transform hover:-translate-y-0.5">
-                    <input type="checkbox" value="${opt.id}" class="${checkboxClass} w-5 h-5 text-orange-500 rounded border-slate-300 focus:ring-orange-500" ${checkedIds.includes(opt.id) ? 'checked' : ''}>
-                    <div class="flex flex-col min-w-0">
-                        <span class="text-sm font-black text-slate-800 truncate">${opt.name}</span>
-                        <span class="text-[10px] font-bold text-slate-400 truncate w-full" title="${opt.choices.join(', ')}">${opt.choices.join(', ')}</span>
+                <label class="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-xl border border-orange-100 hover:border-orange-400 hover:shadow-sm transition transform hover:-translate-y-0.5 w-full">
+                    <input type="checkbox" value="${opt.id}" class="${checkboxClass} w-5 h-5 text-orange-500 rounded border-slate-300 focus:ring-orange-500 shrink-0" ${checkedIds.includes(opt.id) ? 'checked' : ''}>
+                    <div class="flex flex-col min-w-0 flex-1">
+                        <span class="text-sm font-black text-slate-800 break-words whitespace-normal leading-tight">${opt.name}</span>
+                        <span class="text-[10px] font-bold text-slate-400 break-words whitespace-normal w-full mt-0.5 leading-snug">${opt.choices.join(', ')}</span>
                     </div>
                 </label>
             `).join('');
@@ -1725,14 +1720,14 @@
                 const display = checked ? 'flex' : 'none';
                 const t1 = dayData[0] || ''; const t2 = dayData[1] || ''; const t3 = dayData[2] || '';
                 html += `
-                <div class="flex flex-col gap-2 border-b border-slate-100 pb-3 mb-2 last:border-0 last:pb-0 last:mb-0 hover:bg-slate-50 p-2 rounded-lg transition">
-                    <label class="flex items-center gap-2 cursor-pointer font-black text-sm text-slate-700">
-                        <input type="checkbox" class="store-day-cb-${prefix} w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500" value="${idx}" onchange="toggleDayInput('${prefix}', ${idx})" ${checked}> 星期${d}
+                <div class="flex flex-col gap-2 border-b border-slate-100 pb-3 mb-2 last:border-0 last:pb-0 last:mb-0 hover:bg-slate-50 p-2 rounded-lg transition w-full">
+                    <label class="flex items-center gap-2 cursor-pointer font-black text-sm text-slate-700 w-full">
+                        <input type="checkbox" class="store-day-cb-${prefix} w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500 shrink-0" value="${idx}" onchange="toggleDayInput('${prefix}', ${idx})" ${checked}> 星期${d}
                     </label>
-                    <div id="day-slots-${prefix}-${idx}" class="gap-2 pl-6 flex-wrap" style="display: ${display}">
-                        <input type="text" id="slot-${prefix}-${idx}-0" value="${t1}" placeholder="例: 09:00-12:00" class="w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
-                        <input type="text" id="slot-${prefix}-${idx}-1" value="${t2}" placeholder="例: 13:00-17:00" class="w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
-                        <input type="text" id="slot-${prefix}-${idx}-2" value="${t3}" placeholder="例: 18:00-21:00" class="w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
+                    <div id="day-slots-${prefix}-${idx}" class="gap-2 pl-6 flex-col sm:flex-row flex-wrap w-full" style="display: ${display}">
+                        <input type="text" id="slot-${prefix}-${idx}-0" value="${t1}" placeholder="例: 09:00-12:00" class="w-full sm:w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
+                        <input type="text" id="slot-${prefix}-${idx}-1" value="${t2}" placeholder="例: 13:00-17:00" class="w-full sm:w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
+                        <input type="text" id="slot-${prefix}-${idx}-2" value="${t3}" placeholder="例: 18:00-21:00" class="w-full sm:w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
                     </div>
                 </div>`;
             });
@@ -1859,7 +1854,6 @@
             window.renderAdmin();
         };
 
-        // 一鍵完整刪除店家與旗下所有菜單
         window.deleteEntireStore = async function(storeName) {
             const itemsCount = window.state.items.filter(i => i.store === storeName).length;
             window.state.stores = window.state.stores.filter(s => s.name !== storeName);
@@ -1909,13 +1903,13 @@
                 
                 if (window.editingStoreName === store) {
                     html += `
-                        <div class="border border-orange-300 rounded-[2rem] overflow-hidden shadow-md mb-8 bg-white ring-4 ring-orange-100">
-                            <div class="store-header p-5 md:p-6 bg-orange-50 border-b border-orange-200 shadow-inner">
-                                <h4 class="font-black text-orange-600 flex items-center mb-4 text-lg border-b border-orange-200/50 pb-2"><i class="fa-solid fa-pen-to-square mr-2"></i>編輯店家綜合資訊</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border border-orange-300 rounded-[2rem] overflow-hidden shadow-md mb-8 bg-white ring-4 ring-orange-100 w-full">
+                            <div class="store-header p-4 md:p-6 bg-orange-50 border-b border-orange-200 shadow-inner w-full">
+                                <h4 class="font-black text-orange-600 flex items-center mb-4 text-lg border-b border-orange-200/50 pb-2 break-words"><i class="fa-solid fa-pen-to-square mr-2 shrink-0"></i>編輯店家綜合資訊</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                                     <div>
                                         <label class="block text-xs font-bold text-slate-500 mb-1">店家名稱 <span class="text-red-500">*</span></label>
-                                        <input type="text" id="edit-store-name-${store}" value="${store}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
+                                        <input type="text" id="edit-store-name-${store}" value="${store}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-slate-500 mb-1">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label>
@@ -1925,56 +1919,59 @@
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-slate-500 mb-1">聯絡電話</label>
-                                        <input type="text" id="edit-store-phone-${store}" value="${storeMeta.phone || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
+                                        <input type="text" id="edit-store-phone-${store}" value="${storeMeta.phone || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-all">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold text-slate-500 mb-1">店家封面圖</label>
-                                        <div class="flex gap-2">
-                                            <input type="text" id="edit-store-img-${store}" value="${storeMeta.coverImg || ''}" class="flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm" placeholder="輸入網址或上傳">
-                                            <input type="file" id="edit-store-file-${store}" accept=".png, .jpg, .jpeg, .webp" class="w-48 text-sm text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:font-bold file:bg-slate-200 file:text-slate-700 cursor-pointer shadow-sm transition hover:bg-slate-300" onchange="handleImageUpload(event, 'edit-store-img-${store}', null)">
+                                        <div class="flex flex-col sm:flex-row gap-2 w-full">
+                                            <input type="text" id="edit-store-img-${store}" value="${storeMeta.coverImg || ''}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="輸入網址或上傳">
+                                            <input type="file" id="edit-store-file-${store}" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'edit-store-img-${store}', null)">
+                                            <button type="button" onclick="document.getElementById('edit-store-file-${store}').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
                                         </div>
                                     </div>
                                     <div class="md:col-span-2">
                                         <label class="block text-xs font-bold text-slate-500 mb-1">詳細地址</label>
-                                        <input type="text" id="edit-store-address-${store}" value="${storeMeta.address || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
+                                        <input type="text" id="edit-store-address-${store}" value="${storeMeta.address || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words whitespace-normal">
                                     </div>
                                     <div class="md:col-span-2 pt-2 border-t border-slate-200">
                                         <label class="block text-xs font-black mb-2 text-slate-600"><i class="fa-regular fa-clock mr-1"></i>營業時間 (選填)</label>
-                                        <div id="edit-hours-container-${store}" class="space-y-2 border border-slate-200 p-3 rounded-xl bg-white max-h-48 overflow-y-auto custom-scrollbar">
+                                        <div id="edit-hours-container-${store}" class="space-y-2 border border-slate-200 p-3 rounded-xl bg-white max-h-48 overflow-y-auto custom-scrollbar w-full">
                                             ${window.generateStoreHoursHTML(storeMeta.hours || {}, `edit-${store}`)}
                                         </div>
                                     </div>
                                 </div>
-                                <div class="flex gap-3 justify-end mt-5 border-t border-orange-200/50 pt-4">
-                                    <button onclick="setStoreEdit(null)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-2.5 rounded-xl font-bold transition">取消</button>
-                                    <button onclick="saveStoreEdit('${store}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-2.5 rounded-xl font-black shadow-md transition transform hover:-translate-y-1"><i class="fa-solid fa-check mr-2"></i>確認儲存店家變更</button>
+                                <div class="flex flex-col sm:flex-row gap-3 justify-end mt-5 border-t border-orange-200/50 pt-4 w-full">
+                                    <button onclick="setStoreEdit(null)" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3 md:py-2.5 rounded-xl font-bold transition">取消</button>
+                                    <button onclick="saveStoreEdit('${store}')" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 md:py-2.5 rounded-xl font-black shadow-md transition transform hover:-translate-y-1"><i class="fa-solid fa-check mr-2"></i>確認儲存變更</button>
                                 </div>
                             </div>
                             <div class="p-0 pointer-events-none opacity-40 grayscale">
                     `;
                 } else {
                     html += `
-                        <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white">
-                            <div class="store-header p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4" style="background-color: ${catInfo ? catInfo.color : '#f1f5f9'}">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-14 h-14 bg-white rounded-2xl shadow-inner bg-cover bg-center border border-slate-200" style="background-image: url('${coverImg}')"></div>
-                                    <div>
-                                        <h4 class="text-2xl font-black text-slate-800 flex items-center gap-3">
-                                            ${store}
-                                            <i onclick="setStoreEdit('${store}')" class="fa-solid fa-pen-to-square text-sm text-slate-400 hover:text-orange-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="編輯店家名稱、分類與營業時間等資訊"></i>
-                                            <i onclick="quickAddItem('${store}')" class="fa-solid fa-plus-circle text-sm text-emerald-500 hover:text-emerald-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="快速新增此店家的餐點"></i>
-                                            <i onclick="requestPassword('確定要完整刪除「${store}」店家嗎？\\n\\n【嚴重警告】這將會刪除該店家的基本資訊與「所有菜單餐點」！此操作絕對無法復原。\\n請輸入管理員密碼：', pwd => { if(pwd==='suting') deleteEntireStore('${store}'); else alert('密碼錯誤') })" class="fa-solid fa-trash text-sm text-red-400 hover:text-red-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="完整刪除此店家與所有菜單"></i>
+                        <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white w-full">
+                            <div class="store-header p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4 w-full" style="background-color: ${catInfo ? catInfo.color : '#f1f5f9'}">
+                                <div class="flex items-start md:items-center gap-4 w-full md:w-auto overflow-hidden">
+                                    <div class="w-12 h-12 md:w-14 md:h-14 bg-white rounded-2xl shadow-inner bg-cover bg-center border border-slate-200 shrink-0" style="background-image: url('${coverImg}')"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-xl md:text-2xl font-black text-slate-800 flex items-center flex-wrap gap-2 w-full">
+                                            <span class="break-words whitespace-normal leading-snug">${store}</span>
+                                            <div class="flex flex-wrap gap-1 shrink-0 mt-1 md:mt-0">
+                                                <i onclick="setStoreEdit('${store}')" class="fa-solid fa-pen-to-square text-sm text-slate-400 hover:text-orange-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="編輯店家名稱、分類與營業時間等資訊"></i>
+                                                <i onclick="quickAddItem('${store}')" class="fa-solid fa-plus-circle text-sm text-emerald-500 hover:text-emerald-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="快速新增此店家的餐點"></i>
+                                                <i onclick="requestPassword('確定要完整刪除「${store}」店家嗎？\\n\\n【嚴重警告】這將會刪除該店家的基本資訊與「所有菜單餐點」！此操作絕對無法復原。\\n請輸入管理員密碼：', pwd => { if(pwd==='suting') deleteEntireStore('${store}'); else alert('密碼錯誤') })" class="fa-solid fa-trash text-sm text-red-400 hover:text-red-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="完整刪除此店家與所有菜單"></i>
+                                            </div>
                                         </h4>
-                                        <div class="mt-1 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
-                                            ${storeMeta.phone ? `<a href="tel:${storeMeta.phone}" class="bg-white/60 hover:bg-white/90 px-2 py-0.5 rounded transition text-slate-700 shadow-sm"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</a>` : ''}
-                                            ${storeMeta.address ? `<span class="bg-white/60 px-2 py-0.5 rounded shadow-sm"><i class="fa-solid fa-map-location-dot mr-1"></i>${storeMeta.address}</span>` : ''}
-                                            <span class="bg-white/60 px-2 py-0.5 rounded shadow-sm text-orange-700"><i class="fa-solid fa-tag mr-1"></i>${catInfo ? catInfo.name : '綜合'}</span>
+                                        <div class="mt-1 flex flex-wrap gap-2 text-[10px] md:text-xs font-bold text-slate-600 w-full">
+                                            ${storeMeta.phone ? `<a href="tel:${storeMeta.phone}" class="bg-white/60 hover:bg-white/90 px-2 py-0.5 rounded transition text-slate-700 shadow-sm break-all"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</a>` : ''}
+                                            ${storeMeta.address ? `<span class="bg-white/60 px-2 py-0.5 rounded shadow-sm break-words whitespace-normal"><i class="fa-solid fa-map-location-dot mr-1"></i>${storeMeta.address}</span>` : ''}
+                                            <span class="bg-white/60 px-2 py-0.5 rounded shadow-sm text-orange-700 shrink-0"><i class="fa-solid fa-tag mr-1"></i>${catInfo ? catInfo.name : '綜合'}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <span class="text-sm font-black bg-white/80 px-4 py-2 rounded-xl text-slate-700 shadow-sm whitespace-nowrap border border-white/50"><i class="fa-solid fa-cubes mr-2"></i>共 ${items.length} 筆資料</span>
+                                <span class="text-xs md:text-sm font-black bg-white/80 px-3 md:px-4 py-2 rounded-xl text-slate-700 shadow-sm whitespace-nowrap border border-white/50 shrink-0"><i class="fa-solid fa-cubes mr-1 md:mr-2"></i>共 ${items.length} 筆資料</span>
                             </div>
-                            <div class="p-0">
+                            <div class="p-0 w-full">
                     `;
                 }
                 
@@ -1986,9 +1983,9 @@
 
                     if (String(window.editingItemId) === String(item.id)) {
                         html += `
-                        <div class="p-5 md:p-6 border-b border-orange-200 bg-orange-50/50 shadow-inner">
-                            <h5 class="font-black text-orange-600 mb-4 flex items-center text-lg border-b border-orange-200/50 pb-2"><i class="fa-solid fa-pen-to-square mr-2"></i>編輯餐點資料</h5>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="p-4 md:p-6 border-b border-orange-200 bg-orange-50/50 shadow-inner w-full">
+                            <h5 class="font-black text-orange-600 mb-4 flex items-center text-lg border-b border-orange-200/50 pb-2 break-words"><i class="fa-solid fa-pen-to-square mr-2"></i>編輯餐點資料</h5>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 w-full">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 mb-1">菜單子分類 <span class="text-red-500">*</span></label>
                                     <select id="inline-subcat-${item.id}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
@@ -1998,7 +1995,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 mb-1">餐點名稱 <span class="text-red-500">*</span></label>
-                                    <input type="text" id="inline-name-${item.id}" value="${item.name}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
+                                    <input type="text" id="inline-name-${item.id}" value="${item.name}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 mb-1">價格 <span class="text-red-500">*</span></label>
@@ -2006,20 +2003,21 @@
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-xs font-bold text-slate-500 mb-1">餐點圖片 (輸入 images/圖檔名.jpg、網址或上傳)</label>
-                                    <div class="flex gap-2">
-                                        <input type="text" id="inline-img-${item.id}" value="${item.img === DEFAULT_IMG ? '' : item.img}" class="flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm" placeholder="輸入網址或上傳">
-                                        <input type="file" id="inline-file-${item.id}" accept=".png, .jpg, .jpeg, .webp" class="w-48 text-sm text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:font-bold file:bg-slate-200 file:text-slate-700 cursor-pointer shadow-sm transition hover:bg-slate-300" onchange="handleImageUpload(event, 'inline-img-${item.id}', 'inline-preview-${item.id}')">
+                                    <div class="flex flex-col sm:flex-row gap-2 w-full">
+                                        <input type="text" id="inline-img-${item.id}" value="${item.img === DEFAULT_IMG ? '' : item.img}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="輸入網址或上傳">
+                                        <input type="file" id="inline-file-${item.id}" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'inline-img-${item.id}', 'inline-preview-${item.id}')">
+                                        <button type="button" onclick="document.getElementById('inline-file-${item.id}').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
                                     </div>
                                     <img id="inline-preview-${item.id}" src="${imgUrl}" class="mt-3 h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm">
                                 </div>
-                                <div class="md:col-span-2 bg-white p-4 rounded-xl border border-orange-200 mt-2 shadow-sm">
-                                    <label class="block text-xs font-bold text-orange-600 mb-3"><i class="fa-solid fa-sliders mr-2"></i>勾選欲套用的客製化選項模組 (選填)</label>
-                                    <div id="inline-opt-container-${item.id}" class="grid grid-cols-1 lg:grid-cols-2 gap-2"></div>
+                                <div class="md:col-span-2 bg-white p-4 rounded-xl border border-orange-200 mt-2 shadow-sm w-full">
+                                    <label class="block text-xs font-bold text-orange-600 mb-3 break-words whitespace-normal"><i class="fa-solid fa-sliders mr-2"></i>勾選欲套用的客製化選項模組 (選填)</label>
+                                    <div id="inline-opt-container-${item.id}" class="grid grid-cols-1 lg:grid-cols-2 gap-2 w-full"></div>
                                 </div>
                             </div>
-                            <div class="flex gap-3 justify-end mt-4">
-                                <button onclick="setInlineEdit(null)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-2.5 rounded-xl font-bold transition border border-transparent hover:border-slate-400">取消</button>
-                                <button onclick="saveInlineEdit('${item.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-2.5 rounded-xl font-black shadow-md transition transform hover:-translate-y-1"><i class="fa-solid fa-check mr-2"></i>確認儲存餐點變更</button>
+                            <div class="flex flex-col sm:flex-row gap-3 justify-end mt-4 w-full">
+                                <button onclick="setInlineEdit(null)" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3 md:py-2.5 rounded-xl font-bold transition border border-transparent hover:border-slate-400">取消</button>
+                                <button onclick="saveInlineEdit('${item.id}')" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 md:py-2.5 rounded-xl font-black shadow-md transition transform hover:-translate-y-1"><i class="fa-solid fa-check mr-2"></i>確認儲存變更</button>
                             </div>
                         </div>`;
                         
@@ -2029,29 +2027,32 @@
                     } 
                     else {
                         html += `
-                        <div class="flex items-center justify-between p-4 pl-5 md:pl-6 border-b border-slate-100 hover:bg-orange-50/30 transition group">
-                            <div class="flex items-center gap-4 md:gap-5">
-                                <img src="${imgUrl}" class="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-200 shadow-sm bg-white p-0.5 group-hover:border-orange-300 transition-colors">
-                                <div class="min-w-0">
-                                    <p class="font-black text-slate-800 text-lg md:text-xl truncate group-hover:text-orange-700 transition-colors">${item.name} <span class="text-sm md:text-base text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-lg ml-2 font-black border border-orange-100">$${item.price}</span></p>
-                                    <p class="text-sm text-slate-400 mt-1.5 font-bold flex flex-wrap gap-2 items-center">
-                                        <span class="bg-slate-100 px-2 py-0.5 rounded text-xs border border-slate-200 text-slate-600">${item.subCat || '無細項分類'}</span>
-                                        ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100"><i class="fa-solid fa-list-ul mr-1"></i>含選項 (${item.customOptionIds.length})</span>` : ''}
-                                        <span class="bg-slate-50 px-2 py-0.5 rounded text-xs border border-slate-200 text-slate-400 truncate" title="最後更新日期"><i class="fa-regular fa-clock mr-1"></i>${displayUpdateDate}</span>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 pl-4 md:pl-6 border-b border-slate-100 hover:bg-orange-50/30 transition group gap-4 w-full">
+                            <div class="flex items-center gap-3 md:gap-5 w-full sm:w-auto flex-1 overflow-hidden">
+                                <img src="${imgUrl}" class="w-14 h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-200 shadow-sm bg-white p-0.5 group-hover:border-orange-300 transition-colors shrink-0">
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-black text-slate-800 text-lg md:text-xl group-hover:text-orange-700 transition-colors flex items-center flex-wrap gap-2 leading-tight w-full">
+                                        <span class="break-words whitespace-normal">${item.name}</span>
+                                        <span class="text-xs md:text-sm text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-lg font-black border border-orange-100 shrink-0">$${item.price}</span>
+                                    </p>
+                                    <p class="text-xs md:text-sm text-slate-400 mt-1.5 font-bold flex flex-wrap gap-2 items-center w-full">
+                                        <span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-600 break-words whitespace-normal">${item.subCat || '無細項分類'}</span>
+                                        ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 whitespace-nowrap"><i class="fa-solid fa-list-ul mr-1"></i>含選項 (${item.customOptionIds.length})</span>` : ''}
+                                        <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-slate-400 break-words whitespace-normal" title="最後更新日期"><i class="fa-regular fa-clock mr-1"></i>${displayUpdateDate}</span>
                                     </p>
                                 </div>
                             </div>
-                            <div class="flex gap-4 md:gap-6 text-xl md:text-2xl pr-4 shrink-0">
-                                <i onclick="toggleLock('${item.id}')" class="fa-solid ${lockIcon} admin-action hover:scale-125 transform transition-transform" title="解鎖以啟用編輯與刪除功能"></i>
-                                <i onclick="setInlineEdit('${item.id}')" class="fa-solid fa-pen-to-square text-slate-300 admin-action ${actionCls} hover:text-orange-500 hover:scale-110 transform transition-transform" title="行內直接編輯"></i>
-                                <i onclick="requestPassword('輸入密碼確認刪除餐點', pwd => { if(pwd==='suting') deleteItem('${item.id}'); else alert('密碼錯誤') })" class="fa-solid fa-trash-can text-slate-300 admin-action ${actionCls} hover:!text-red-600 hover:scale-110 transform transition-transform" title="刪除此餐點"></i>
+                            <div class="flex gap-4 sm:gap-6 text-xl md:text-2xl sm:pr-4 w-full sm:w-auto justify-end shrink-0 mt-2 sm:mt-0 border-t sm:border-0 border-slate-100 pt-3 sm:pt-0">
+                                <i onclick="toggleLock('${item.id}')" class="fa-solid ${lockIcon} admin-action hover:scale-125 transform transition-transform p-2 sm:p-0" title="解鎖以啟用編輯與刪除功能"></i>
+                                <i onclick="setInlineEdit('${item.id}')" class="fa-solid fa-pen-to-square text-slate-300 admin-action ${actionCls} hover:text-orange-500 hover:scale-110 transform transition-transform p-2 sm:p-0" title="行內直接編輯"></i>
+                                <i onclick="requestPassword('輸入密碼確認刪除餐點', pwd => { if(pwd==='suting') deleteItem('${item.id}'); else alert('密碼錯誤') })" class="fa-solid fa-trash-can text-slate-300 admin-action ${actionCls} hover:!text-red-600 hover:scale-110 transform transition-transform p-2 sm:p-0" title="刪除此餐點"></i>
                             </div>
                         </div>`;
                     }
                 });
                 html += `</div></div>`;
             }
-            document.getElementById('admin-data-grouped-list').innerHTML = html || '<div class="p-10 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50"><p class="text-slate-400 font-bold text-xl"><i class="fa-solid fa-box-open text-4xl mb-4 block opacity-50"></i>目前資料庫無符合的商品資料</p></div>';
+            document.getElementById('admin-data-grouped-list').innerHTML = html || '<div class="p-6 md:p-10 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal"><p class="text-slate-400 font-bold text-lg md:text-xl"><i class="fa-solid fa-box-open text-4xl mb-4 block opacity-50"></i>目前資料庫無符合的商品資料</p></div>';
         };
 
         window.setInlineEdit = function(id) {
@@ -2164,12 +2165,6 @@
             await window.saveState(); window.renderAdmin();
         };
 
-        window.addNewCategoryPrompt = function() {
-            alert('系統大分類現在請至「全域設定」標籤頁中統一管理！');
-            window.switchAdminTab('settings');
-        };
-
-        // 歷史結單紀錄篩選與顯示邏輯
         window.updateHistoryFilters = function() {
             const yearSelect = document.getElementById('history-filter-year');
             const monthSelect = document.getElementById('history-filter-month');
@@ -2201,7 +2196,6 @@
             if (sortedMonths.includes(currentMonth)) monthSelect.value = currentMonth;
         };
 
-        // 以高效率的 innerHTML 串接方式渲染，確保 1000 筆資料不會卡頓
         window.renderHistory = function() {
             window.updateHistoryFilters();
 
@@ -2224,7 +2218,7 @@
 
             let html = '';
             if(filteredHistory.length === 0) {
-                document.getElementById('admin-history-list').innerHTML = '<div class="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50"><p class="text-slate-400 font-bold text-2xl"><i class="fa-solid fa-receipt block text-5xl mb-4 opacity-50"></i>目前尚無符合篩選條件的歷史紀錄。</p></div>';
+                document.getElementById('admin-history-list').innerHTML = '<div class="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal"><p class="text-slate-400 font-bold text-lg md:text-2xl"><i class="fa-solid fa-receipt block text-5xl mb-4 opacity-50"></i>目前尚無符合篩選條件的歷史紀錄。</p></div>';
                 return;
             }
             
@@ -2233,33 +2227,33 @@
                 const displayId = originalIdx !== -1 ? window.state.orderHistory.length - originalIdx : filteredHistory.length - idx;
 
                 html += `
-                    <div class="border border-slate-200 rounded-[2rem] p-6 md:p-8 bg-white shadow-sm hover:shadow-lg transition flex flex-col transform hover:-translate-y-1">
-                        <div class="flex flex-col xl:flex-row justify-between xl:items-center border-b border-slate-100 pb-5 mb-5 gap-4">
-                            <div class="flex items-center gap-3">
-                                <span class="bg-slate-800 text-white px-4 py-1.5 rounded-xl text-sm font-black shadow-sm">#${displayId}</span>
-                                <span class="font-bold text-slate-500 text-sm"><i class="fa-regular fa-clock mr-1.5"></i>${order.date} ${order.time}</span>
+                    <div class="border border-slate-200 rounded-[2rem] p-4 md:p-8 bg-white shadow-sm hover:shadow-lg transition flex flex-col transform hover:-translate-y-1 w-full overflow-hidden">
+                        <div class="flex flex-col xl:flex-row justify-between xl:items-center border-b border-slate-100 pb-5 mb-5 gap-4 w-full">
+                            <div class="flex items-center gap-3 w-full xl:w-auto flex-wrap">
+                                <span class="bg-slate-800 text-white px-4 py-1.5 rounded-xl text-sm font-black shadow-sm shrink-0">#${displayId}</span>
+                                <span class="font-bold text-slate-500 text-sm whitespace-nowrap"><i class="fa-regular fa-clock mr-1.5"></i>${order.date} ${order.time}</span>
                             </div>
-                            <div class="flex gap-2 items-center">
-                                <button onclick="exportSingleHistoryExcel('${order.id}')" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-sm font-bold border border-emerald-200 transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-file-excel mr-1"></i>單筆匯出</button>
-                                <span class="font-black text-red-600 bg-red-50 px-5 py-2 rounded-xl text-xl border border-red-100 shadow-inner whitespace-nowrap">結算 $${order.total}</span>
+                            <div class="flex flex-wrap gap-2 items-center w-full xl:w-auto">
+                                <button onclick="exportSingleHistoryExcel('${order.id}')" class="flex-1 md:flex-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-sm font-bold border border-emerald-200 transition shadow-sm whitespace-nowrap text-center"><i class="fa-solid fa-file-excel mr-1"></i>單筆匯出</button>
+                                <span class="flex-[2] md:flex-none font-black text-red-600 bg-red-50 px-5 py-2 rounded-xl text-xl border border-red-100 shadow-inner whitespace-nowrap text-center">結算 $${order.total}</span>
                             </div>
                         </div>
                         
-                        <div class="text-slate-800 font-black text-xl md:text-2xl mb-5 flex items-start gap-3">
+                        <div class="text-slate-800 font-black text-xl md:text-2xl mb-5 flex items-start gap-3 w-full">
                             <i class="fa-solid fa-store mt-1 text-orange-500 bg-orange-50 p-2 rounded-lg shrink-0"></i>
-                            <span class="leading-tight">${order.store}</span>
+                            <span class="leading-tight break-words whitespace-normal w-full">${order.store}</span>
                         </div>
                         
-                        <div class="space-y-2 bg-slate-50 p-5 rounded-2xl text-sm border border-slate-100 flex-1">
+                        <div class="space-y-2 bg-slate-50 p-4 md:p-5 rounded-2xl text-sm border border-slate-100 flex-1 w-full">
                             ${order.cart.map(c => `
-                                <div class="flex justify-between items-start md:items-center border-b border-slate-200/70 pb-3 mb-3 last:border-0 last:pb-0 last:mb-0">
-                                    <div class="flex items-center flex-wrap gap-2 pr-4">
-                                        <span class="text-white bg-orange-500 px-2.5 py-1 rounded-lg text-xs font-black shadow-sm">${c.userName}</span> 
-                                        <span class="font-bold text-slate-800 text-base">${c.itemName}</span> 
-                                        <span class="text-slate-400 font-black text-sm ml-1 bg-white border border-slate-200 px-1.5 rounded">x${c.qty}</span> 
-                                        ${c.note ? `<span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-md font-bold border border-blue-100 ml-1"><i class="fa-solid fa-pen mr-1"></i>${c.note}</span>` : ''}
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200/70 pb-3 mb-3 last:border-0 last:pb-0 last:mb-0 gap-3 w-full">
+                                    <div class="flex items-center flex-wrap gap-2 w-full pr-2">
+                                        <span class="text-white bg-orange-500 px-2.5 py-1 rounded-lg text-xs font-black shadow-sm break-words max-w-full">${c.userName}</span> 
+                                        <span class="font-bold text-slate-800 text-base break-words whitespace-normal leading-snug">${c.itemName}</span> 
+                                        <span class="text-slate-400 font-black text-sm bg-white border border-slate-200 px-1.5 rounded shrink-0">x${c.qty}</span> 
+                                        ${c.note ? `<div class="w-full mt-1 mb-1 sm:mt-0 sm:mb-0 sm:w-auto"><span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-md font-bold border border-blue-100 break-words whitespace-pre-wrap inline-block max-w-full"><i class="fa-solid fa-pen mr-1"></i>${c.note}</span></div>` : ''}
                                     </div>
-                                    <span class="text-slate-700 font-black text-lg mt-1 md:mt-0">$${c.price * c.qty}</span>
+                                    <span class="text-slate-700 font-black text-lg shrink-0 self-end sm:self-auto">$${c.price * c.qty}</span>
                                 </div>
                             `).join('')}
                         </div>

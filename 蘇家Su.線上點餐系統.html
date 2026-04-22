@@ -106,7 +106,7 @@
                     <div class="absolute top-0 left-0 w-full h-2 bg-red-500 animate-pulse"></div>
                     <p class="text-slate-500 font-black mb-2 tracking-widest uppercase"><i class="fa-solid fa-stopwatch mr-2 text-red-500"></i>點餐活動倒數中</p>
                     <div id="big-timer" class="text-6xl md:text-7xl font-black text-red-600 tracking-tighter drop-shadow-sm">00:00</div>
-                    <button onclick="requestPassword('輸入密碼以提早結單', () => window.autoCheckout())" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
+                    <button onclick="requestPassword('輸入密碼以提早結單 (81160530)', pwd => { if(pwd === '81160530') window.autoCheckout(); else alert('密碼錯誤！'); })" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
                         <i class="fa-solid fa-lock-open mr-2 text-slate-400"></i>提早結單
                     </button>
                 </div>
@@ -1180,18 +1180,31 @@
                     if (!dbState.session || !dbState.session.isActive) return; 
                     
                     let history = dbState.orderHistory || [];
+                    if (!Array.isArray(history)) history = [];
+                    
                     let finalCart = dbState.cart || [];
-                    let total = finalCart.reduce((sum, c) => sum + (c.price * c.qty), 0);
+                    let total = finalCart.reduce((sum, c) => sum + ((Number(c.price) || 0) * (Number(c.qty) || 1)), 0);
                     
                     const storeNamesStr = dbState.session.storeNames ? dbState.session.storeNames.join('、') : dbState.session.storeName;
 
+                    // 徹底的資料淨化，確保寫入 Firebase 的資料絕對不會包含 undefined 導致異常
+                    const safeCart = finalCart.map(c => ({
+                        id: c.id ? String(c.id) : '',
+                        userName: c.userName ? String(c.userName) : '未知',
+                        itemName: c.itemName ? String(c.itemName) : '未知',
+                        storeName: c.storeName ? String(c.storeName) : '未知',
+                        price: Number(c.price) || 0,
+                        qty: Number(c.qty) || 1,
+                        note: c.note ? String(c.note) : ''
+                    }));
+
                     history.unshift({ 
-                        id: Date.now().toString(),
+                        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                         date: window.getFormattedDate(), 
                         time: new Date().toLocaleTimeString('zh-TW'), 
-                        store: storeNamesStr, 
-                        total: total, 
-                        cart: [...finalCart] 
+                        store: storeNamesStr || '綜合店家', 
+                        total: total || 0, 
+                        cart: safeCart 
                     });
                     if (history.length > 100) history.pop();
                     
@@ -1201,7 +1214,7 @@
                 });
             } catch(e) { 
                 console.error("Checkout failed", e); 
-                alert("結單同步時發生錯誤！請確認網路。");
+                alert("結單同步時發生錯誤！" + e.message);
             }
         };
 
@@ -1598,21 +1611,25 @@
             searchTimeout = setTimeout(window.renderAdmin, 300);
         };
 
+        // 店家編輯功能邏輯
         window.setStoreEdit = function(storeName) {
             window.editingStoreName = storeName;
             window.renderAdmin();
         };
 
+        // 快速添加餐點 (自動帶入鎖定店家資訊並聚焦)
         window.quickAddItem = function(storeName) {
             window.switchAdminTab('menu');
             document.getElementById('admin-input-store').value = storeName;
             window.autoFillStoreInfo();
             
+            // 嘗試自動帶入該店家所屬的系統大分類
             const storeItem = window.state.items.find(i => i.store === storeName);
             if(storeItem && storeItem.cat) {
                 document.getElementById('admin-input-cat').value = storeItem.cat;
             }
             
+            // 將畫面平滑捲動到頂部的輸入表單，並將輸入焦點放在餐點名稱
             const formTitle = document.getElementById('admin-form-title');
             formTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
             setTimeout(() => {
@@ -1642,6 +1659,7 @@
                 window.state.stores.push({name: newName, phone, address, coverImg, hours: {}});
             }
 
+            // 若店名變更，必須同步更新所有旗下餐點的店名資訊
             if (newName !== oldStoreName) {
                 window.state.items.forEach(item => {
                     if (item.store === oldStoreName) {
@@ -1678,6 +1696,7 @@
                 );
             }
 
+            // 在後台列表中也加入名稱相近的排序
             filteredItems.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
 
             const grouped = filteredItems.reduce((acc, item) => { 
@@ -1693,6 +1712,7 @@
                 const storeMeta = window.state.stores.find(s => s.name === store) || {};
                 const coverImg = storeMeta.coverImg || items.find(i=>i.img && i.img !== DEFAULT_IMG)?.img || DEFAULT_IMG;
                 
+                // 店家編輯模式視圖
                 if (window.editingStoreName === store) {
                     html += `
                         <div class="border border-orange-300 rounded-[2rem] overflow-hidden shadow-md mb-8 bg-white ring-4 ring-orange-100">
@@ -1727,6 +1747,7 @@
                             <div class="p-0 pointer-events-none opacity-40 grayscale">
                     `;
                 } else {
+                    // 店家一般視圖 (加入編輯按鈕與快速添加餐點按鈕)
                     html += `
                         <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white">
                             <div class="store-header p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4" style="background-color: ${catInfo ? catInfo.color : '#f1f5f9'}">
@@ -1756,6 +1777,7 @@
                     const imgUrl = item.img || DEFAULT_IMG;
                     const displayUpdateDate = item.updateDate || window.state.menuUpdateDate || '無紀錄';
 
+                    // 確保使用 String 型別來做精確比對
                     if (String(window.editingItemId) === String(item.id)) {
                         html += `
                         <div class="p-5 md:p-6 border-b border-orange-200 bg-orange-50/50 shadow-inner">
@@ -1953,7 +1975,7 @@
 
         // ================= ExcelJS 匯出匯入模組 =================
         
-        // 匯出資料庫
+        // 匯出資料庫 (精準欄寬設定，移除圖片欄位)
         window.exportDatabaseExcel = async function() {
             if (window.state.items.length === 0) return alert('資料庫目前沒有餐點可供匯出！');
             
@@ -1965,16 +1987,15 @@
                 }
             });
             
-            // 移除圖片欄位
             sheet.columns = [
-                { header: '系統大分類', key: 'cat', width: 18 },
-                { header: '店家名稱', key: 'store', width: 25 },
-                { header: '店家電話(選填)', key: 'phone', width: 16 },
-                { header: '店家地址(選填)', key: 'address', width: 35 },
-                { header: '菜單子分類', key: 'subcat', width: 15 },
-                { header: '餐點名稱', key: 'item', width: 30 },
-                { header: '價格', key: 'price', width: 12 },
-                { header: '選項模組(用逗號分隔)', key: 'options', width: 25 }
+                { header: '系統大分類', key: 'cat', width: 20 },
+                { header: '店家名稱', key: 'store', width: 30 },
+                { header: '店家電話(選填)', key: 'phone', width: 18 },
+                { header: '店家地址(選填)', key: 'address', width: 40 },
+                { header: '菜單子分類', key: 'subcat', width: 18 },
+                { header: '餐點名稱', key: 'item', width: 35 },
+                { header: '價格', key: 'price', width: 15 },
+                { header: '套用客製化選項(用逗號分隔)', key: 'options', width: 35 }
             ];
 
             // 標題列美化
@@ -1990,6 +2011,12 @@
                 const catObj = window.state.categories.find(c => c.id === item.cat);
                 const storeObj = window.state.stores.find(s => s.name === item.store) || {};
                 
+                // 自動將內部 ID 轉換為易讀的中文選項名稱
+                const optionsString = (item.customOptionIds || []).map(optId => {
+                    const opt = window.state.globalOptions.find(g => g.id === optId);
+                    return opt ? opt.name : '';
+                }).filter(Boolean).join(', ');
+
                 const row = sheet.addRow({
                     cat: catObj ? catObj.name : '未分類',
                     store: item.store,
@@ -1998,7 +2025,7 @@
                     subcat: item.subCat || '主餐',
                     item: item.name,
                     price: item.price,
-                    options: (item.customOptionIds || []).join(', ')
+                    options: optionsString
                 });
 
                 // 奇偶數跳色 (斑馬紋)
@@ -2079,9 +2106,15 @@
                                 if(address && !storeObj.address) storeObj.address = address;
                             }
 
-                            const customOptionIds = optionsStr ? optionsStr.split(',').map(s=>s.trim()).filter(s=>s) : [];
+                            // 自動將 Excel 中的中文選項轉換回系統 ID
+                            const optionNames = optionsStr ? optionsStr.split(',').map(s=>s.trim()).filter(s=>s) : [];
+                            const customOptionIds = [];
+                            optionNames.forEach(optName => {
+                                let optObj = window.state.globalOptions.find(g => g.name === optName);
+                                if(optObj) customOptionIds.push(optObj.id);
+                            });
 
-                            // 將資料壓入系統 (圖片自動帶入預設)
+                            // 將資料壓入系統 (圖片自動帶入預設，避免匯入破圖)
                             window.state.items.push({
                                 id: Date.now().toString() + Math.random().toString(36).substring(2, 8),
                                 cat: catObj.id,
@@ -2140,10 +2173,10 @@
             const tableStartRow = 4;
             sheet.getRow(tableStartRow).values = ['點餐人', '餐點名稱', '數量', '備註', '小計'];
             sheet.columns = [
-                { key: 'user', width: 15 },
-                { key: 'item', width: 30 },
-                { key: 'qty', width: 10 },
-                { key: 'note', width: 25 },
+                { key: 'user', width: 20 },
+                { key: 'item', width: 35 },
+                { key: 'qty', width: 12 },
+                { key: 'note', width: 30 },
                 { key: 'subtotal', width: 15 }
             ];
 
@@ -2201,14 +2234,14 @@
             });
 
             sheet.columns = [
-                { header: '結單日期', key: 'date', width: 15 },
-                { header: '店家名稱', key: 'store', width: 25 },
-                { header: '點餐人', key: 'user', width: 15 },
-                { header: '餐點名稱', key: 'item', width: 30 },
-                { header: '數量', key: 'qty', width: 10 },
-                { header: '備註', key: 'note', width: 25 },
-                { header: '小計', key: 'subtotal', width: 12 },
-                { header: '該單總額', key: 'total', width: 15 }
+                { header: '結單日期', key: 'date', width: 22 },
+                { header: '店家名稱', key: 'store', width: 30 },
+                { header: '點餐人', key: 'user', width: 20 },
+                { header: '餐點名稱', key: 'item', width: 35 },
+                { header: '數量', key: 'qty', width: 12 },
+                { header: '備註', key: 'note', width: 30 },
+                { header: '小計', key: 'subtotal', width: 15 },
+                { header: '該單總額', key: 'total', width: 18 }
             ];
 
             sheet.getRow(1).eachCell(cell => {

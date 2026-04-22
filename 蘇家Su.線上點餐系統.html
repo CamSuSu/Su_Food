@@ -200,7 +200,7 @@
                                     <label class="block text-xs font-bold mb-1 text-slate-500">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label>
                                     <div class="flex gap-2">
                                         <select id="admin-input-cat" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold"></select>
-                                        <button onclick="addNewCategoryPrompt()" class="bg-orange-100 hover:bg-orange-200 text-orange-600 px-4 rounded-xl font-bold transition shadow-sm shrink-0" title="大分類管理請至設定頁"><i class="fa-solid fa-gear"></i></button>
+                                        <button onclick="switchAdminTab('settings')" class="bg-orange-100 hover:bg-orange-200 text-orange-600 px-4 rounded-xl font-bold transition shadow-sm shrink-0" title="大分類管理請至設定頁"><i class="fa-solid fa-gear"></i></button>
                                     </div>
                                 </div>
 
@@ -318,11 +318,17 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-blue-800 mb-1">選項群組名稱</label>
-                                <input id="setting-opt-name" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 甜度、加飯">
+                                <input id="setting-opt-name" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 甜度、加料">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-blue-800 mb-1">下拉選單內容 (請以半形逗號 , 分隔)</label>
+                                <label class="block text-xs font-bold text-blue-800 mb-1">選項內容 (請以半形逗號 , 分隔)</label>
                                 <input id="setting-opt-choices" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 正常甜,少糖,半糖,無糖">
+                            </div>
+                            <div class="md:col-span-3 mt-1">
+                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm text-blue-800 bg-white p-2.5 rounded-xl border border-blue-200 shadow-sm w-full sm:w-auto inline-flex">
+                                    <input type="checkbox" id="setting-opt-ismulti" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-blue-300">
+                                    允許使用者複選此選項 (若未勾選則強制為單選必填)
+                                </label>
                             </div>
                         </div>
                         <button onclick="addGlobalOption()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-md transition"><i class="fa-solid fa-folder-plus mr-2"></i>建立新選項模組</button>
@@ -553,26 +559,23 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
-        // 新增：產生圖片明細的專屬方法
+        // 產生圖片明細的專屬方法
         window.generateReceiptImage = async function() {
             const btnArea = document.getElementById('receipt-action-buttons');
             const captureArea = document.getElementById('receipt-capture-area');
             
-            // 隱藏最下方按鈕區塊，避免按鈕被截圖進去
             const originalDisplay = btnArea.style.display;
             btnArea.style.display = 'none';
             
-            // 開啟預覽 Modal 並顯示載入中
             window.openModal('image-modal');
             document.getElementById('image-modal-loader').classList.remove('hidden');
             document.getElementById('generated-receipt-img').classList.add('hidden');
             document.getElementById('generated-receipt-img').src = '';
             
-            // 給予微小延遲讓 DOM 更新完成
             setTimeout(async () => {
                 try {
                     const canvas = await html2canvas(captureArea, {
-                        scale: window.devicePixelRatio > 1 ? window.devicePixelRatio : 2, // 提高圖片解析度
+                        scale: window.devicePixelRatio > 1 ? window.devicePixelRatio : 2, 
                         useCORS: true,
                         backgroundColor: '#ffffff'
                     });
@@ -586,7 +589,6 @@
                     alert('圖片產生失敗，請確認您的裝置瀏覽器是否支援此功能。');
                     window.closeModal('image-modal');
                 } finally {
-                    // 恢復按鈕顯示
                     btnArea.style.display = originalDisplay;
                 }
             }, 300);
@@ -624,9 +626,9 @@
         ];
         const DEFAULT_SUBCATS = ['主餐', '副餐', '套餐', '單點', '飲料', '甜點', '飯類', '麵類', '湯品'];
         const DEFAULT_GLOBAL_OPTIONS = [
-            { id: 'gopt_1', name: '冰塊', choices: ['正常冰', '少冰', '微冰', '去冰', '完全去冰', '溫熱'] },
-            { id: 'gopt_2', name: '甜度', choices: ['正常甜', '少糖', '半糖', '微糖', '無糖'] },
-            { id: 'gopt_3', name: '加購', choices: ['不加', '加飯(+15)', '加麵(+15)', '加蛋(+15)'] }
+            { id: 'gopt_1', name: '冰塊', choices: ['正常冰', '少冰', '微冰', '去冰', '完全去冰', '溫熱'], isMulti: false },
+            { id: 'gopt_2', name: '甜度', choices: ['正常甜', '少糖', '半糖', '微糖', '無糖'], isMulti: false },
+            { id: 'gopt_3', name: '加料區', choices: ['不加', '加飯(+15)', '加麵(+15)', '加蛋(+15)'], isMulti: true }
         ];
         const DEFAULT_ITEMS = [
             { id: 1, cat: 'cat_1', store: '老王香雞排飯', subCat: '飯類', name: '巨無霸雞排飯', price: 110, img: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: [], updateDate: window.getFormattedDate() },
@@ -657,6 +659,21 @@
         window.inactivityTimer = null;
         window.hasInitialLoaded = false;
         window.selectedActivityStores = []; 
+
+        // 全域鎖定滾動，預防 Modal 卡死網頁背景
+        function checkBodyScroll() {
+            const openModals = Array.from(document.querySelectorAll('[id$="-modal"]')).filter(el => !el.classList.contains('hidden'));
+            if(openModals.length === 0) document.body.style.overflow = '';
+        }
+
+        window.closeModal = function(id) { 
+            document.getElementById(id).classList.add('hidden'); 
+            checkBodyScroll();
+        };
+        window.openModal = function(id) { 
+            document.getElementById(id).classList.remove('hidden'); 
+            document.body.style.overflow = 'hidden'; 
+        };
 
         window.pendingPwdCallback = null;
         window.requestPassword = function(msg, callback) {
@@ -700,7 +717,7 @@
                             quality -= 0.2;
                             attemptCompress();
                         } else if (dataUrl.length > 130000) {
-                            alert('⚠️ 圖片過於複雜，壓縮後仍超過系統單檔容量安全限制 (100KB)。請手 মোক換較簡單或檔案更小的圖片！');
+                            alert('⚠️ 圖片過於複雜，壓縮後仍超過系統單檔容量安全限制 (100KB)。請手動更換較簡單或檔案更小的圖片！');
                             if(event && event.target) event.target.value = '';
                         } else {
                             callback(dataUrl);
@@ -894,9 +911,6 @@
             else if (viewName === 'active-order') window.renderActiveOrder();
         };
 
-        window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); };
-        window.openModal = function(id) { document.getElementById(id).classList.remove('hidden'); };
-
         window.formatStoreHoursHTML = function(hoursObj) {
             if (!hoursObj || Object.keys(hoursObj).length === 0) return '';
             let html = '<div class="flex items-start gap-2 w-full"><i class="fa-regular fa-clock text-orange-500 mt-1 shrink-0"></i><div class="flex flex-col text-sm text-slate-600 gap-1 w-full break-words">';
@@ -1024,6 +1038,23 @@
                     const bgColor = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'; 
                     const imgUrl = item.img || DEFAULT_IMG;
                     
+                    let optionsHtmlStr = '';
+                    if (item.customOptionIds && item.customOptionIds.length > 0) {
+                        if (isActiveMode) {
+                            optionsHtmlStr = `<p class="text-[10px] md:text-xs text-blue-500 font-bold mt-1.5 bg-blue-50 inline-block px-2 py-0.5 rounded border border-blue-100 whitespace-nowrap"><i class="fa-solid fa-list-ul mr-1"></i>含客製選項</p>`;
+                        } else {
+                            const appliedOpts = item.customOptionIds.map(optId => window.state.globalOptions.find(g => g.id === optId)).filter(Boolean);
+                            if (appliedOpts.length > 0) {
+                                optionsHtmlStr = `<div class="mt-2 w-full flex flex-col gap-1">` + appliedOpts.map(opt => `
+                                    <div class="bg-blue-50/70 border border-blue-100/70 p-1.5 rounded text-[10px] md:text-xs w-full leading-tight">
+                                        <span class="font-black text-blue-700 mr-1"><i class="fa-solid fa-tag mr-1 opacity-70"></i>${opt.name} <span class="opacity-60 font-bold">(${opt.isMulti ? '可複選' : '單選'})</span>:</span>
+                                        <span class="text-blue-600 font-bold break-words whitespace-normal">${opt.choices.join('、')}</span>
+                                    </div>
+                                `).join('') + `</div>`;
+                            }
+                        }
+                    }
+                    
                     html += `
                         <div ${action} class="${bgColor} p-4 md:p-5 rounded-[1.5rem] shadow-sm border flex items-center gap-4 md:gap-5 transition-all duration-300 ${pointer} group">
                             <div class="relative w-24 h-24 md:w-28 md:h-28 shrink-0">
@@ -1033,7 +1064,7 @@
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-black text-lg md:text-xl text-slate-800 group-hover:text-orange-700 transition-colors break-words">${item.name}</h4>
                                 <p class="text-orange-600 font-black text-xl md:text-2xl mt-1">$${item.price}</p>
-                                ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<p class="text-[10px] md:text-xs text-blue-500 font-bold mt-1.5 bg-blue-50 inline-block px-2 py-0.5 rounded border border-blue-100 whitespace-nowrap"><i class="fa-solid fa-list-ul mr-1"></i>含客製選項</p>` : ''}
+                                ${optionsHtmlStr}
                             </div>
                             ${isActiveMode ? `<div class="w-12 h-12 bg-slate-100 text-slate-400 group-hover:bg-orange-500 group-hover:text-white rounded-2xl flex items-center justify-center font-bold shadow-sm text-xl transition-all transform group-hover:rotate-90 shrink-0"><i class="fa-solid fa-plus"></i></div>` : ''}
                         </div>`;
@@ -1247,12 +1278,24 @@
 
             if (appliedOptions.length > 0) {
                 appliedOptions.forEach((opt, idx) => {
+                    const isMulti = opt.isMulti === true;
+                    const inputType = isMulti ? 'checkbox' : 'radio';
+                    const inputName = isMulti ? '' : `name="modal-opt-${opt.id}"`;
+                    const typeLabel = isMulti ? '(可複選)' : '(單選必填)';
+
                     optionsHtml += `
-                        <div class="bg-orange-50/50 p-5 rounded-2xl border border-orange-100 shadow-inner w-full">
-                            <label class="block text-sm font-black text-orange-800 mb-3 break-words"><i class="fa-solid fa-caret-right text-orange-500 mr-2"></i>${opt.name}</label>
-                            <select class="modal-dynamic-opt w-full bg-white border-2 border-orange-200 rounded-xl p-4 outline-none focus:border-orange-500 transition font-bold text-lg text-slate-800 shadow-sm appearance-none cursor-pointer break-words whitespace-normal">
-                                ${opt.choices.map(c => `<option value="${c}">${c}</option>`).join('')}
-                            </select>
+                        <div class="bg-orange-50/50 p-4 md:p-5 rounded-2xl border border-orange-100 shadow-inner w-full">
+                            <label class="block text-sm font-black text-orange-800 mb-3 break-words"><i class="fa-solid fa-caret-right text-orange-500 mr-2"></i>${opt.name} <span class="text-xs text-orange-500 font-normal ml-1">${typeLabel}</span></label>
+                            <div class="flex flex-wrap gap-2 w-full">
+                                ${opt.choices.map((c, cIdx) => {
+                                    const isChecked = (!isMulti && cIdx === 0) ? 'checked' : '';
+                                    return `
+                                    <label class="flex items-center gap-2 cursor-pointer bg-white px-3 py-2.5 rounded-xl border border-orange-200 hover:border-orange-400 hover:shadow-sm transition">
+                                        <input type="${inputType}" ${inputName} value="${c}" class="modal-dynamic-opt-input w-5 h-5 text-orange-500 ${isMulti ? 'rounded' : 'rounded-full'} border-slate-300 focus:ring-orange-500 shrink-0" ${isChecked}>
+                                        <span class="text-sm font-bold text-slate-700 select-none">${c}</span>
+                                    </label>
+                                `}).join('')}
+                            </div>
                         </div>`;
                 });
             }
@@ -1272,8 +1315,9 @@
             let note = document.getElementById('modal-note').value.trim();
             
             let dynamicNotes = [];
-            document.querySelectorAll('.modal-dynamic-opt').forEach(sel => {
-                if (sel.value) dynamicNotes.push(sel.value);
+            // 單選與複選都能被這行抓到 (Radio & Checkbox)
+            document.querySelectorAll('.modal-dynamic-opt-input:checked').forEach(input => {
+                if (input.value) dynamicNotes.push(input.value);
             });
             if (dynamicNotes.length > 0) {
                 note = `[${dynamicNotes.join(', ')}] ` + note;
@@ -1618,7 +1662,7 @@
             } else {
                 document.getElementById('setting-global-opt-list').innerHTML = window.state.globalOptions.map(opt => `
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group hover:border-blue-300 transition hover:shadow-md transform hover:-translate-y-0.5 w-full">
-                        <h4 class="font-black text-slate-800 text-lg mb-2 flex items-center pr-6 break-words"><i class="fa-solid fa-caret-right text-blue-500 mr-2 shrink-0"></i>${opt.name}</h4>
+                        <h4 class="font-black text-slate-800 text-lg mb-2 flex items-center pr-6 break-words"><i class="fa-solid fa-caret-right text-blue-500 mr-2 shrink-0"></i>${opt.name} <span class="text-xs ml-2 ${opt.isMulti ? 'text-emerald-600 bg-emerald-50' : 'text-blue-600 bg-blue-50'} px-2 py-0.5 rounded shadow-sm border ${opt.isMulti ? 'border-emerald-100' : 'border-blue-100'}">${opt.isMulti ? '可複選' : '單選必填'}</span></h4>
                         <div class="flex flex-wrap gap-2 w-full">
                             ${opt.choices.map(c => `<span class="text-xs font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 shadow-sm break-words whitespace-normal max-w-full leading-tight">${c}</span>`).join('')}
                         </div>
@@ -1721,16 +1765,18 @@
         window.addGlobalOption = function() {
             const name = document.getElementById('setting-opt-name').value.trim();
             const choicesStr = document.getElementById('setting-opt-choices').value.trim();
+            const isMulti = document.getElementById('setting-opt-ismulti').checked;
             if (!name || !choicesStr) return alert('請完整填寫選項名稱與下拉內容！');
             const choices = choicesStr.split(',').map(s => s.trim()).filter(s => s !== '');
-            if (choices.length === 0) return alert('下拉選單內容無效！');
+            if (choices.length === 0) return alert('選項內容無效！');
             
-            window.state.globalOptions.push({ id: 'gopt_' + Date.now(), name, choices });
+            window.state.globalOptions.push({ id: 'gopt_' + Date.now(), name, choices, isMulti });
             window.addAdminLog('設定', `建立全域客製化選項模組「${name}」`);
             window.saveState();
             window.renderAdminSettings();
             document.getElementById('setting-opt-name').value = '';
             document.getElementById('setting-opt-choices').value = '';
+            document.getElementById('setting-opt-ismulti').checked = false;
         };
 
         window.deleteGlobalOption = function(id) {

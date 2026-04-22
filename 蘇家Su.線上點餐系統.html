@@ -22,6 +22,9 @@
         ::-webkit-scrollbar-track { background: transparent; }
         .store-header { position: sticky; top: 0; background: #f8fafc; z-index: 10; }
         
+        /* 拖曳時的視覺效果 */
+        .dragging { opacity: 0.5; border: 2px dashed #10b981; }
+
         @media print { 
             body * { visibility: hidden; }
             #view-receipt, #view-receipt * { visibility: visible; }
@@ -259,12 +262,16 @@
                 </div>
 
                 <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center"><i class="fa-solid fa-list text-emerald-500 mr-3"></i>菜單子分類統一管理</h3>
+                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between">
+                        <div class="flex items-center"><i class="fa-solid fa-list text-emerald-500 mr-3"></i>菜單子分類統一管理</div>
+                        <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100"><i class="fa-solid fa-arrows-up-down mr-1"></i>支援滑鼠拖曳變更排序</span>
+                    </h3>
+                    <p class="text-slate-500 font-bold mb-4 text-sm">在此處調整的上下順序，將會全域套用到前台的菜單呈現順序。</p>
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col md:flex-row gap-3">
                         <input id="setting-new-subcat" type="text" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-emerald-500 font-bold" placeholder="輸入新的子分類 (例如: 燒烤、炸物)">
                         <button onclick="addSubcat()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i>新增分類</button>
                     </div>
-                    <div id="setting-subcat-list" class="flex flex-wrap gap-3"></div>
+                    <div id="setting-subcat-list" class="flex flex-col gap-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner"></div>
                 </div>
 
                 <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100">
@@ -379,9 +386,9 @@
                         <button onclick="addStoreToActivity(document.getElementById('start-store-select').value)" class="shrink-0 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-black shadow-sm transition"><i class="fa-solid fa-plus"></i></button>
                     </div>
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-slate-400 font-bold">或隨機從分類抽取：</span>
+                        <span class="text-xs text-slate-400 font-bold">過濾 / 隨機抽取：</span>
                         <div class="flex gap-2">
-                            <select id="random-cat-select" class="bg-white border border-slate-200 p-1 rounded outline-none focus:border-yellow-500 font-bold text-xs shadow-sm text-slate-600"></select>
+                            <select id="random-cat-select" onchange="updateStartStoreDropdown()" class="bg-white border border-slate-200 p-1 rounded outline-none focus:border-yellow-500 font-bold text-xs shadow-sm text-slate-600"></select>
                             <button onclick="pickRandomStore()" class="shrink-0 bg-yellow-400 hover:bg-yellow-500 text-slate-800 px-3 py-1 rounded font-black shadow-sm transition text-xs flex items-center"><i class="fa-solid fa-dice mr-1"></i>隨機加入</button>
                         </div>
                     </div>
@@ -398,7 +405,8 @@
                         <button onclick="selectTime(30)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="30">30分</button>
                         <button onclick="selectTime(60)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="60">60分</button>
                         <button onclick="selectTime(180)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="180">180分</button>
-                        <button onclick="selectTime('custom')" class="time-btn col-span-2 bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="custom">自訂分鐘</button>
+                        <button onclick="selectTime(300)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="300">300分</button>
+                        <button onclick="selectTime('custom')" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200" data-val="custom">自訂</button>
                     </div>
                     <div id="custom-time-container" class="hidden mt-2">
                         <input id="custom-time-input" type="number" min="1" max="1440" class="w-full bg-orange-50 border-2 border-orange-200 p-3 rounded-xl outline-none focus:border-orange-500 font-bold text-sm text-center text-orange-800 shadow-inner" placeholder="輸入自訂分鐘數">
@@ -519,10 +527,10 @@
         window.timerInterval = null;
         window.isAdminLoggedIn = false;
         window.editingItemId = null; 
-        window.editingStoreName = null; // 新增：用於記錄正在編輯的店家
+        window.editingStoreName = null; 
         window.inactivityTimer = null;
         window.hasInitialLoaded = false;
-        window.selectedActivityStores = []; // 用於發起活動時的多選店家清單
+        window.selectedActivityStores = []; 
 
         // 密碼彈窗共用系統
         window.pendingPwdCallback = null;
@@ -610,7 +618,7 @@
                             }
                         } else {
                             const activeTag = document.activeElement ? document.activeElement.tagName : '';
-                            // 加入正在編輯店家的判斷，防止強制重置焦點
+                            // 防止重新渲染打斷正在輸入的欄位
                             const isTyping = window.editingItemId !== null || window.editingStoreName !== null || ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag);
 
                             if (isNowActive && !wasActive) {
@@ -802,13 +810,29 @@
 
         window.generateMenuHtml = function(storeName, isActiveMode = false) {
             let items = window.state.items.filter(i => (i.store || 'Unknown') === storeName);
-            items.sort((a, b) => a.name.localeCompare(b.name));
+            
+            // 將餐點依照全域子分類排序，並且在同一分類內自動依照名稱相近(localeCompare)自動排在一起
             const grouped = items.reduce((acc, item) => {
-                const sub = item.subCat || '所有餐點';
+                const sub = item.subCat || '無分類';
                 acc[sub] = acc[sub] || []; acc[sub].push(item); return acc;
             }, {});
+
+            Object.values(grouped).forEach(arr => {
+                arr.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+            });
+
+            // 依照後台自訂的「菜單子分類統一管理」做為呈現排序依據
+            const sortedKeys = Object.keys(grouped).sort((a, b) => {
+                let idxA = window.state.subCategories.indexOf(a);
+                let idxB = window.state.subCategories.indexOf(b);
+                if(idxA === -1) idxA = 999;
+                if(idxB === -1) idxB = 999;
+                return idxA - idxB;
+            });
+
             let html = '';
-            for (const [subCat, subItems] of Object.entries(grouped)) {
+            sortedKeys.forEach(subCat => {
+                const subItems = grouped[subCat];
                 html += `<div class="mb-10 bg-slate-50/70 p-6 md:p-8 rounded-[2rem] border border-slate-100"><h3 class="text-2xl font-black text-slate-800 mb-6 flex items-center"><span class="w-3 h-8 bg-orange-500 rounded-full mr-3 shadow-md"></span>${subCat}</h3><div class="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6">`;
                 subItems.forEach((item, index) => {
                     const action = isActiveMode ? `onclick="openOrderModal('${item.id}')"` : `onclick="alert('請發起活動才能點餐喔！')"` ;
@@ -831,8 +855,28 @@
                         </div>`;
                 });
                 html += `</div></div>`;
-            }
+            });
             return html || '<p class="text-center text-slate-400 font-bold py-8 text-lg bg-slate-50 rounded-3xl border border-dashed border-slate-200">該店家尚無任何餐點資料。</p>';
+        };
+
+        // 發起活動模組，動態依照分類更新店家清單
+        window.updateStartStoreDropdown = function() {
+            const catId = document.getElementById('random-cat-select').value;
+            let filteredItems = window.state.items;
+            if (catId !== 'all') {
+                filteredItems = filteredItems.filter(i => i.cat === catId);
+            }
+            const stores = [...new Set(filteredItems.map(i => i.store || 'Unknown'))];
+            const sel = document.getElementById('start-store-select');
+            
+            if(stores.length === 0) {
+                sel.innerHTML = '<option value="" disabled selected>該分類無店家資料</option>';
+            } else {
+                // 使用 Tailwind 的 bg-white 與 bg-slate-100 達成奇偶數跳色效果
+                sel.innerHTML = stores.map((s, index) => 
+                    `<option value="${s}" class="${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}">${s}</option>`
+                ).join('');
+            }
         };
 
         window.openStartOrderModal = function() {
@@ -840,19 +884,18 @@
             window.selectedActivityStores = [];
             window.renderSelectedActivityStores();
 
-            const sel = document.getElementById('start-store-select');
-            sel.innerHTML = [...new Set(window.state.items.map(i => i.store || 'Unknown'))].map(s => `<option value="${s}">${s}</option>`).join('');
-
             const catSel = document.getElementById('random-cat-select');
-            let catOptions = `<option value="all">全部分類</option>`;
+            let catOptions = `<option value="all" selected>全部分類</option>`;
             window.state.categories.forEach(c => { catOptions += `<option value="${c.id}">${c.name}</option>`; });
             catSel.innerHTML = catOptions;
+
+            // 觸發一次更新讓店家清單載入
+            window.updateStartStoreDropdown();
 
             window.selectTime(5); 
             window.openModal('start-modal');
         };
 
-        // 徹底修正渲染選擇店家的邏輯，避免刪除需要的 DOM 元件導致當機
         window.renderSelectedActivityStores = function() {
             const container = document.getElementById('selected-stores-list');
             if (window.selectedActivityStores.length === 0) {
@@ -895,7 +938,11 @@
             
             const randomStore = stores[Math.floor(Math.random() * stores.length)];
             window.addStoreToActivity(randomStore);
-            document.getElementById('start-store-select').value = randomStore;
+            // 同步下拉選單顯示的對象
+            const sel = document.getElementById('start-store-select');
+            if(sel.querySelector(`option[value="${randomStore}"]`)) {
+                sel.value = randomStore;
+            }
         };
 
         window.selectTime = function(val) {
@@ -1344,10 +1391,14 @@
         window.renderAdminSettings = function() {
             document.getElementById('admin-quick-names').value = window.state.quickNames.join(',');
             
+            // 加上 HTML5 拖曳功能
             document.getElementById('setting-subcat-list').innerHTML = window.state.subCategories.map((s, idx) => `
-                <div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-bold border border-emerald-100 shadow-sm transition hover:bg-emerald-100 hover:-translate-y-0.5">
-                    <span>${s}</span>
-                    <i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition ml-2" onclick="deleteSubcat(${idx})"></i>
+                <div class="flex items-center justify-between bg-emerald-50 text-emerald-700 px-4 py-3 rounded-lg font-bold border border-emerald-100 shadow-sm cursor-move hover:bg-emerald-100 hover:shadow-md transition group" draggable="true" ondragstart="handleDragStart(event, ${idx})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${idx})">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-grip-lines text-emerald-300 group-hover:text-emerald-500 transition"></i>
+                        <span>${s}</span>
+                    </div>
+                    <i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition" onclick="deleteSubcat(${idx})"></i>
                 </div>
             `).join('');
 
@@ -1365,6 +1416,37 @@
                 `).join('');
             }
         };
+
+        // 拖曳排序實作邏輯
+        let draggedSubcatIndex = null;
+        window.handleDragStart = function(e, idx) {
+            draggedSubcatIndex = idx;
+            e.dataTransfer.effectAllowed = "move";
+            e.target.classList.add('dragging');
+        };
+        window.handleDragOver = function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+        };
+        window.handleDrop = async function(e, targetIdx) {
+            e.preventDefault();
+            const draggedElement = document.querySelector('.dragging');
+            if(draggedElement) draggedElement.classList.remove('dragging');
+            if(draggedSubcatIndex === null || draggedSubcatIndex === targetIdx) return;
+            
+            const newArr = [...window.state.subCategories];
+            const item = newArr.splice(draggedSubcatIndex, 1)[0];
+            newArr.splice(targetIdx, 0, item);
+            window.state.subCategories = newArr;
+            
+            window.addAdminLog('修改', `調整子分類排序順序：${item} 移至第 ${targetIdx + 1} 位`);
+            window.renderAdminSettings();
+            await window.saveState();
+        };
+        document.addEventListener('dragend', () => {
+            const draggedElement = document.querySelector('.dragging');
+            if(draggedElement) draggedElement.classList.remove('dragging');
+        });
 
         window.saveQuickNames = function() {
             const val = document.getElementById('admin-quick-names').value;
@@ -1523,6 +1605,26 @@
             window.renderAdmin();
         };
 
+        // 快速添加餐點 (自動帶入鎖定店家資訊並聚焦)
+        window.quickAddItem = function(storeName) {
+            window.switchAdminTab('menu');
+            document.getElementById('admin-input-store').value = storeName;
+            window.autoFillStoreInfo();
+            
+            // 嘗試自動帶入該店家所屬的系統大分類
+            const storeItem = window.state.items.find(i => i.store === storeName);
+            if(storeItem && storeItem.cat) {
+                document.getElementById('admin-input-cat').value = storeItem.cat;
+            }
+            
+            // 將畫面平滑捲動到頂部的輸入表單，並將輸入焦點放在餐點名稱
+            const formTitle = document.getElementById('admin-form-title');
+            formTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => {
+                document.getElementById('admin-input-item').focus();
+            }, 500);
+        };
+
         window.saveStoreEdit = async function(oldStoreName) {
             const newName = document.getElementById(`edit-store-name-${oldStoreName}`).value.trim();
             const phone = document.getElementById(`edit-store-phone-${oldStoreName}`).value.trim();
@@ -1582,6 +1684,9 @@
                 );
             }
 
+            // 在後台列表中也加入名稱相近的排序
+            filteredItems.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+
             const grouped = filteredItems.reduce((acc, item) => { 
                 const sName = item.store || 'Unknown';
                 acc[sName] = acc[sName] || []; 
@@ -1630,7 +1735,7 @@
                             <div class="p-0 pointer-events-none opacity-40 grayscale">
                     `;
                 } else {
-                    // 店家一般視圖 (加入編輯按鈕)
+                    // 店家一般視圖 (加入編輯按鈕與快速添加餐點按鈕)
                     html += `
                         <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white">
                             <div class="store-header p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4" style="background-color: ${catInfo ? catInfo.color : '#f1f5f9'}">
@@ -1640,6 +1745,7 @@
                                         <h4 class="text-2xl font-black text-slate-800 flex items-center gap-3">
                                             ${store}
                                             <i onclick="setStoreEdit('${store}')" class="fa-solid fa-pen-to-square text-sm text-slate-400 hover:text-orange-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="編輯店家名稱與圖片資訊"></i>
+                                            <i onclick="quickAddItem('${store}')" class="fa-solid fa-plus-circle text-sm text-emerald-500 hover:text-emerald-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="快速新增此店家的餐點"></i>
                                         </h4>
                                         <div class="mt-1 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
                                             ${storeMeta.phone ? `<a href="tel:${storeMeta.phone}" class="bg-white/60 hover:bg-white/90 px-2 py-0.5 rounded transition text-slate-700 shadow-sm"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</a>` : ''}

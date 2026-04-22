@@ -426,20 +426,25 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // 🚨 這裡已經為您完全切換回您指定的 Firebase 12.12.1 原始 SDK 設定
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-        // 您的 Firebase 設定
+        // 您專屬的 Firebase 設定檔
         const firebaseConfig = {
             apiKey: "AIzaSyBhLO5Fpv0hQ921p1teY_e9Drmfi9jRsQM",
             authDomain: "sufood-2dc61.firebaseapp.com",
             projectId: "sufood-2dc61",
             storageBucket: "sufood-2dc61.firebasestorage.app",
             messagingSenderId: "15294829611",
-            appId: "1:15294829611:web:f7f244a5be5dcfc69b066e"
+            appId: "1:15294829611:web:f7f244a5be5dcfc69b066e",
+            measurementId: "G-QNMQNM15PY"
         };
         
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "food_order_db");
 

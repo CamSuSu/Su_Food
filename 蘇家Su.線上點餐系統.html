@@ -7,6 +7,7 @@
     <link rel="icon" href="images/sufood.ico" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px;}
@@ -141,7 +142,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b-2 border-slate-200 pb-4">
                 <h2 class="text-3xl font-black text-slate-800 flex items-center"><i class="fa-solid fa-database text-orange-500 mr-3 text-3xl"></i>系統資料庫管理</h2>
                 <div class="flex gap-3 w-full md:w-auto">
-                    <button onclick="logoutAdmin()" class="flex-1 md:flex-none bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-slate-900 transition shadow-md flex justify-center items-center"><i class="fa-solid fa-right-from-bracket mr-2"></i>返回前台</button>
+                    <button onclick="logoutAdmin()" class="flex-1 md:flex-none bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-slate-900 transition shadow-md flex justify-center items-center whitespace-nowrap"><i class="fa-solid fa-right-from-bracket mr-2"></i>返回前台</button>
                 </div>
             </div>
 
@@ -243,6 +244,14 @@
                 </div>
 
                 <div class="xl:col-span-8">
+                    <div class="flex flex-wrap justify-end gap-3 mb-4">
+                        <button onclick="exportDatabaseExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center whitespace-nowrap"><i class="fa-solid fa-file-excel mr-2"></i>匯出 Excel</button>
+                        <label class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center cursor-pointer whitespace-nowrap mb-0">
+                            <i class="fa-solid fa-file-import mr-2"></i>匯入 Excel
+                            <input type="file" id="import-db-file" accept=".xlsx" class="hidden" onchange="importDatabaseExcel(event)">
+                        </label>
+                    </div>
+
                     <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
                         <div class="mb-8 relative">
                             <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-400 text-lg"></i>
@@ -296,12 +305,13 @@
             </div>
 
             <div id="admin-tab-history" class="hidden bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b-2 border-slate-100 pb-6 gap-4">
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 border-b-2 border-slate-100 pb-6 gap-4">
                     <div>
                         <h3 class="text-3xl font-black text-slate-800 flex items-center"><i class="fa-solid fa-clock-rotate-left text-orange-500 mr-3"></i>歷史訂單紀錄</h3>
                         <p class="text-slate-500 font-bold mt-2 bg-slate-100 px-3 py-1 rounded-lg inline-block text-sm">系統結單後自動保留最新的 100 筆紀錄</p>
                     </div>
-                    <div class="flex gap-3 w-full md:w-auto">
+                    <div class="flex flex-wrap gap-3 w-full xl:w-auto">
+                        <button onclick="exportAllHistoryExcel()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap"><i class="fa-solid fa-file-excel mr-2"></i>全部匯出 Excel</button>
                         <button onclick="exportHistoryTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap"><i class="fa-solid fa-file-export mr-2"></i>匯出 TXT</button>
                         <button onclick="requestPassword('確認清空歷史紀錄？輸入管理員密碼', pwd => clearHistoryRecords(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
                     </div>
@@ -532,7 +542,6 @@
         window.hasInitialLoaded = false;
         window.selectedActivityStores = []; 
 
-        // 密碼彈窗共用系統
         window.pendingPwdCallback = null;
         window.requestPassword = function(msg, callback) {
             document.getElementById('pwd-prompt-msg').innerText = msg;
@@ -550,7 +559,6 @@
             }
         };
 
-        // 高效圖片壓縮引擊
         window.compressImage = function(file, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -618,7 +626,6 @@
                             }
                         } else {
                             const activeTag = document.activeElement ? document.activeElement.tagName : '';
-                            // 防止重新渲染打斷正在輸入的欄位
                             const isTyping = window.editingItemId !== null || window.editingStoreName !== null || ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag);
 
                             if (isNowActive && !wasActive) {
@@ -811,7 +818,6 @@
         window.generateMenuHtml = function(storeName, isActiveMode = false) {
             let items = window.state.items.filter(i => (i.store || 'Unknown') === storeName);
             
-            // 將餐點依照全域子分類排序，並且在同一分類內自動依照名稱相近(localeCompare)自動排在一起
             const grouped = items.reduce((acc, item) => {
                 const sub = item.subCat || '無分類';
                 acc[sub] = acc[sub] || []; acc[sub].push(item); return acc;
@@ -821,7 +827,6 @@
                 arr.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
             });
 
-            // 依照後台自訂的「菜單子分類統一管理」做為呈現排序依據
             const sortedKeys = Object.keys(grouped).sort((a, b) => {
                 let idxA = window.state.subCategories.indexOf(a);
                 let idxB = window.state.subCategories.indexOf(b);
@@ -859,7 +864,6 @@
             return html || '<p class="text-center text-slate-400 font-bold py-8 text-lg bg-slate-50 rounded-3xl border border-dashed border-slate-200">該店家尚無任何餐點資料。</p>';
         };
 
-        // 發起活動模組，動態依照分類更新店家清單
         window.updateStartStoreDropdown = function() {
             const catId = document.getElementById('random-cat-select').value;
             let filteredItems = window.state.items;
@@ -872,7 +876,6 @@
             if(stores.length === 0) {
                 sel.innerHTML = '<option value="" disabled selected>該分類無店家資料</option>';
             } else {
-                // 使用 Tailwind 的 bg-white 與 bg-slate-100 達成奇偶數跳色效果
                 sel.innerHTML = stores.map((s, index) => 
                     `<option value="${s}" class="${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}">${s}</option>`
                 ).join('');
@@ -889,9 +892,7 @@
             window.state.categories.forEach(c => { catOptions += `<option value="${c.id}">${c.name}</option>`; });
             catSel.innerHTML = catOptions;
 
-            // 觸發一次更新讓店家清單載入
             window.updateStartStoreDropdown();
-
             window.selectTime(5); 
             window.openModal('start-modal');
         };
@@ -938,7 +939,6 @@
             
             const randomStore = stores[Math.floor(Math.random() * stores.length)];
             window.addStoreToActivity(randomStore);
-            // 同步下拉選單顯示的對象
             const sel = document.getElementById('start-store-select');
             if(sel.querySelector(`option[value="${randomStore}"]`)) {
                 sel.value = randomStore;
@@ -1353,6 +1353,7 @@
                 if (log.action === '新增') actionColor = "bg-emerald-100 text-emerald-700";
                 if (log.action === '修改') actionColor = "bg-amber-100 text-amber-700";
                 if (log.action === '刪除') actionColor = "bg-red-100 text-red-700";
+                if (log.action === '匯入') actionColor = "bg-purple-100 text-purple-700";
 
                 html += `
                     <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-3 hover:bg-slate-50 hover:shadow-sm transition">
@@ -1391,7 +1392,6 @@
         window.renderAdminSettings = function() {
             document.getElementById('admin-quick-names').value = window.state.quickNames.join(',');
             
-            // 加上 HTML5 拖曳功能
             document.getElementById('setting-subcat-list').innerHTML = window.state.subCategories.map((s, idx) => `
                 <div class="flex items-center justify-between bg-emerald-50 text-emerald-700 px-4 py-3 rounded-lg font-bold border border-emerald-100 shadow-sm cursor-move hover:bg-emerald-100 hover:shadow-md transition group" draggable="true" ondragstart="handleDragStart(event, ${idx})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${idx})">
                     <div class="flex items-center gap-3">
@@ -1417,7 +1417,6 @@
             }
         };
 
-        // 拖曳排序實作邏輯
         let draggedSubcatIndex = null;
         window.handleDragStart = function(e, idx) {
             draggedSubcatIndex = idx;
@@ -1599,25 +1598,21 @@
             searchTimeout = setTimeout(window.renderAdmin, 300);
         };
 
-        // 店家編輯功能邏輯
         window.setStoreEdit = function(storeName) {
             window.editingStoreName = storeName;
             window.renderAdmin();
         };
 
-        // 快速添加餐點 (自動帶入鎖定店家資訊並聚焦)
         window.quickAddItem = function(storeName) {
             window.switchAdminTab('menu');
             document.getElementById('admin-input-store').value = storeName;
             window.autoFillStoreInfo();
             
-            // 嘗試自動帶入該店家所屬的系統大分類
             const storeItem = window.state.items.find(i => i.store === storeName);
             if(storeItem && storeItem.cat) {
                 document.getElementById('admin-input-cat').value = storeItem.cat;
             }
             
-            // 將畫面平滑捲動到頂部的輸入表單，並將輸入焦點放在餐點名稱
             const formTitle = document.getElementById('admin-form-title');
             formTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
             setTimeout(() => {
@@ -1647,7 +1642,6 @@
                 window.state.stores.push({name: newName, phone, address, coverImg, hours: {}});
             }
 
-            // 若店名變更，必須同步更新所有旗下餐點的店名資訊
             if (newName !== oldStoreName) {
                 window.state.items.forEach(item => {
                     if (item.store === oldStoreName) {
@@ -1684,7 +1678,6 @@
                 );
             }
 
-            // 在後台列表中也加入名稱相近的排序
             filteredItems.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
 
             const grouped = filteredItems.reduce((acc, item) => { 
@@ -1700,7 +1693,6 @@
                 const storeMeta = window.state.stores.find(s => s.name === store) || {};
                 const coverImg = storeMeta.coverImg || items.find(i=>i.img && i.img !== DEFAULT_IMG)?.img || DEFAULT_IMG;
                 
-                // 店家編輯模式視圖
                 if (window.editingStoreName === store) {
                     html += `
                         <div class="border border-orange-300 rounded-[2rem] overflow-hidden shadow-md mb-8 bg-white ring-4 ring-orange-100">
@@ -1735,7 +1727,6 @@
                             <div class="p-0 pointer-events-none opacity-40 grayscale">
                     `;
                 } else {
-                    // 店家一般視圖 (加入編輯按鈕與快速添加餐點按鈕)
                     html += `
                         <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white">
                             <div class="store-header p-5 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4" style="background-color: ${catInfo ? catInfo.color : '#f1f5f9'}">
@@ -1765,7 +1756,6 @@
                     const imgUrl = item.img || DEFAULT_IMG;
                     const displayUpdateDate = item.updateDate || window.state.menuUpdateDate || '無紀錄';
 
-                    // 確保使用 String 型別來做精確比對
                     if (String(window.editingItemId) === String(item.id)) {
                         html += `
                         <div class="p-5 md:p-6 border-b border-orange-200 bg-orange-50/50 shadow-inner">
@@ -1961,70 +1951,312 @@
             }
         };
 
-        window.renderHistory = function() {
-            let html = '';
-            if(window.state.orderHistory.length === 0) {
-                document.getElementById('admin-history-list').innerHTML = '<div class="col-span-full py-16 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50"><p class="text-slate-400 font-bold text-2xl"><i class="fa-solid fa-receipt block text-5xl mb-4 opacity-50"></i>目前尚無任何歷史結單紀錄。</p></div>';
-                return;
-            }
+        // ================= ExcelJS 匯出匯入模組 =================
+        
+        // 匯出資料庫
+        window.exportDatabaseExcel = async function() {
+            if (window.state.items.length === 0) return alert('資料庫目前沒有餐點可供匯出！');
             
-            window.state.orderHistory.forEach((order, idx) => {
-                html += `
-                    <div class="border border-slate-200 rounded-[2rem] p-6 md:p-8 bg-white shadow-sm hover:shadow-lg transition flex flex-col transform hover:-translate-y-1">
-                        <div class="flex flex-col xl:flex-row justify-between xl:items-center border-b border-slate-100 pb-5 mb-5 gap-4">
-                            <div class="flex items-center gap-3">
-                                <span class="bg-slate-800 text-white px-4 py-1.5 rounded-xl text-sm font-black shadow-sm">#${window.state.orderHistory.length - idx}</span>
-                                <span class="font-bold text-slate-500 text-sm"><i class="fa-regular fa-clock mr-1.5"></i>${order.date} ${order.time}</span>
-                            </div>
-                            <span class="font-black text-red-600 bg-red-50 px-5 py-2 rounded-xl text-xl border border-red-100 shadow-inner whitespace-nowrap">結算 $${order.total}</span>
-                        </div>
-                        
-                        <div class="text-slate-800 font-black text-xl md:text-2xl mb-5 flex items-start gap-3">
-                            <i class="fa-solid fa-store mt-1 text-orange-500 bg-orange-50 p-2 rounded-lg shrink-0"></i>
-                            <span class="leading-tight">${order.store}</span>
-                        </div>
-                        
-                        <div class="space-y-2 bg-slate-50 p-5 rounded-2xl text-sm border border-slate-100 flex-1">
-                            ${order.cart.map(c => `
-                                <div class="flex justify-between items-start md:items-center border-b border-slate-200/70 pb-3 mb-3 last:border-0 last:pb-0 last:mb-0">
-                                    <div class="flex items-center flex-wrap gap-2 pr-4">
-                                        <span class="text-white bg-orange-500 px-2.5 py-1 rounded-lg text-xs font-black shadow-sm">${c.userName}</span> 
-                                        <span class="font-bold text-slate-800 text-base">${c.itemName}</span> 
-                                        <span class="text-slate-400 font-black text-sm ml-1 bg-white border border-slate-200 px-1.5 rounded">x${c.qty}</span> 
-                                        ${c.note ? `<span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-md font-bold border border-blue-100 ml-1"><i class="fa-solid fa-pen mr-1"></i>${c.note}</span>` : ''}
-                                    </div>
-                                    <span class="text-slate-700 font-black text-lg mt-1 md:mt-0">$${c.price * c.qty}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('蘇家系統資料庫', {
+                pageSetup: { 
+                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
+                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
+                }
             });
-            document.getElementById('admin-history-list').innerHTML = html;
+            
+            // 移除圖片欄位
+            sheet.columns = [
+                { header: '系統大分類', key: 'cat', width: 18 },
+                { header: '店家名稱', key: 'store', width: 25 },
+                { header: '店家電話(選填)', key: 'phone', width: 16 },
+                { header: '店家地址(選填)', key: 'address', width: 35 },
+                { header: '菜單子分類', key: 'subcat', width: 15 },
+                { header: '餐點名稱', key: 'item', width: 30 },
+                { header: '價格', key: 'price', width: 12 },
+                { header: '選項模組(用逗號分隔)', key: 'options', width: 25 }
+            ];
+
+            // 標題列美化
+            sheet.getRow(1).eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF97316' } }; // 橘色底
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+
+            // 寫入資料
+            window.state.items.forEach((item, index) => {
+                const catObj = window.state.categories.find(c => c.id === item.cat);
+                const storeObj = window.state.stores.find(s => s.name === item.store) || {};
+                
+                const row = sheet.addRow({
+                    cat: catObj ? catObj.name : '未分類',
+                    store: item.store,
+                    phone: storeObj.phone || '',
+                    address: storeObj.address || '',
+                    subcat: item.subCat || '主餐',
+                    item: item.name,
+                    price: item.price,
+                    options: (item.customOptionIds || []).join(', ')
+                });
+
+                // 奇偶數跳色 (斑馬紋)
+                if (index % 2 === 0) { 
+                    row.eachCell(cell => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEDD5' } }; // 淺橘色底
+                    });
+                }
+                
+                row.eachCell(cell => {
+                    cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                    cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
+                });
+            });
+
+            // 產出檔案並下載
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `蘇家線上點餐資料庫_${window.getFormattedDate()}.xlsx`;
+            link.click();
         };
 
-        window.exportHistoryTxt = function() {
-            if(window.state.orderHistory.length === 0) return alert('沒有資料可供匯出');
-            let content = "--- 蘇家Su.線上點餐系統 歷史訂單紀錄 ---\n\n";
-            window.state.orderHistory.forEach((order, idx) => {
-                content += `[紀錄 #${window.state.orderHistory.length - idx}] 結單時間: ${order.date} ${order.time} | 店家: ${order.store}\n`;
-                content += `>>> 總結算金額: $${order.total}\n明細：\n`;
-                order.cart.forEach(c => { content += `  - ${c.userName}: ${c.itemName} x${c.qty} (小計 $${c.price * c.qty}) ${c.note ? '備註:'+c.note : ''}\n`; });
-                content += "--------------------------------------------------\n";
+        // 匯入資料庫
+        window.importDatabaseExcel = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            window.requestPassword('確認匯入 Excel 嗎？(將與現有資料庫合併)', async pwd => {
+                if(pwd !== 'kora1992') { alert('❌ 管理員密碼錯誤，拒絕執行匯入！'); event.target.value = ''; return; }
+                
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const buffer = e.target.result;
+                        const workbook = new ExcelJS.Workbook();
+                        await workbook.xlsx.load(buffer);
+                        const sheet = workbook.getWorksheet(1);
+                        
+                        let importedCount = 0;
+                        sheet.eachRow((row, rowNumber) => {
+                            if (rowNumber === 1) return; // 略過標題列
+                            
+                            const catName = row.getCell(1).value?.toString().trim() || '未分類';
+                            const storeName = row.getCell(2).value?.toString().trim();
+                            const phone = row.getCell(3).value?.toString().trim() || '';
+                            const address = row.getCell(4).value?.toString().trim() || '';
+                            const subCat = row.getCell(5).value?.toString().trim() || '主餐';
+                            const itemName = row.getCell(6).value?.toString().trim();
+                            
+                            const priceVal = row.getCell(7).value;
+                            const price = parseInt(priceVal);
+                            
+                            const optionsStr = row.getCell(8).value?.toString().trim() || '';
+                            
+                            // 略過無效資料
+                            if (!storeName || !itemName || isNaN(price)) return; 
+
+                            // 處理系統大分類 (若無則自動新建)
+                            let catObj = window.state.categories.find(c => c.name === catName);
+                            if(!catObj) {
+                                catObj = { id: 'cat_' + Date.now() + Math.random().toString(36).substring(2,8), name: catName, color: THEME_COLORS[Math.floor(Math.random()*THEME_COLORS.length)] };
+                                window.state.categories.push(catObj);
+                            }
+                            
+                            // 處理子分類 (若無則自動新建)
+                            if (!window.state.subCategories.includes(subCat)) {
+                                window.state.subCategories.push(subCat);
+                            }
+
+                            // 處理店家資訊 (自動新建或更新空值)
+                            let storeObj = window.state.stores.find(s => s.name === storeName);
+                            if(!storeObj) {
+                                window.state.stores.push({ name: storeName, phone: phone, address: address, coverImg: '', hours: {} });
+                            } else {
+                                if(phone && !storeObj.phone) storeObj.phone = phone;
+                                if(address && !storeObj.address) storeObj.address = address;
+                            }
+
+                            const customOptionIds = optionsStr ? optionsStr.split(',').map(s=>s.trim()).filter(s=>s) : [];
+
+                            // 將資料壓入系統 (圖片自動帶入預設)
+                            window.state.items.push({
+                                id: Date.now().toString() + Math.random().toString(36).substring(2, 8),
+                                cat: catObj.id,
+                                store: storeName,
+                                subCat: subCat,
+                                name: itemName,
+                                price: price,
+                                img: DEFAULT_IMG,
+                                isLocked: true, 
+                                customOptionIds: customOptionIds,
+                                updateDate: window.getFormattedDate()
+                            });
+                            importedCount++;
+                        });
+                        
+                        window.state.menuUpdateDate = window.getFormattedDate();
+                        window.addAdminLog('匯入', `透過 Excel 批次匯入了 ${importedCount} 筆餐點資料`);
+                        await window.saveState();
+                        window.renderAdmin();
+                        alert(`✅ 成功匯入 ${importedCount} 筆資料！`);
+
+                    } catch (err) {
+                        console.error(err);
+                        alert("❌ 匯入失敗，請確認檔案格式是否為有效的 .xlsx 檔案。");
+                    }
+                    event.target.value = ''; 
+                };
+                reader.readAsArrayBuffer(file);
             });
-            const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `點餐紀錄_${window.getFormattedDate()}.txt`; a.click();
         };
 
-        window.clearHistoryRecords = async function(pwd) {
-            if(!window.state.orderHistory || window.state.orderHistory.length === 0) return alert('紀錄已經是空的，無需清空。');
-            if(pwd === "81160530") {
-                window.state.orderHistory = [];
-                window.addAdminLog('清空', '最高權限管理員已手動清空歷史結單紀錄');
-                await window.saveState(); window.renderHistory(); alert("✅ 歷史紀錄已成功清空！");
-            } else alert("❌ 密碼錯誤，拒絕執行！");
+        // 單筆明細匯出
+        window.exportSingleHistoryExcel = async function(orderId) {
+            const order = window.state.orderHistory.find(o => String(o.id) === String(orderId));
+            if (!order) return;
+
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('點餐明細', {
+                pageSetup: { 
+                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
+                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
+                }
+            });
+
+            sheet.mergeCells('A1:E1');
+            const titleCell = sheet.getCell('A1');
+            titleCell.value = '蘇家Su.線上點餐系統 - 訂單明細';
+            titleCell.font = { size: 16, bold: true };
+            titleCell.alignment = { horizontal: 'center' };
+
+            sheet.mergeCells('A2:E2');
+            sheet.getCell('A2').value = `店家：${order.store}   |   結單時間：${order.date} ${order.time}`;
+            sheet.getCell('A2').font = { bold: true };
+            sheet.getCell('A2').alignment = { horizontal: 'center' };
+
+            const tableStartRow = 4;
+            sheet.getRow(tableStartRow).values = ['點餐人', '餐點名稱', '數量', '備註', '小計'];
+            sheet.columns = [
+                { key: 'user', width: 15 },
+                { key: 'item', width: 30 },
+                { key: 'qty', width: 10 },
+                { key: 'note', width: 25 },
+                { key: 'subtotal', width: 15 }
+            ];
+
+            sheet.getRow(tableStartRow).eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; 
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.alignment = { horizontal: 'center' };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+
+            order.cart.sort((a,b) => a.userName.localeCompare(b.userName)).forEach((c, idx) => {
+                const row = sheet.addRow({
+                    user: c.userName,
+                    item: c.itemName,
+                    qty: c.qty,
+                    note: c.note || '',
+                    subtotal: c.price * c.qty
+                });
+                
+                if (idx % 2 === 0) {
+                    row.eachCell(cell => cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } });
+                }
+                row.eachCell(cell => {
+                    cell.alignment = { vertical: 'middle', wrapText: true };
+                    cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
+                });
+                row.getCell('qty').alignment = { horizontal: 'center', vertical: 'middle' };
+                row.getCell('subtotal').alignment = { horizontal: 'right', vertical: 'middle' };
+            });
+
+            const totalRow = sheet.addRow(['', '', '', '總結算金額：', `$${order.total}`]);
+            totalRow.getCell(4).font = { bold: true, size: 14 };
+            totalRow.getCell(4).alignment = { horizontal: 'right' };
+            totalRow.getCell(5).font = { bold: true, size: 14, color: { argb: 'FFDC2626' } };
+            totalRow.getCell(5).alignment = { horizontal: 'right' };
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `訂單明細_${order.date.replace(/-/g,'')}_${order.time.replace(/:/g,'')}.xlsx`;
+            link.click();
+        };
+
+        // 全部歷史明細匯出
+        window.exportAllHistoryExcel = async function() {
+            if(window.state.orderHistory.length === 0) return alert('沒有歷史訂單可供匯出');
+
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('歷史訂單總表', {
+                pageSetup: { 
+                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
+                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
+                }
+            });
+
+            sheet.columns = [
+                { header: '結單日期', key: 'date', width: 15 },
+                { header: '店家名稱', key: 'store', width: 25 },
+                { header: '點餐人', key: 'user', width: 15 },
+                { header: '餐點名稱', key: 'item', width: 30 },
+                { header: '數量', key: 'qty', width: 10 },
+                { header: '備註', key: 'note', width: 25 },
+                { header: '小計', key: 'subtotal', width: 12 },
+                { header: '該單總額', key: 'total', width: 15 }
+            ];
+
+            sheet.getRow(1).eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.alignment = { horizontal: 'center' };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+
+            let isEven = false;
+            window.state.orderHistory.forEach(order => {
+                order.cart.sort((a,b) => a.userName.localeCompare(b.userName)).forEach((c, idx) => {
+                    const row = sheet.addRow({
+                        date: idx === 0 ? `${order.date} ${order.time}` : '',
+                        store: idx === 0 ? order.store : '',
+                        user: c.userName,
+                        item: c.itemName,
+                        qty: c.qty,
+                        note: c.note || '',
+                        subtotal: c.price * c.qty,
+                        total: idx === 0 ? order.total : ''
+                    });
+                    
+                    if (isEven) {
+                        row.eachCell(cell => cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } });
+                    }
+
+                    row.eachCell(cell => {
+                        cell.alignment = { vertical: 'middle', wrapText: true };
+                        cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
+                    });
+
+                    row.getCell('qty').alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell('subtotal').alignment = { horizontal: 'right', vertical: 'middle' };
+                    if(idx === 0) {
+                        row.getCell('total').font = { bold: true, color: { argb: 'FFDC2626' } };
+                        row.getCell('total').alignment = { horizontal: 'right', vertical: 'middle' };
+                    }
+                });
+                isEven = !isEven; 
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `全部訂單紀錄_${window.getFormattedDate()}.xlsx`;
+            link.click();
         };
 
     </script>

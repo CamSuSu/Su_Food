@@ -325,7 +325,7 @@
                                 <input id="setting-opt-choices" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 正常甜,少糖,半糖,無糖">
                             </div>
                             <div class="md:col-span-3 mt-1">
-                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm text-blue-800 bg-white p-2.5 rounded-xl border border-blue-200 shadow-sm w-full sm:w-auto inline-flex">
+                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm text-blue-800 bg-white p-2.5 rounded-xl border border-blue-200 shadow-sm w-full sm:w-auto inline-flex hover:shadow transition">
                                     <input type="checkbox" id="setting-opt-ismulti" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-blue-300">
                                     允許使用者複選此選項 (若未勾選則強制為單選必填)
                                 </label>
@@ -594,14 +594,20 @@
             }, 300);
         };
 
-        // 壓縮與解壓縮演算法模組
+        // 高效能 Base64 壓縮機制，並提供 UTF-16 的向下相容解碼
         window.compressData = function(data) {
             if (!data) return null;
-            return LZString.compressToUTF16(JSON.stringify(data));
+            return LZString.compressToBase64(JSON.stringify(data));
         };
         window.decompressData = function(str, defaultVal = []) {
             if (!str) return defaultVal;
-            try { return JSON.parse(LZString.decompressFromUTF16(str)) || defaultVal; } 
+            try { 
+                let decompressed = LZString.decompressFromBase64(str);
+                if (decompressed === null) {
+                    decompressed = LZString.decompressFromUTF16(str);
+                }
+                return JSON.parse(decompressed) || defaultVal; 
+            } 
             catch(e) { console.error("資料解壓縮失敗", e); return defaultVal; }
         };
 
@@ -660,7 +666,6 @@
         window.hasInitialLoaded = false;
         window.selectedActivityStores = []; 
 
-        // 全域鎖定滾動，預防 Modal 卡死網頁背景
         function checkBodyScroll() {
             const openModals = Array.from(document.querySelectorAll('[id$="-modal"]')).filter(el => !el.classList.contains('hidden'));
             if(openModals.length === 0) document.body.style.overflow = '';
@@ -692,7 +697,7 @@
             }
         };
 
-        // 圖片破壞性極限壓縮
+        // 更新圖片壓縮機制，採用 WebP 格式大幅減少資料庫佔用空間
         window.compressImage = function(file, event, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -700,7 +705,8 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    const maxW = 400; const maxH = 400;
+                    // 解析度微調至 320px，在行動裝置呈現完美且容量極小
+                    const maxW = 320; const maxH = 320;
                     let w = img.width; let h = img.height;
                     if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
                     else { if (h > maxH) { w *= maxH / h; h = maxH; } }
@@ -710,14 +716,15 @@
                     ctx.fillRect(0, 0, w, h);
                     ctx.drawImage(img, 0, 0, w, h);
                     
-                    let quality = 0.7;
+                    let quality = 0.8;
                     const attemptCompress = () => {
-                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        if (dataUrl.length > 130000 && quality > 0.1) {
-                            quality -= 0.2;
+                        // 使用 webp 獲得比 jpeg 更高的壓縮率 (降低 30~40% 容量)
+                        const dataUrl = canvas.toDataURL('image/webp', quality);
+                        if (dataUrl.length > 70000 && quality > 0.1) {
+                            quality -= 0.15;
                             attemptCompress();
-                        } else if (dataUrl.length > 130000) {
-                            alert('⚠️ 圖片過於複雜，壓縮後仍超過系統單檔容量安全限制 (100KB)。請手動更換較簡單或檔案更小的圖片！');
+                        } else if (dataUrl.length > 100000) {
+                            alert('⚠️ 圖片過於複雜，壓縮後仍超過系統單檔容量安全限制。請手動更換較簡單或檔案更小的圖片！');
                             if(event && event.target) event.target.value = '';
                         } else {
                             callback(dataUrl);
@@ -845,26 +852,26 @@
 
         window.saveState = async function() {
             try {
-                const safeState = JSON.parse(JSON.stringify(window.state));
+                // 淺拷貝避免直接修改 window.state
+                const safeState = { ...window.state };
                 
                 safeState.orderHistoryStr = window.compressData(safeState.orderHistory);
                 safeState.adminLogsStr = window.compressData(safeState.adminLogs);
                 safeState.itemsStr = window.compressData(safeState.items);
                 safeState.storesStr = window.compressData(safeState.stores);
                 
-                safeState.orderHistory = deleteField();
-                safeState.adminLogs = deleteField();
-                safeState.items = deleteField();
-                safeState.stores = deleteField();
+                delete safeState.orderHistory;
+                delete safeState.adminLogs;
+                delete safeState.items;
+                delete safeState.stores;
 
                 const jsonString = JSON.stringify(safeState);
                 const sizeInBytes = new Blob([jsonString]).size;
                 
+                // Firestore 單個文檔 1MB 極限保護，避免崩潰 (1048576 bytes)
                 if (sizeInBytes > 1040000) {
-                    alert("❌ 嚴重錯誤：資料總容量已超過 Firebase 1MB 限制！本次修改已被系統攔截以防崩潰。\n\n請至歷史紀錄中「清空紀錄」，或刪除不需要的店家圖片！");
+                    alert("❌ 嚴重錯誤：資料總容量已超過 Firebase 單一文檔 1MB 限制！本次修改已被系統攔截以防崩潰。\n\n請至歷史紀錄中「清空紀錄」，或刪除不需要的店家圖片！");
                     return;
-                } else if (sizeInBytes > 800000) {
-                    alert("⚠️ 系統容量警告：資料庫容量已達 80%。建議您定期清理歷史紀錄，以維持系統最佳效能！");
                 }
 
                 await setDoc(dbRef, safeState, { merge: true });
@@ -1396,6 +1403,8 @@
         window.autoCheckout = async function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.add('hidden');
+            window.closeModal('order-modal');
+            window.closeModal('start-modal');
 
             try {
                 await runTransaction(db, async (transaction) => {

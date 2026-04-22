@@ -437,18 +437,21 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyBxwPsNRCbYLbrILVevw1zP9JZsZHRjFQw",
-            authDomain: "su-computer-studio-225e1.firebaseapp.com",
-            projectId: "su-computer-studio-225e1",
-            storageBucket: "su-computer-studio-225e1.firebasestorage.app",
-            messagingSenderId: "220949673626",
-            appId: "1:220949673626:web:6c767c20f681edfcc65123"
+            apiKey: "AIzaSyBhLO5Fpv0hQ921p1teY_e9Drmfi9jRsQM",
+            authDomain: "sufood-2dc61.firebaseapp.com",
+            projectId: "sufood-2dc61",
+            storageBucket: "sufood-2dc61.firebasestorage.app",
+            messagingSenderId: "15294829611",
+            appId: "1:15294829611:web:f7f244a5be5dcfc69b066e",
+            measurementId: "G-QNMQNM15PY"
         };
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "food_order_db");
 
@@ -538,7 +541,10 @@
                             window.hasInitialLoaded = true;
                             // 第一次進入網站，若活動正在進行中，強制跳轉進點餐畫面
                             if (isNowActive) {
-                                window.checkSession();
+                                window.showView('active-order');
+                                window.startTimer();
+                            } else {
+                                window.showView('home');
                             }
                         } else {
                             const activeTag = document.activeElement ? document.activeElement.tagName : '';
@@ -993,29 +999,28 @@
                     if (!sfDoc.exists()) return;
                     let dbState = sfDoc.data();
                     
-                    if (!dbState.session.isActive) return;
+                    if (!dbState.session.isActive) return; // 已被其他人結單
                     
                     let history = dbState.orderHistory || [];
-                    let total = 0;
-                    if (dbState.cart && dbState.cart.length > 0) {
-                        total = dbState.cart.reduce((sum, c) => sum + (c.price * c.qty), 0);
-                        history.unshift({ 
-                            date: window.getFormattedDate(), 
-                            time: new Date().toLocaleTimeString('zh-TW'), 
-                            store: dbState.session.storeName, 
-                            total, 
-                            cart: [...dbState.cart] 
-                        });
-                        if (history.length > 100) history.pop();
-                    }
+                    let finalCart = dbState.cart || [];
+                    let total = finalCart.reduce((sum, c) => sum + (c.price * c.qty), 0);
+                    
+                    // 無論有沒有人點餐，都寫入歷史紀錄
+                    history.unshift({ 
+                        date: window.getFormattedDate(), 
+                        time: new Date().toLocaleTimeString('zh-TW'), 
+                        store: dbState.session.storeName, 
+                        total: total, 
+                        cart: [...finalCart] 
+                    });
+                    if (history.length > 100) history.pop();
                     
                     dbState.session.isActive = false;
                     
                     window.printStoreName = dbState.session.storeName;
-                    window.printCart = [...(dbState.cart || [])];
+                    window.printCart = [...finalCart];
                     window.printTotal = total;
 
-                    dbState.cart = [];
                     transaction.update(dbRef, { session: dbState.session, orderHistory: history, cart: [] });
                     checkoutTriggeredByMe = true;
                 });
@@ -1046,7 +1051,7 @@
                     alert("活動結束！即將開啟列印/匯出 PDF 畫面。"); 
                     window.print();
                 } else {
-                    alert("活動結束！無人點餐。");
+                    alert("活動結束！本次活動無人點餐。");
                 }
                 window.printCart = null;
             }

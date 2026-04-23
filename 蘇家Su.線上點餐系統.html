@@ -24,9 +24,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
     <style>
         /* 提升文字載入效能與優化字體抗鋸齒渲染 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -445,8 +442,9 @@
                 <button id="btn-print-pdf" onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
-                <button id="btn-generate-pdf" onclick="openMobilePDF()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
-                    <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>新分頁顯示 PDF
+                
+                <button id="btn-new-tab-receipt" onclick="openReceiptInNewTab()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                    <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>新分頁開啟明細
                 </button>
                 
                 <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
@@ -588,8 +586,10 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
+        // 全域鎖定標籤，防止行動裝置慢速網路時 snapshot 監聽器與結單互搶導致死當
         window.isCheckingOut = false;
 
+        // 莫蘭迪色系生成器 (管理員介面專用)
         window.getStoreColor = function(str) {
             let hash = 0;
             if (str) {
@@ -603,94 +603,70 @@
             return `hsl(${hue}, ${sat}%, ${light}%)`;
         };
 
-        // ====== 關鍵修復：新版行動裝置 PDF 處理功能 ======
-        window.openMobilePDF = function() {
+        // 新增：開啟新分頁顯示明細 PDF，取代原本無法執行的手機端 html2canvas
+        window.openReceiptInNewTab = function() {
             const captureArea = document.getElementById('receipt-capture-area');
-            const loader = document.getElementById('checkout-loader');
-            const loaderTitle = document.getElementById('loader-title');
+            if (!captureArea) return;
             
-            const originalText = loaderTitle.innerText;
+            // 取得 Tailwind CSS 與 FontAwesome 以確保新分頁樣式正常
+            const tailwindScript = '<script src="https://cdn.tailwindcss.com"><\/script>';
+            const faLink = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
+            const fontLink = `<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">`;
             
-            // 1. 【同步開啟】新分頁：這是防止 Safari 等瀏覽器 Popup Blocker 阻擋的關鍵
+            // 開啟新分頁
             const newWin = window.open('', '_blank');
             if (!newWin) {
-                alert('⚠️ 您的瀏覽器阻擋了彈出視窗！請允許本網站開啟彈出視窗（Pop-ups）以顯示明細。');
+                alert('彈出視窗被瀏覽器封鎖，請允許開啟新分頁以查看明細！');
                 return;
             }
-            
-            // 2. 寫入過渡畫面到新分頁
+
+            // 將明細內容寫入新分頁
             newWin.document.write(`
                 <!DOCTYPE html>
                 <html lang="zh-TW">
                 <head>
                     <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>訂單明細 PDF 產生中...</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                    <title>訂單明細總表</title>
+                    ${tailwindScript}
+                    ${faLink}
+                    ${fontLink}
                     <style>
-                        body { background-color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; color: #334155; }
-                        .spinner { width: 50px; height: 50px; border: 5px solid #cbd5e1; border-top-color: #f97316; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-                        @keyframes spin { to { transform: rotate(360deg); } }
-                        h3 { margin: 0 0 10px 0; font-size: 20px; }
-                        p { margin: 0; font-size: 14px; color: #64748b; text-align: center; padding: 0 20px; line-height: 1.6; }
+                        body { 
+                            font-family: 'Noto Sans TC', sans-serif; 
+                            background-color: #f8fafc; 
+                            padding: 16px; 
+                            margin: 0;
+                            -webkit-font-smoothing: antialiased;
+                        }
+                        /* 隱藏操作按鈕區 */
+                        #receipt-action-buttons { display: none !important; }
+                        /* 移除部分不必要的陰影與邊框以利閱讀與列印 */
+                        #receipt-capture-area {
+                            box-shadow: none !important;
+                            border: none !important;
+                            margin: 0 auto !important;
+                            padding: 0 !important;
+                            background-color: transparent !important;
+                        }
+                        @media print {
+                            body { background: white !important; padding: 0 !important; }
+                        }
                     </style>
                 </head>
                 <body>
-                    <div class="spinner"></div>
-                    <h3>PDF 產生中，請稍候...</h3>
-                    <p>正在進行高畫質轉換，處理大量資料時可能需要幾秒鐘的時間。<br>完成後將自動顯示 PDF 檔案。</p>
+                    ${captureArea.outerHTML}
+                    <script>
+                        // 自動觸發列印選單，手機版可在此直接另存PDF
+                        setTimeout(() => {
+                            window.print();
+                        }, 800);
+                    <\/script>
                 </body>
                 </html>
             `);
             newWin.document.close();
-
-            // 3. 原本的頁面也顯示 loader 讓使用者知道正在處理
-            loader.classList.remove('hidden');
-            loaderTitle.innerText = "PDF 產生中，請稍候...";
-
-            // 4. 非同步執行 html2canvas，並降低 scale 避免手機 OOM 當機
-            setTimeout(async () => {
-                try {
-                    const actionBtns = document.getElementById('receipt-action-buttons');
-                    const origDisplay = actionBtns.style.display;
-                    actionBtns.style.display = 'none'; // 截圖時隱藏按鈕
-
-                    // ★行動裝置極限優化：scale: 1 徹底解決記憶體溢出（OOM）導致畫面凍結的問題
-                    const canvas = await html2canvas(captureArea, {
-                        scale: 1, 
-                        useCORS: true,
-                        backgroundColor: '#ffffff',
-                        logging: false
-                    });
-
-                    actionBtns.style.display = origDisplay; // 恢復按鈕顯示
-
-                    const { jsPDF } = window.jspdf;
-                    const imgData = canvas.toDataURL('image/jpeg', 0.8);
-                    const pdf = new jsPDF({
-                        orientation: 'portrait',
-                        unit: 'px',
-                        format: [canvas.width, canvas.height]
-                    });
-                    
-                    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
-                    
-                    const pdfBlob = pdf.output('blob');
-                    const pdfUrl = URL.createObjectURL(pdfBlob);
-
-                    // 5. 將剛剛開啟的新分頁導向至 PDF Blob 檔案
-                    newWin.location.replace(pdfUrl);
-
-                } catch (e) {
-                    console.error('PDF generation failed', e);
-                    newWin.close(); // 失敗時關閉過渡視窗
-                    alert('❌ PDF 產生失敗，可能是行動裝置記憶體不足。請稍後再試或改用電腦版。');
-                } finally {
-                    loader.classList.add('hidden');
-                    loaderTitle.innerText = originalText;
-                }
-            }, 300);
         };
-        // =================================================
 
         window.compressData = function(data) {
             if (!data) return null;
@@ -1310,7 +1286,6 @@
             }
         };
 
-        // 縮短計時器更新間隔至 600 毫秒，極限降低跨平台視覺誤差並保持效能
         window.startTimer = function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.remove('hidden');
@@ -1666,19 +1641,18 @@
             document.getElementById('receipt-time').innerText = `${latestOrder.date} ${latestOrder.time}`;
             
             const btnPrint = document.getElementById('btn-print-pdf');
-            const btnImg = document.getElementById('btn-generate-pdf');
+            const btnNewTab = document.getElementById('btn-new-tab-receipt');
 
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
                 document.getElementById('receipt-phone-buttons').innerHTML = ''; 
-                
                 if (btnPrint) btnPrint.style.display = 'none';
-                if (btnImg) btnImg.style.display = 'none';
+                if (btnNewTab) btnNewTab.style.display = 'none';
                 
                 setTimeout(() => alert("活動結束！本次活動無人點餐。"), 500);
             } else {
                 if (btnPrint) btnPrint.style.display = '';
-                if (btnImg) btnImg.style.display = '';
+                if (btnNewTab) btnNewTab.style.display = '';
 
                 const cartByStore = latestOrder.cart.reduce((acc, c) => {
                     const sName = c.storeName || '綜合店家';
@@ -2699,4 +2673,337 @@
                     return a.userName.localeCompare(b.userName);
                 });
                 
-                sortedCart.forEach(c => { content += `  - [${c.storeName || '店家'}] ${c.userName}: ${c.itemName} x${c.qty} (小計 $${c.price * c.qty}) ${c.note ? '備註:'+c.note : ''
+                sortedCart.forEach(c => { content += `  - [${c.storeName || '店家'}] ${c.userName}: ${c.itemName} x${c.qty} (小計 $${c.price * c.qty}) ${c.note ? '備註:'+c.note : ''}\n`; });
+                content += "--------------------------------------------------\n";
+            });
+            const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `點餐紀錄_${window.getFormattedDate()}.txt`; a.click();
+        };
+
+        window.clearHistoryRecords = async function(pwd) {
+            if(!window.state.orderHistory || window.state.orderHistory.length === 0) return alert('紀錄已經是空的，無需清空。');
+            if(pwd === "suting") {
+                window.state.orderHistory = [];
+                window.addAdminLog('清空', '最高權限管理員已手動清空歷史結單紀錄');
+                await window.saveState(); window.renderHistory(); alert("✅ 歷史紀錄已成功清空！");
+            } else alert("❌ 密碼錯誤，拒絕執行！");
+        };
+
+        window.exportDatabaseExcel = async function() {
+            if (window.state.items.length === 0) return alert('資料庫目前沒有餐點可供匯出！');
+            
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('蘇家系統資料庫', {
+                pageSetup: { 
+                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
+                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
+                }
+            });
+            
+            sheet.columns = [
+                { header: '系統大分類', key: 'cat', width: 20 },
+                { header: '店家名稱', key: 'store', width: 30 },
+                { header: '店家電話(選填)', key: 'phone', width: 18 },
+                { header: '店家地址(選填)', key: 'address', width: 40 },
+                { header: '菜單子分類', key: 'subcat', width: 18 },
+                { header: '餐點名稱', key: 'item', width: 35 },
+                { header: '價格', key: 'price', width: 15 },
+                { header: '套用客製化選項(用逗號分隔)', key: 'options', width: 45 }
+            ];
+
+            sheet.getRow(1).eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF97316' } }; 
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+
+            window.state.items.forEach((item, index) => {
+                const catObj = window.state.categories.find(c => c.id === item.cat);
+                const storeObj = window.state.stores.find(s => s.name === item.store) || {};
+                
+                const optionsString = (item.customOptionIds || []).map(optId => {
+                    const opt = window.state.globalOptions.find(g => g.id === optId);
+                    return opt ? opt.name : '';
+                }).filter(Boolean).join(', ');
+
+                const row = sheet.addRow({
+                    cat: catObj ? catObj.name : '未分類',
+                    store: item.store,
+                    phone: storeObj.phone || '',
+                    address: storeObj.address || '',
+                    subcat: item.subCat || '主餐',
+                    item: item.name,
+                    price: item.price,
+                    options: optionsString
+                });
+
+                if (index % 2 === 0) { 
+                    row.eachCell(cell => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEDD5' } };
+                    });
+                }
+                
+                row.eachCell(cell => {
+                    cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                    cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
+                });
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `蘇家線上點餐資料庫_${window.getFormattedDate()}.xlsx`;
+            link.click();
+        };
+
+        window.importDatabaseExcel = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            window.requestPassword('確認匯入 Excel 嗎？(將與現有資料庫合併)', async pwd => {
+                if(pwd !== 'suting') { alert('❌ 管理員密碼錯誤，拒絕執行匯入！'); event.target.value = ''; return; }
+                
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const buffer = e.target.result;
+                        const workbook = new ExcelJS.Workbook();
+                        await workbook.xlsx.load(buffer);
+                        const sheet = workbook.getWorksheet(1);
+                        
+                        let importedCount = 0;
+                        sheet.eachRow((row, rowNumber) => {
+                            if (rowNumber === 1) return; 
+                            
+                            const catName = row.getCell(1).value?.toString().trim() || '未分類';
+                            const storeName = row.getCell(2).value?.toString().trim();
+                            const phone = row.getCell(3).value?.toString().trim() || '';
+                            const address = row.getCell(4).value?.toString().trim() || '';
+                            const subCat = row.getCell(5).value?.toString().trim() || '主餐';
+                            const itemName = row.getCell(6).value?.toString().trim();
+                            const priceVal = row.getCell(7).value;
+                            const price = parseInt(priceVal);
+                            const optionsStr = row.getCell(8).value?.toString().trim() || '';
+                            
+                            if (!storeName || !itemName || isNaN(price)) return; 
+
+                            let catObj = window.state.categories.find(c => c.name === catName);
+                            if(!catObj) {
+                                catObj = { id: 'cat_' + Date.now() + Math.random().toString(36).substring(2,8), name: catName, color: THEME_COLORS[Math.floor(Math.random()*THEME_COLORS.length)] };
+                                window.state.categories.push(catObj);
+                            }
+                            
+                            if (!window.state.subCategories.includes(subCat)) {
+                                window.state.subCategories.push(subCat);
+                            }
+
+                            let storeObj = window.state.stores.find(s => s.name === storeName);
+                            if(!storeObj) {
+                                window.state.stores.push({ name: storeName, phone: phone, address: address, coverImg: '', hours: {}, cat: catObj.id });
+                            } else {
+                                if(phone && !storeObj.phone) storeObj.phone = phone;
+                                if(address && !storeObj.address) storeObj.address = address;
+                                if(!storeObj.cat) storeObj.cat = catObj.id;
+                            }
+
+                            const optionNames = optionsStr ? optionsStr.split(',').map(s=>s.trim()).filter(s=>s) : [];
+                            const customOptionIds = [];
+                            optionNames.forEach(optName => {
+                                let optObj = window.state.globalOptions.find(g => g.name === optName);
+                                if(optObj) customOptionIds.push(optObj.id);
+                            });
+
+                            window.state.items.push({
+                                id: Date.now().toString() + Math.random().toString(36).substring(2, 8),
+                                cat: catObj.id,
+                                store: storeName,
+                                subCat: subCat,
+                                name: itemName,
+                                price: price,
+                                img: DEFAULT_IMG,
+                                isLocked: true, 
+                                customOptionIds: customOptionIds,
+                                updateDate: window.getFormattedDate()
+                            });
+                            importedCount++;
+                        });
+                        
+                        window.state.menuUpdateDate = window.getFormattedDate();
+                        window.addAdminLog('匯入', `透過 Excel 批次匯入了 ${importedCount} 筆餐點資料`);
+                        await window.saveState();
+                        window.renderAdmin();
+                        alert(`✅ 成功匯入 ${importedCount} 筆資料！`);
+
+                    } catch (err) {
+                        console.error(err);
+                        alert("❌ 匯入失敗，請確認檔案格式是否為有效的 .xlsx 檔案。");
+                    }
+                    event.target.value = ''; 
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        };
+
+        window.exportSingleHistoryExcel = async function(orderId) {
+            const order = window.state.orderHistory.find(o => String(o.id) === String(orderId));
+            if (!order) return;
+
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('點餐明細', {
+                pageSetup: { 
+                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
+                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
+                }
+            });
+
+            sheet.mergeCells('A1:E1');
+            const titleCell = sheet.getCell('A1');
+            titleCell.value = '蘇家Su.線上點餐系統 - 訂單明細';
+            titleCell.font = { size: 16, bold: true };
+            titleCell.alignment = { horizontal: 'center' };
+
+            sheet.mergeCells('A2:E2');
+            sheet.getCell('A2').value = `店家：${order.store}   |   結單時間：${order.date} ${order.time}`;
+            sheet.getCell('A2').font = { bold: true };
+            sheet.getCell('A2').alignment = { horizontal: 'center' };
+
+            const tableStartRow = 4;
+            sheet.getRow(tableStartRow).values = ['點餐人', '餐點名稱', '數量', '備註', '小計'];
+            sheet.columns = [
+                { key: 'user', width: 20 },
+                { key: 'item', width: 35 },
+                { key: 'qty', width: 12 },
+                { key: 'note', width: 30 },
+                { key: 'subtotal', width: 15 }
+            ];
+
+            sheet.getRow(tableStartRow).eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; 
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.alignment = { horizontal: 'center' };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+
+            order.cart.sort((a,b) => {
+                if (a.storeName !== b.storeName) return (a.storeName || '').localeCompare(b.storeName || '');
+                return a.userName.localeCompare(b.userName);
+            }).forEach((c, idx) => {
+                const row = sheet.addRow({
+                    user: c.userName,
+                    item: c.itemName,
+                    qty: c.qty,
+                    note: c.note || '',
+                    subtotal: c.price * c.qty
+                });
+                
+                if (idx % 2 === 0) {
+                    row.eachCell(cell => cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } });
+                }
+                row.eachCell(cell => {
+                    cell.alignment = { vertical: 'middle', wrapText: true };
+                    cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
+                });
+                row.getCell('qty').alignment = { horizontal: 'center', vertical: 'middle' };
+                row.getCell('subtotal').alignment = { horizontal: 'right', vertical: 'middle' };
+            });
+
+            const totalRow = sheet.addRow(['', '', '', '總結算金額：', `$${order.total}`]);
+            totalRow.getCell(4).font = { bold: true, size: 14 };
+            totalRow.getCell(4).alignment = { horizontal: 'right' };
+            totalRow.getCell(5).font = { bold: true, size: 14, color: { argb: 'FFDC2626' } };
+            totalRow.getCell(5).alignment = { horizontal: 'right' };
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `訂單明細_${order.date.replace(/-/g,'')}_${order.time.replace(/:/g,'')}.xlsx`;
+            link.click();
+        };
+
+        window.exportAllHistoryExcel = async function() {
+            if(window.state.orderHistory.length === 0) return alert('沒有歷史訂單可供匯出');
+
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('歷史訂單總表', {
+                pageSetup: { 
+                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
+                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
+                }
+            });
+
+            sheet.columns = [
+                { header: '結單日期', key: 'date', width: 22 },
+                { header: '店家名稱', key: 'store', width: 30 },
+                { header: '點餐人', key: 'user', width: 20 },
+                { header: '餐點名稱', key: 'item', width: 35 },
+                { header: '數量', key: 'qty', width: 12 },
+                { header: '備註', key: 'note', width: 30 },
+                { header: '小計', key: 'subtotal', width: 15 },
+                { header: '該單總額', key: 'total', width: 18 }
+            ];
+
+            sheet.getRow(1).eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.alignment = { horizontal: 'center' };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+
+            let isEven = false;
+            window.state.orderHistory.forEach(order => {
+                order.cart.sort((a,b) => {
+                    if (a.storeName !== b.storeName) return (a.storeName || '').localeCompare(b.storeName || '');
+                    return a.userName.localeCompare(b.userName);
+                }).forEach((c, idx) => {
+                    const row = sheet.addRow({
+                        date: idx === 0 ? `${order.date} ${order.time}` : '',
+                        store: idx === 0 ? order.store : '',
+                        user: c.userName,
+                        item: c.itemName,
+                        qty: c.qty,
+                        note: c.note || '',
+                        subtotal: c.price * c.qty,
+                        total: idx === 0 ? order.total : ''
+                    });
+                    
+                    if (isEven) {
+                        row.eachCell(cell => cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } });
+                    }
+
+                    row.eachCell(cell => {
+                        cell.alignment = { vertical: 'middle', wrapText: true };
+                        cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
+                    });
+
+                    row.getCell('qty').alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell('subtotal').alignment = { horizontal: 'right', vertical: 'middle' };
+                    if(idx === 0) {
+                        row.getCell('total').font = { bold: true, color: { argb: 'FFDC2626' } };
+                        row.getCell('total').alignment = { horizontal: 'right', vertical: 'middle' };
+                    }
+                });
+                isEven = !isEven; 
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `全部訂單紀錄_${window.getFormattedDate()}.xlsx`;
+            link.click();
+        };
+
+        // 在 Firebase 連線完成前，先使用預設資料與快取渲染首頁，達到「零秒載入」的體驗
+        if (document.getElementById('view-home') && !document.getElementById('view-home').classList.contains('hidden')) {
+            window.renderHome();
+        }
+
+    </script>
+</body>
+</html>

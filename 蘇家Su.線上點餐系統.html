@@ -98,7 +98,7 @@
     <div class="fixed z-30 no-print pointer-events-none" style="bottom: 16px; left: 16px; padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left);">
         <div class="bg-white/30 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
             <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
-            <span class="tracking-widest">更新日期：<span id="global-update-date" class="font-bold"></span></span>
+            <span class="tracking-widest">菜單更新日：<span id="global-update-date" class="font-bold"></span></span>
         </div>
     </div>
 
@@ -112,7 +112,7 @@
             <div class="mb-8 bg-gradient-to-r from-orange-500 to-amber-500 p-8 md:p-10 rounded-3xl text-white shadow-xl relative overflow-hidden">
                 <div class="relative z-10">
                     <h2 class="text-3xl md:text-4xl font-black mb-3">今天想吃什麼？</h2>
-                    <p class="opacity-95 text-lg font-bold mb-6">瀏覽各類精選店家，或發起新的點餐活動</p>
+                    <p class="opacity-95 text-lg font-bold mb-6">瀏覽各類店家，與家禾發起新的點餐活動</p>
                     <button onclick="openStartOrderModal()" class="bg-white text-orange-600 px-6 py-3.5 rounded-xl font-black shadow-lg hover:bg-orange-50 transition transform hover:-translate-y-1 hover:shadow-xl text-lg flex items-center w-full md:w-max justify-center">
                         <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>發起點餐活動
                     </button>
@@ -428,10 +428,10 @@
             <div id="receipt-action-buttons" class="flex flex-col sm:flex-row gap-4 justify-center items-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
                 <div id="receipt-phone-buttons" class="flex flex-wrap justify-center gap-3 w-full sm:w-auto mr-auto"></div>
 
-                <button onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                <button id="btn-print-pdf" onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
-                <button onclick="generateReceiptImage()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                <button id="btn-download-img" onclick="generateReceiptImage()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-image mr-2"></i>下載明細圖片
                 </button>
                 
@@ -618,8 +618,12 @@
             
             setTimeout(async () => {
                 try {
+                    // ★修復：手機端產生圖片死當/緩慢，根據裝置寬度與倍率設定合理的 scale，防止記憶體超載
+                    const isMobile = window.innerWidth < 768;
+                    const deviceScale = isMobile ? 1 : (window.devicePixelRatio > 1 ? 1.5 : 2);
+
                     const canvas = await html2canvas(captureArea, {
-                        scale: window.devicePixelRatio > 1 ? window.devicePixelRatio : 2, 
+                        scale: deviceScale, 
                         useCORS: true,
                         backgroundColor: '#ffffff'
                     });
@@ -871,8 +875,11 @@
                             else if (viewStoreDetails && !isTyping) window.openStoreBrowse(document.getElementById('browse-store-name').innerText);
                             else if (viewActiveOrder) {
                                 window.updateCartUI();
+                                // ★修復：避免手機端頻繁接收快照並全部重新繪製菜單（導致卡頓與死當）
                                 if (!isTyping && document.getElementById('order-modal').classList.contains('hidden')) {
-                                    window.renderActiveOrder();
+                                    if (document.getElementById('active-menu-container').innerHTML.trim() === '') {
+                                        window.renderActiveOrder();
+                                    }
                                 }
                             }
                             else if (viewAdmin && !isTyping) {
@@ -953,7 +960,10 @@
             window.scrollTo({top: 0});
             if (viewName === 'home') window.renderHome();
             else if (viewName === 'admin') window.renderAdmin();
-            else if (viewName === 'active-order') window.renderActiveOrder();
+            else if (viewName === 'active-order') {
+                document.getElementById('active-menu-container').innerHTML = ''; // 確保切換畫面時強制渲染菜單
+                window.renderActiveOrder();
+            }
         };
 
         window.formatStoreHoursHTML = function(hoursObj) {
@@ -1595,11 +1605,22 @@
             const latestOrder = window.state.orderHistory[0];
             document.getElementById('receipt-time').innerText = `${latestOrder.date} ${latestOrder.time}`;
             
+            const btnPrint = document.getElementById('btn-print-pdf');
+            const btnImg = document.getElementById('btn-download-img');
+
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
                 document.getElementById('receipt-phone-buttons').innerHTML = ''; // 清空按鈕
+                // ★修復：防呆機制，無人點餐時隱藏列印與下載按鈕，保留返回首頁
+                if (btnPrint) btnPrint.style.display = 'none';
+                if (btnImg) btnImg.style.display = 'none';
+                
                 setTimeout(() => alert("活動結束！本次活動無人點餐。"), 500);
             } else {
+                // 還原按鈕顯示
+                if (btnPrint) btnPrint.style.display = '';
+                if (btnImg) btnImg.style.display = '';
+
                 const cartByStore = latestOrder.cart.reduce((acc, c) => {
                     const sName = c.storeName || '綜合店家';
                     if (!acc[sName]) acc[sName] = { items: [], total: 0 };

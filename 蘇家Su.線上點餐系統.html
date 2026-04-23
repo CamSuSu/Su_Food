@@ -415,6 +415,12 @@
         </div>
     </main>
 
+    <div id="checkout-loader" class="fixed inset-0 bg-black/80 hidden z-[500] flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity">
+        <i class="fa-solid fa-spinner fa-spin text-6xl text-orange-500 mb-6 drop-shadow-lg"></i>
+        <p class="text-white font-black text-2xl tracking-widest drop-shadow-md">系統結算中，請稍候...</p>
+        <p class="text-slate-300 font-bold text-sm mt-2">正在為您產生明細，請勿關閉視窗</p>
+    </div>
+
     <div id="view-receipt" class="view-section hidden print-no-shadow relative">
         <div id="receipt-capture-area" class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
             <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">蘇家Su.線上點餐明細總表</h2>
@@ -590,6 +596,9 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
+        // 全域鎖定標籤，防止行動裝置慢速網路時 snapshot 監聽器與結單互搶導致死當
+        window.isCheckingOut = false;
+
         // 莫蘭迪色系生成器 (管理員介面專用)
         window.getStoreColor = function(str) {
             let hash = 0;
@@ -599,8 +608,8 @@
                 }
             }
             const hue = Math.abs(hash) % 360;
-            const sat = 20 + (Math.abs(hash) % 15); // 極低飽和度 20% - 35%
-            const light = 80 + (Math.abs(hash) % 10); // 高明度 80% - 90%
+            const sat = 20 + (Math.abs(hash) % 15);
+            const light = 80 + (Math.abs(hash) % 10);
             return `hsl(${hue}, ${sat}%, ${light}%)`;
         };
 
@@ -616,30 +625,33 @@
             document.getElementById('generated-receipt-img').classList.add('hidden');
             document.getElementById('generated-receipt-img').src = '';
             
+            // 縮短 Timeout 使 UI 反應更敏捷
             setTimeout(async () => {
                 try {
-                    // ★修復：手機端產生圖片死當/緩慢，根據裝置寬度與倍率設定合理的 scale，防止記憶體超載
                     const isMobile = window.innerWidth < 768;
-                    const deviceScale = isMobile ? 1 : (window.devicePixelRatio > 1 ? 1.5 : 2);
+                    // ★核心修正：行動裝置限制最大倍率不超過 1.5 倍，防止繪製時 OOM (記憶體溢位) 死當
+                    const deviceScale = isMobile ? Math.min(window.devicePixelRatio, 1.5) : 2;
 
                     const canvas = await html2canvas(captureArea, {
                         scale: deviceScale, 
                         useCORS: true,
-                        backgroundColor: '#ffffff'
+                        backgroundColor: '#ffffff',
+                        logging: false // 關閉日誌以提升效能
                     });
                     
-                    const dataUrl = canvas.toDataURL('image/png');
+                    // ★核心修正：改用 image/jpeg 與 0.85 壓縮率，大幅降低 Base64 字串大小與記憶體負擔
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
                     document.getElementById('generated-receipt-img').src = dataUrl;
                     document.getElementById('image-modal-loader').classList.add('hidden');
                     document.getElementById('generated-receipt-img').classList.remove('hidden');
                 } catch (e) {
                     console.error('Image generation failed', e);
-                    alert('圖片產生失敗，請確認您的裝置瀏覽器是否支援此功能。');
+                    alert('圖片產生失敗，這通常是因為明細過長導致手機記憶體不足，請改用截圖。');
                     window.closeModal('image-modal');
                 } finally {
                     btnArea.style.display = originalDisplay;
                 }
-            }, 300);
+            }, 100);
         };
 
         window.compressData = function(data) {
@@ -856,13 +868,15 @@
                             if (isNowActive && !wasActive) {
                                 window.showView('active-order');
                                 window.startTimer();
-                            } else if (justFinished) {
+                            } 
+                            // ★核心修正：加上 !window.isCheckingOut 判斷，確保結單當下 Snapshot 不會互相干擾
+                            else if (justFinished && !window.isCheckingOut) {
                                 clearInterval(window.timerInterval);
                                 document.getElementById('nav-timer').classList.add('hidden');
                                 window.closeModal('order-modal');
                                 window.closeModal('start-modal');
                                 window.showReceiptFromHistory();
-                            } else if (!isNowActive && !document.getElementById('view-active-order').classList.contains('hidden')) {
+                            } else if (!isNowActive && !document.getElementById('view-active-order').classList.contains('hidden') && !window.isCheckingOut) {
                                 window.showView('home'); 
                             }
 
@@ -873,9 +887,8 @@
                             
                             if (viewHome && !isTyping) window.renderHome();
                             else if (viewStoreDetails && !isTyping) window.openStoreBrowse(document.getElementById('browse-store-name').innerText);
-                            else if (viewActiveOrder) {
+                            else if (viewActiveOrder && !window.isCheckingOut) {
                                 window.updateCartUI();
-                                // ★修復：避免手機端頻繁接收快照並全部重新繪製菜單（導致卡頓與死當）
                                 if (!isTyping && document.getElementById('order-modal').classList.contains('hidden')) {
                                     if (document.getElementById('active-menu-container').innerHTML.trim() === '') {
                                         window.renderActiveOrder();
@@ -961,7 +974,7 @@
             if (viewName === 'home') window.renderHome();
             else if (viewName === 'admin') window.renderAdmin();
             else if (viewName === 'active-order') {
-                document.getElementById('active-menu-container').innerHTML = ''; // 確保切換畫面時強制渲染菜單
+                document.getElementById('active-menu-container').innerHTML = ''; 
                 window.renderActiveOrder();
             }
         };
@@ -980,7 +993,6 @@
             return hasHours ? html : '';
         };
 
-        // 重新設計的首頁類別分籤，加入 snap 及膠囊造型
         window.renderHome = function() {
             let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab snap-start bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0">全部店家</button>`;
             
@@ -1025,7 +1037,6 @@
                     else coverImg = DEFAULT_IMG;
                 }
 
-                // 首頁卡片統一白底，保留 object-contain 讓圖片不裁切不重疊文字
                 gridHtml += `
                     <div class="category-card bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col cursor-pointer relative group" onclick="openStoreBrowse('${storeName}')">
                         <div class="w-full aspect-[4/3] bg-slate-100 flex justify-center items-center overflow-hidden p-2">
@@ -1529,11 +1540,20 @@
             } catch(e) { console.error(e); }
         };
 
+        // ★核心修正：加入結單鎖定防護，避免與 Snapshot 衝突造成當機
         window.autoCheckout = async function() {
+            if (window.isCheckingOut) return;
+            window.isCheckingOut = true;
+
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.add('hidden');
             window.closeModal('order-modal');
             window.closeModal('start-modal');
+            window.closeModal('pwd-prompt-modal');
+
+            // 顯示結算過渡動畫
+            const loader = document.getElementById('checkout-loader');
+            if (loader) loader.classList.remove('hidden');
 
             try {
                 await runTransaction(db, async (transaction) => {
@@ -1548,7 +1568,6 @@
                     
                     let finalCart = dbState.cart || [];
                     
-                    // 結單前進行最終防呆聚合，避免任何網路意外產生重複明細，同時極大化壓縮資料庫空間
                     let aggregatedCartMap = {};
                     finalCart.forEach(c => {
                         const key = `${c.storeName}::${c.userName}::${c.itemName}::${c.note || ''}`;
@@ -1591,9 +1610,17 @@
                         cart: [] 
                     });
                 });
+
+                // 本地狀態強制更新，並主動切換至明細畫面
+                window.state.session.isActive = false;
+                window.showReceiptFromHistory();
+
             } catch(e) { 
                 console.error("Checkout failed", e); 
                 alert("結單同步時發生錯誤！" + e.message);
+            } finally {
+                window.isCheckingOut = false;
+                if (loader) loader.classList.add('hidden');
             }
         };
 
@@ -1610,14 +1637,13 @@
 
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
-                document.getElementById('receipt-phone-buttons').innerHTML = ''; // 清空按鈕
-                // ★修復：防呆機制，無人點餐時隱藏列印與下載按鈕，保留返回首頁
+                document.getElementById('receipt-phone-buttons').innerHTML = '';
+                // 若為空單，直接隱藏下載與列印按鈕
                 if (btnPrint) btnPrint.style.display = 'none';
                 if (btnImg) btnImg.style.display = 'none';
                 
                 setTimeout(() => alert("活動結束！本次活動無人點餐。"), 500);
             } else {
-                // 還原按鈕顯示
                 if (btnPrint) btnPrint.style.display = '';
                 if (btnImg) btnImg.style.display = '';
 

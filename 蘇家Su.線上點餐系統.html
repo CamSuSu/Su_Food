@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>蘇家Su.線上點餐系統</title>
+    <title>Su.線上點餐系統</title>
     
     <link rel="icon" href="images/sufood.ico" type="image/x-icon">
     
@@ -87,7 +87,7 @@
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80" onclick="showView('home')">
                 <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm shrink-0"><i class="fa-solid fa-store"></i></div>
-                <h1 class="text-xl font-black tracking-tight truncate">蘇家Su.線上點餐系統</h1>
+                <h1 class="text-xl font-black tracking-tight truncate">Su.線上點餐系統</h1>
             </div>
             <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <button id="nav-cart-btn" onclick="openModal('cart-modal')" class="hidden lg:hidden bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full font-bold hover:bg-orange-200 transition border border-orange-200 shadow-sm items-center text-sm md:text-base whitespace-nowrap">
@@ -430,7 +430,7 @@
 
     <div id="view-receipt" class="view-section hidden print-no-shadow relative">
         <div id="receipt-capture-area" class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
-            <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">蘇家Su.線上點餐明細總表</h2>
+            <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">Su.線上點餐明細總表</h2>
             <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2 w-full break-words">
                 <p class="font-bold text-lg md:text-xl break-words">結單時間：<span id="receipt-time" class="ml-2 text-slate-600 whitespace-nowrap"></span></p>
             </div>
@@ -1760,7 +1760,7 @@
                 document.getElementById('receipt-content').innerHTML = `
                     ${tablesHtml}
                     <div class="bg-orange-50 border-4 border-orange-200 rounded-2xl p-6 flex flex-wrap justify-between items-center mt-4 gap-4">
-                        <span class="font-black text-2xl md:text-3xl text-slate-800 shrink-0">全部店家總結算：</span>
+                        <span class="font-black text-2xl md:text-3xl text-slate-800 shrink-0">總結算：</span>
                         <span class="font-black text-4xl md:text-5xl text-red-600 drop-shadow-sm shrink-0">$${grandTotal}</span>
                     </div>
                 `;
@@ -1859,7 +1859,7 @@
 
         window.exportLogsTxt = function() {
             if(!window.state.adminLogs || window.state.adminLogs.length === 0) return alert('沒有資料可供匯出');
-            let content = "--- 蘇家Su.線上點餐系統 系統操作紀錄 ---\n\n";
+            let content = "--- Su.線上點餐系統 系統操作紀錄 ---\n\n";
             window.state.adminLogs.forEach((log) => {
                 content += `[${log.date} ${log.time}] 【${log.action}】 ${log.detail}\n`;
             });
@@ -2686,7 +2686,7 @@
 
         window.exportHistoryTxt = function() {
             if(window.state.orderHistory.length === 0) return alert('沒有資料可供匯出');
-            let content = "--- 蘇家Su.線上點餐系統 歷史訂單紀錄 ---\n\n";
+            let content = "--- Su.線上點餐系統 歷史訂單紀錄 ---\n\n";
             window.state.orderHistory.forEach((order, idx) => {
                 content += `[紀錄 #${window.state.orderHistory.length - idx}] 結單時間: ${order.date} ${order.time} | 店家: ${order.store}\n`;
                 content += `>>> 總結算金額: $${order.total}\n明細：\n`;

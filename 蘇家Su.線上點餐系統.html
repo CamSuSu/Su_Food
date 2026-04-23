@@ -26,7 +26,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* 加入 swap 提升文字載入效能，並優化字體抗鋸齒渲染 */
+        /* 提升文字載入效能與優化字體抗鋸齒渲染 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
         
@@ -35,8 +35,8 @@
         .admin-action { cursor: pointer; transition: 0.2s; }
         .admin-action.disabled { opacity: 0.3; pointer-events: none; }
         
-        /* 強化卡片選取視覺回饋 */
-        .category-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; }
+        /* 強化卡片選取視覺回饋，加入 will-change 優化渲染效能 */
+        .category-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; will-change: transform; }
         .category-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); z-index: 10; border-color: #fb923c; }
         
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -279,7 +279,7 @@
                                     <div class="flex gap-2 mb-2">
                                         <input id="admin-input-img-url" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 text-sm font-bold" placeholder="輸入網址或上傳">
                                         <input type="file" id="admin-input-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'admin-input-img-url', 'admin-img-preview')">
-                                        <button type="button" onclick="document.getElementById('admin-input-file').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
+                                        <button type="button" onclick="document.getElementById('admin-input-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
                                     </div>
                                     <img id="admin-img-preview" src="" class="hidden mt-2 h-32 w-full object-cover rounded-xl border border-slate-200 shadow-sm" loading="lazy" decoding="async">
                                 </div>
@@ -1367,6 +1367,7 @@
             el.value = Math.max(1, current + val); 
         };
 
+        // 購物車新增：加入同人同店相同品項的「聚合」邏輯
         window.confirmAddToCart = async function() {
             const user = document.getElementById('modal-user').value.trim();
             if (!user) return alert('請務必輸入或點選您的姓名！');
@@ -1381,27 +1382,62 @@
                 note = `[${dynamicNotes.join(', ')}] ` + note;
             }
 
-            const newItem = { 
-                id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
-                userName: user, 
-                itemName: window.activeItemForModal.name, 
-                storeName: window.activeItemForModal.store, 
-                price: window.activeItemForModal.price, 
-                qty: parseInt(document.getElementById('modal-qty').value) || 1, 
-                note 
-            };
+            const qtyToAdd = parseInt(document.getElementById('modal-qty').value) || 1;
 
-            window.state.cart.push(newItem);
+            // 1. 本地狀態聚合：檢查是否已有完全一樣的餐點
+            const existingLocalIndex = window.state.cart.findIndex(c => 
+                c.userName === user && 
+                c.storeName === window.activeItemForModal.store && 
+                c.itemName === window.activeItemForModal.name && 
+                c.note === note
+            );
+
+            if (existingLocalIndex > -1) {
+                window.state.cart[existingLocalIndex].qty += qtyToAdd;
+            } else {
+                const newItem = { 
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
+                    userName: user, 
+                    itemName: window.activeItemForModal.name, 
+                    storeName: window.activeItemForModal.store, 
+                    price: window.activeItemForModal.price, 
+                    qty: qtyToAdd, 
+                    note: note 
+                };
+                window.state.cart.push(newItem);
+            }
+
             window.updateCartUI();
             window.closeModal('order-modal');
 
+            // 2. 資料庫同步聚合
             try {
                 await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(dbRef);
                     if (!sfDoc.exists()) return;
                     let dbState = sfDoc.data();
                     if (!dbState.cart) dbState.cart = [];
-                    dbState.cart.push(newItem);
+
+                    const existingDbIndex = dbState.cart.findIndex(c => 
+                        c.userName === user && 
+                        c.storeName === window.activeItemForModal.store && 
+                        c.itemName === window.activeItemForModal.name && 
+                        c.note === note
+                    );
+
+                    if (existingDbIndex > -1) {
+                        dbState.cart[existingDbIndex].qty = (parseInt(dbState.cart[existingDbIndex].qty) || 0) + qtyToAdd;
+                    } else {
+                        dbState.cart.push({
+                            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                            userName: user,
+                            itemName: window.activeItemForModal.name,
+                            storeName: window.activeItemForModal.store,
+                            price: window.activeItemForModal.price,
+                            qty: qtyToAdd,
+                            note: note
+                        });
+                    }
                     transaction.update(dbRef, { cart: dbState.cart });
                 });
             } catch(e) {
@@ -1501,18 +1537,29 @@
                     if (!Array.isArray(history)) history = [];
                     
                     let finalCart = dbState.cart || [];
-                    let total = finalCart.reduce((sum, c) => sum + ((Number(c.price) || 0) * (Number(c.qty) || 1)), 0);
+                    
+                    // 結單前進行最終防呆聚合，避免任何網路意外產生重複明細，同時極大化壓縮資料庫空間
+                    let aggregatedCartMap = {};
+                    finalCart.forEach(c => {
+                        const key = `${c.storeName}::${c.userName}::${c.itemName}::${c.note || ''}`;
+                        if (!aggregatedCartMap[key]) {
+                            aggregatedCartMap[key] = {
+                                userName: c.userName ? String(c.userName) : '未知',
+                                itemName: c.itemName ? String(c.itemName) : '未知',
+                                storeName: c.storeName ? String(c.storeName) : '未知',
+                                price: Number(c.price) || 0,
+                                qty: Number(c.qty) || 1,
+                                note: c.note ? String(c.note) : ''
+                            };
+                        } else {
+                            aggregatedCartMap[key].qty += (Number(c.qty) || 1);
+                        }
+                    });
+
+                    const safeCart = Object.values(aggregatedCartMap);
+                    let total = safeCart.reduce((sum, c) => sum + (c.price * c.qty), 0);
                     
                     const storeNamesStr = dbState.session.storeNames ? dbState.session.storeNames.join('、') : dbState.session.storeName;
-
-                    const safeCart = finalCart.map(c => ({
-                        userName: c.userName ? String(c.userName) : '未知',
-                        itemName: c.itemName ? String(c.itemName) : '未知',
-                        storeName: c.storeName ? String(c.storeName) : '未知',
-                        price: Number(c.price) || 0,
-                        qty: Number(c.qty) || 1,
-                        note: c.note ? String(c.note) : ''
-                    }));
 
                     history.unshift({ 
                         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),

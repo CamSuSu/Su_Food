@@ -5,32 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>蘇家Su.線上點餐系統</title>
     <link rel="icon" href="images/sufood.ico" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* 加入 swap 提升文字載入效能 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px;}
+        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+        
+        img { -webkit-user-drag: none; } /* 防止手機誤觸拖曳圖片 */
+        
         .admin-action { cursor: pointer; transition: 0.2s; }
         .admin-action.disabled { opacity: 0.3; pointer-events: none; }
         
         /* 強化卡片選取視覺回饋 */
-        .category-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .category-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 25px 30px -5px rgba(249, 115, 22, 0.15), 0 15px 15px -5px rgba(249, 115, 22, 0.1); border-color: #fdba74; z-index: 10; }
+        .category-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; }
+        .category-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); z-index: 10; border-color: #fb923c; }
         
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
         
-        .store-header { position: sticky; top: 0; background: #f8fafc; z-index: 10; }
-        
-        /* 拖曳時的視覺效果 */
+        .store-header { position: sticky; top: 0; z-index: 10; }
         .dragging { opacity: 0.5; border: 2px dashed #10b981; }
 
-        /* 統一各裝置(特別是Android)的下拉選單外觀 */
+        /* 統一各裝置下拉選單外觀 */
         select {
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -81,7 +86,7 @@
     <div class="fixed bottom-4 left-4 bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 rounded-xl p-3 text-xs text-slate-600 z-30 no-print max-w-[calc(100vw-5rem)] break-words">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-clock-rotate-left text-orange-500 shrink-0"></i>
-            <span>線上菜單更新：<span id="global-update-date" class="font-bold text-slate-800"></span></span>
+            <span>線上菜單最後更新日期：<span id="global-update-date" class="font-bold text-slate-800"></span></span>
         </div>
     </div>
 
@@ -255,7 +260,7 @@
                                         <input type="file" id="admin-input-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'admin-input-img-url', 'admin-img-preview')">
                                         <button type="button" onclick="document.getElementById('admin-input-file').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
                                     </div>
-                                    <img id="admin-img-preview" src="" class="hidden mt-2 h-32 w-full object-cover rounded-xl border border-slate-200 shadow-sm">
+                                    <img id="admin-img-preview" src="" class="hidden mt-2 h-32 w-full object-cover rounded-xl border border-slate-200 shadow-sm" loading="lazy" decoding="async">
                                 </div>
                             </div>
                         </div>
@@ -399,7 +404,9 @@
             
             <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200 break-words whitespace-normal">請依照此表單內容進行點餐與收費作業</div>
             
-            <div id="receipt-action-buttons" class="flex flex-col sm:flex-row gap-4 justify-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
+            <div id="receipt-action-buttons" class="flex flex-col sm:flex-row gap-4 justify-center items-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
+                <div id="receipt-phone-buttons" class="flex flex-wrap justify-center gap-3 w-full sm:w-auto mr-auto"></div>
+
                 <button onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
@@ -460,7 +467,7 @@
     </div>
 
     <div id="start-modal" class="fixed inset-0 bg-black/60 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-md no-print transition-opacity">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <h3 class="text-2xl font-black mb-5 text-slate-800 flex items-center border-b-2 border-slate-100 pb-3 break-words"><i class="fa-solid fa-utensils text-orange-500 mr-3"></i>發起聯合點餐</h3>
             <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
@@ -562,6 +569,20 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
+        // 優化為莫蘭迪色系：極低飽和度、高明度，視覺柔和且高雅
+        window.getStoreColor = function(str) {
+            let hash = 0;
+            if (str) {
+                for (let i = 0; i < str.length; i++) {
+                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                }
+            }
+            const hue = Math.abs(hash) % 360;
+            const sat = 20 + (Math.abs(hash) % 15); // 20% - 35% 飽和度
+            const light = 80 + (Math.abs(hash) % 10); // 80% - 90% 明度
+            return `hsl(${hue}, ${sat}%, ${light}%)`;
+        };
+
         window.generateReceiptImage = async function() {
             const btnArea = document.getElementById('receipt-action-buttons');
             const captureArea = document.getElementById('receipt-capture-area');
@@ -596,7 +617,6 @@
             }, 300);
         };
 
-        // 高效能 Base64 壓縮機制，並提供 UTF-16 的向下相容解碼
         window.compressData = function(data) {
             if (!data) return null;
             return LZString.compressToBase64(JSON.stringify(data));
@@ -699,7 +719,6 @@
             }
         };
 
-        // 更新圖片壓縮機制，採用 WebP 格式大幅減少資料庫佔用空間
         window.compressImage = function(file, event, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -707,7 +726,6 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    // 解析度微調至 320px，在行動裝置呈現完美且容量極小
                     const maxW = 320; const maxH = 320;
                     let w = img.width; let h = img.height;
                     if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
@@ -868,7 +886,6 @@
                 const jsonString = JSON.stringify(safeState);
                 const sizeInBytes = new Blob([jsonString]).size;
                 
-                // Firestore 單個文檔 1MB 極限保護，避免崩潰
                 if (sizeInBytes > 1040000) {
                     alert("❌ 嚴重錯誤：資料總容量已超過 Firebase 單一文檔 1MB 限制！本次修改已被系統攔截以防崩潰。\n\n請至歷史紀錄中「清空紀錄」，或刪除不需要的店家圖片！");
                     return;
@@ -889,7 +906,7 @@
             const btn = document.getElementById('btn-back-to-top');
             if (window.scrollY > 300) btn.classList.remove('opacity-0', 'pointer-events-none');
             else btn.classList.add('opacity-0', 'pointer-events-none');
-        });
+        }, {passive: true});
 
         window.resetInactivityTimer = function() {
             if(window.isAdminLoggedIn) {
@@ -932,6 +949,7 @@
             return hasHours ? html : '';
         };
 
+        // ====== 首頁排版大躍進：白底、大字、不重疊、圖片完整顯示 ======
         window.renderHome = function() {
             let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-transparent shrink-0">全部店家</button>`;
             
@@ -942,7 +960,6 @@
                 tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${c.name}</button>`;
             });
             
-            // 確保其他永遠在最後
             if (otherCat) {
                 tabsHtml += `<button data-id="${otherCat.id}" onclick="filterStore('${otherCat.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${otherCat.name}</button>`;
             }
@@ -978,18 +995,19 @@
                 }
 
                 gridHtml += `
-                    <div class="category-card bg-white rounded-[2rem] overflow-hidden border-2 border-slate-100 flex flex-col cursor-pointer relative group" onclick="openStoreBrowse('${storeName}')">
-                        <div class="h-48 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style="background-image: url('${coverImg}')"></div>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                        <div class="absolute top-4 left-4 max-w-[calc(100%-2rem)]">
-                            <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm break-words whitespace-normal block">${cat ? cat.name : '綜合'}</span>
+                    <div class="category-card bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col cursor-pointer relative group" onclick="openStoreBrowse('${storeName}')">
+                        <div class="w-full aspect-[4/3] bg-slate-100 flex justify-center items-center overflow-hidden">
+                            <img src="${coverImg}" loading="lazy" decoding="async" class="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" alt="${storeName}">
                         </div>
-                        <div class="absolute bottom-0 left-0 w-full p-6">
-                            <h3 class="text-2xl font-black text-white mb-1 drop-shadow-md group-hover:text-orange-300 transition-colors break-words">${storeName}</h3>
-                            <p class="text-sm text-slate-200 font-bold drop-shadow-md flex justify-between items-center w-full">
-                                <span><i class="fa-solid fa-utensils mr-2"></i>共 ${storeItems.length} 項</span>
-                                <i class="fa-solid fa-arrow-right opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all text-orange-400"></i>
-                            </p>
+                        <div class="p-5 md:p-6 flex-1 flex flex-col relative z-10">
+                            <div class="mb-3">
+                                <span class="text-[11px] font-black text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg shadow-sm border border-orange-100">${cat ? cat.name : '綜合'}</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-black text-slate-800 mb-2 group-hover:text-orange-600 transition-colors leading-snug break-words">${storeName}</h3>
+                            <div class="mt-auto pt-4 border-t border-slate-100 flex justify-between items-center w-full">
+                                <span class="text-sm md:text-base text-slate-500 font-bold"><i class="fa-solid fa-utensils mr-2 opacity-70"></i>共 ${storeItems.length} 項</span>
+                                <i class="fa-solid fa-arrow-right text-orange-500 transform translate-x-[-10px] group-hover:translate-x-0 transition-all opacity-0 group-hover:opacity-100"></i>
+                            </div>
                         </div>
                     </div>`;
             });
@@ -1075,7 +1093,7 @@
                     html += `
                         <div ${action} class="${bgColor} p-4 md:p-5 rounded-[1.5rem] shadow-sm border flex items-center gap-4 md:gap-5 transition-all duration-300 ${pointer} group">
                             <div class="relative w-24 h-24 md:w-28 md:h-28 shrink-0">
-                                <img src="${imgUrl}" class="w-full h-full rounded-2xl object-cover bg-slate-100 shadow-sm border border-slate-200/50 transition transform group-hover:scale-105">
+                                <img src="${imgUrl}" loading="lazy" decoding="async" class="w-full h-full rounded-2xl object-cover bg-slate-100 shadow-sm border border-slate-200/50 transition transform group-hover:scale-105" alt="${item.name}">
                                 ${isActiveMode ? `<div class="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 transition rounded-2xl"></div>` : ''}
                             </div>
                             <div class="flex-1 min-w-0">
@@ -1370,24 +1388,56 @@
 
         window.updateCartUI = function() {
             let html = '', total = 0, count = 0;
+            
+            const groupedCart = {};
             (window.state.cart || []).forEach((c) => {
                 total += c.price * c.qty; count += c.qty;
-                html += `
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200 mb-3 relative shadow-sm hover:shadow-md group hover:border-orange-300 transition-all transform hover:-translate-y-1">
-                        <div class="flex justify-between items-start mb-2 gap-2 pr-8">
-                            <span class="text-sm font-black text-white bg-slate-800 px-3 py-1 rounded-lg break-words whitespace-normal max-w-full">${c.userName}</span>
-                            <span class="font-black text-slate-800 text-lg shrink-0">$${c.price * c.qty}</span>
-                        </div>
-                        <div class="text-[10px] text-orange-600 font-bold mb-1 break-words pr-8"><i class="fa-solid fa-store mr-1"></i>${c.storeName || '店家'}</div>
-                        <p class="font-bold text-slate-700 text-lg flex flex-wrap items-center gap-2 pr-8 leading-tight">
-                            <span class="break-words">${c.itemName}</span> 
-                            <span class="text-sm font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 shadow-sm shrink-0">x${c.qty}</span>
-                        </p>
-                        ${c.note ? `<p class="text-sm text-blue-600 mt-2 bg-blue-50 p-2.5 rounded-xl font-bold border border-blue-100 break-words whitespace-pre-wrap leading-snug"><i class="fa-solid fa-pen mr-1"></i>${c.note}</p>` : ''}
-                        
-                        <button onclick="removeCartItem('${c.id}')" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 bg-white rounded-full w-8 h-8 flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 transition shadow-sm border border-slate-100 shrink-0"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                    </div>`;
+                const key = `${c.storeName}::${c.userName}`;
+                if (!groupedCart[key]) {
+                    groupedCart[key] = { storeName: c.storeName, userName: c.userName, items: [], storeTotal: 0 };
+                }
+                groupedCart[key].items.push(c);
+                groupedCart[key].storeTotal += (c.price * c.qty);
             });
+
+            for (const key in groupedCart) {
+                const group = groupedCart[key];
+                let itemsHtml = '';
+                
+                group.items.forEach(c => {
+                    itemsHtml += `
+                        <div class="relative flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-slate-100 last:border-0 group/item">
+                            <div class="flex-1 pr-8">
+                                <p class="font-bold text-slate-700 text-sm md:text-base flex flex-wrap items-center gap-2 leading-tight">
+                                    <span class="break-words">${c.itemName}</span> 
+                                    <span class="text-xs font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 shrink-0">x${c.qty}</span>
+                                </p>
+                                ${c.note ? `<p class="text-xs text-blue-600 mt-1.5 bg-blue-50 px-2 py-1 rounded border border-blue-100 break-words whitespace-pre-wrap"><i class="fa-solid fa-pen mr-1"></i>${c.note}</p>` : ''}
+                            </div>
+                            <div class="flex items-center gap-3 mt-2 sm:mt-0">
+                                <span class="font-black text-slate-800 text-base">$${c.price * c.qty}</span>
+                                <button onclick="removeCartItem('${c.id}')" class="text-slate-300 hover:text-red-500 bg-white rounded-full w-7 h-7 flex items-center justify-center sm:opacity-0 sm:group-hover/item:opacity-100 transition shadow-sm border border-slate-200 shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                            </div>
+                        </div>`;
+                });
+
+                html += `
+                    <div class="bg-white rounded-2xl border border-slate-200 mb-4 shadow-sm hover:shadow-md transition-all overflow-hidden">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs text-slate-500 font-bold bg-white px-2 py-1 rounded shadow-sm border border-slate-100"><i class="fa-solid fa-store mr-1 text-orange-500"></i>${group.storeName || '綜合店家'}</span>
+                                <span class="text-sm font-black text-white bg-slate-800 px-3 py-1 rounded-lg">${group.userName}</span>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <span class="font-black text-slate-800 text-lg">$${group.storeTotal}</span>
+                            </div>
+                        </div>
+                        <div class="px-4 py-2 flex flex-col">
+                            ${itemsHtml}
+                        </div>
+                    </div>`;
+            }
+
             document.getElementById('active-cart-list').innerHTML = html || '<div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50"><p class="text-slate-400 font-bold"><i class="fa-solid fa-basket-shopping text-3xl mb-3 opacity-50 block"></i>目前購物車空空如也</p></div>';
             document.getElementById('active-cart-total').innerText = `$${total}`; 
             document.getElementById('cart-count').innerText = `${count} 份`;
@@ -1477,6 +1527,7 @@
             
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
+                document.getElementById('receipt-phone-buttons').innerHTML = ''; // 清空按鈕
                 setTimeout(() => alert("活動結束！本次活動無人點餐。"), 500);
             } else {
                 const cartByStore = latestOrder.cart.reduce((acc, c) => {
@@ -1489,22 +1540,46 @@
 
                 let tablesHtml = '';
                 let grandTotal = 0;
+                let phoneButtonsHtml = ''; 
 
                 for (const [storeName, storeData] of Object.entries(cartByStore)) {
                     grandTotal += storeData.total;
-                    const sortedCart = [...storeData.items].sort((a,b) => a.userName.localeCompare(b.userName));
+                    
+                    const storeInfo = window.state.stores.find(s => s.name === storeName);
+                    if (storeInfo && storeInfo.phone) {
+                        phoneButtonsHtml += `
+                            <a href="tel:${storeInfo.phone}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 px-4 py-2 rounded-xl font-black transition flex items-center justify-center text-sm shadow-sm hover:-translate-y-0.5 whitespace-nowrap">
+                                <i class="fa-solid fa-phone-volume mr-2"></i>撥打 ${storeName}
+                            </a>
+                        `;
+                    }
+
+                    const userGroups = {};
+                    storeData.items.forEach(c => {
+                        if (!userGroups[c.userName]) userGroups[c.userName] = [];
+                        userGroups[c.userName].push(c);
+                    });
+
+                    const sortedUsers = Object.keys(userGroups).sort((a,b) => a.localeCompare(b));
                     let tbody = '';
-                    sortedCart.forEach(c => {
-                        const sub = c.price * c.qty;
-                        tbody += `
-                            <tr class="border-b border-slate-200 hover:bg-slate-50 transition">
-                                <td class="py-4 px-2 md:px-4 font-black text-slate-800 break-words whitespace-normal min-w-[80px]"><span class="bg-slate-100 border border-slate-200 px-2 py-1 rounded shadow-sm inline-block break-words max-w-full">${c.userName}</span></td>
+                    
+                    sortedUsers.forEach(user => {
+                        const userItems = userGroups[user];
+                        userItems.forEach((c, index) => {
+                            const sub = c.price * c.qty;
+                            tbody += `<tr class="border-b border-slate-200 hover:bg-slate-50 transition">`;
+                            
+                            if (index === 0) {
+                                tbody += `<td rowspan="${userItems.length}" class="py-4 px-2 md:px-4 font-black text-slate-800 break-words whitespace-normal min-w-[80px] align-middle border-r border-slate-100/50"><span class="bg-slate-100 border border-slate-200 px-2 py-1 rounded shadow-sm inline-block break-words max-w-full">${c.userName}</span></td>`;
+                            }
+                            
+                            tbody += `
                                 <td class="py-4 px-2 md:px-4 font-bold text-slate-800 break-words whitespace-normal min-w-[120px]">${c.itemName}</td>
                                 <td class="py-4 px-2 md:px-4 font-black text-center text-slate-800 shrink-0">${c.qty}</td>
                                 <td class="py-4 px-2 md:px-4 text-blue-600 text-sm font-bold break-words whitespace-pre-wrap min-w-[150px] max-w-[250px] md:max-w-none">${c.note ? `[${c.note}]` : ''}</td>
                                 <td class="py-4 px-2 md:px-4 font-black text-right text-slate-800 shrink-0">$${sub}</td>
-                            </tr>
-                        `;
+                            </tr>`;
+                        });
                     });
 
                     tablesHtml += `
@@ -1540,6 +1615,8 @@
                         <span class="font-black text-4xl md:text-5xl text-red-600 drop-shadow-sm shrink-0">$${grandTotal}</span>
                     </div>
                 `;
+                
+                document.getElementById('receipt-phone-buttons').innerHTML = phoneButtonsHtml;
                 setTimeout(() => alert("活動順利結束！已產生結單明細。"), 500);
             }
             
@@ -2062,28 +2139,31 @@
                 const storeMeta = window.state.stores.find(s => s.name === store) || {};
                 const coverImg = storeMeta.coverImg || items.find(i=>i.img && i.img !== DEFAULT_IMG)?.img || DEFAULT_IMG;
                 
+                // 管理者專屬莫蘭迪色系
+                const storeColor = window.getStoreColor(store);
+
                 if (window.editingStoreName === store) {
                     html += `
                         <div class="border border-orange-300 rounded-[2rem] overflow-hidden shadow-md mb-8 bg-white ring-4 ring-orange-100 w-full">
-                            <div class="store-header p-4 md:p-6 bg-orange-50 border-b border-orange-200 shadow-inner w-full">
-                                <h4 class="font-black text-orange-600 flex items-center mb-4 text-lg border-b border-orange-200/50 pb-2 break-words"><i class="fa-solid fa-pen-to-square mr-2 shrink-0"></i>編輯店家綜合資訊</h4>
+                            <div class="store-header p-4 md:p-6 border-b border-orange-200 shadow-inner w-full" style="background-color: ${storeColor}">
+                                <h4 class="font-black text-slate-800 flex items-center mb-4 text-lg border-b border-slate-800/20 pb-2 break-words"><i class="fa-solid fa-pen-to-square mr-2 shrink-0"></i>編輯店家綜合資訊</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 mb-1">店家名稱 <span class="text-red-500">*</span></label>
+                                        <label class="block text-xs font-bold text-slate-600 mb-1">店家名稱 <span class="text-red-500">*</span></label>
                                         <input type="text" id="edit-store-name-${store}" value="${store}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 mb-1">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label>
+                                        <label class="block text-xs font-bold text-slate-600 mb-1">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label>
                                         <select id="edit-store-cat-${store}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
                                             ${window.state.categories.map(c => `<option value="${c.id}" ${c.id === (storeMeta.cat || items[0].cat) ? 'selected' : ''}>${c.name}</option>`).join('')}
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 mb-1">聯絡電話</label>
+                                        <label class="block text-xs font-bold text-slate-600 mb-1">聯絡電話</label>
                                         <input type="text" id="edit-store-phone-${store}" value="${storeMeta.phone || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-all">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 mb-1">店家封面圖</label>
+                                        <label class="block text-xs font-bold text-slate-600 mb-1">店家封面圖</label>
                                         <div class="flex flex-col sm:flex-row gap-2 w-full">
                                             <input type="text" id="edit-store-img-${store}" value="${storeMeta.coverImg || ''}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="輸入網址或上傳">
                                             <input type="file" id="edit-store-file-${store}" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'edit-store-img-${store}', null)">
@@ -2091,17 +2171,17 @@
                                         </div>
                                     </div>
                                     <div class="md:col-span-2">
-                                        <label class="block text-xs font-bold text-slate-500 mb-1">詳細地址</label>
+                                        <label class="block text-xs font-bold text-slate-600 mb-1">詳細地址</label>
                                         <input type="text" id="edit-store-address-${store}" value="${storeMeta.address || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words whitespace-normal">
                                     </div>
-                                    <div class="md:col-span-2 pt-2 border-t border-slate-200">
-                                        <label class="block text-xs font-black mb-2 text-slate-600"><i class="fa-regular fa-clock mr-1"></i>營業時間 (選填)</label>
+                                    <div class="md:col-span-2 pt-2 border-t border-slate-800/10">
+                                        <label class="block text-xs font-black mb-2 text-slate-700"><i class="fa-regular fa-clock mr-1"></i>營業時間 (選填)</label>
                                         <div id="edit-hours-container-${store}" class="space-y-2 border border-slate-200 p-3 rounded-xl bg-white max-h-48 overflow-y-auto custom-scrollbar w-full">
                                             ${window.generateStoreHoursHTML(storeMeta.hours || {}, `edit-${store}`)}
                                         </div>
                                     </div>
                                 </div>
-                                <div class="flex flex-col sm:flex-row gap-3 justify-end mt-5 border-t border-orange-200/50 pt-4 w-full">
+                                <div class="flex flex-col sm:flex-row gap-3 justify-end mt-5 border-t border-slate-800/10 pt-4 w-full">
                                     <button onclick="setStoreEdit(null)" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3 md:py-2.5 rounded-xl font-bold transition">取消</button>
                                     <button onclick="saveStoreEdit('${store}')" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 md:py-2.5 rounded-xl font-black shadow-md transition transform hover:-translate-y-1"><i class="fa-solid fa-check mr-2"></i>確認儲存變更</button>
                                 </div>
@@ -2111,40 +2191,43 @@
                 } else {
                     html += `
                         <div class="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white w-full">
-                            <div class="store-header p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4 w-full" style="background-color: ${catInfo ? catInfo.color : '#f1f5f9'}">
+                            <div class="store-header p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4 w-full" style="background-color: ${storeColor}">
                                 <div class="flex items-start md:items-center gap-4 w-full md:w-auto overflow-hidden">
                                     <div class="w-12 h-12 md:w-14 md:h-14 bg-white rounded-2xl shadow-inner bg-cover bg-center border border-slate-200 shrink-0" style="background-image: url('${coverImg}')"></div>
                                     <div class="flex-1 min-w-0">
                                         <h4 class="text-xl md:text-2xl font-black text-slate-800 flex items-center flex-wrap gap-2 w-full">
                                             <span class="break-words whitespace-normal leading-snug">${store}</span>
                                             <div class="flex flex-wrap gap-1 shrink-0 mt-1 md:mt-0">
-                                                <i onclick="setStoreEdit('${store}')" class="fa-solid fa-pen-to-square text-sm text-slate-400 hover:text-orange-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="編輯店家名稱、分類與營業時間等資訊"></i>
-                                                <i onclick="quickAddItem('${store}')" class="fa-solid fa-plus-circle text-sm text-emerald-500 hover:text-emerald-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="快速新增此店家的餐點"></i>
-                                                <i onclick="requestPassword('確定要完整刪除「${store}」店家嗎？\\n\\n【嚴重警告】這將會刪除該店家的基本資訊與「所有菜單餐點」！此操作絕對無法復原。\\n請輸入管理員密碼：', pwd => { if(pwd==='suting') deleteEntireStore('${store}'); else alert('密碼錯誤') })" class="fa-solid fa-trash text-sm text-red-400 hover:text-red-600 cursor-pointer transition transform hover:scale-125 bg-white/50 px-2 py-1 rounded-lg" title="完整刪除此店家與所有菜單"></i>
+                                                <i onclick="setStoreEdit('${store}')" class="fa-solid fa-pen-to-square text-sm text-slate-600 hover:text-orange-600 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="編輯店家名稱、分類與營業時間等資訊"></i>
+                                                <i onclick="quickAddItem('${store}')" class="fa-solid fa-plus-circle text-sm text-emerald-600 hover:text-emerald-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="快速新增此店家的餐點"></i>
+                                                <i onclick="requestPassword('確定要完整刪除「${store}」店家嗎？\\n\\n【嚴重警告】這將會刪除該店家的基本資訊與「所有菜單餐點」！此操作絕對無法復原。\\n請輸入管理員密碼：', pwd => { if(pwd==='suting') deleteEntireStore('${store}'); else alert('密碼錯誤') })" class="fa-solid fa-trash text-sm text-red-500 hover:text-red-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="完整刪除此店家與所有菜單"></i>
                                             </div>
                                         </h4>
-                                        <div class="mt-1 flex flex-wrap gap-2 text-[10px] md:text-xs font-bold text-slate-600 w-full">
-                                            ${storeMeta.phone ? `<a href="tel:${storeMeta.phone}" class="bg-white/60 hover:bg-white/90 px-2 py-0.5 rounded transition text-slate-700 shadow-sm break-all"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</a>` : ''}
-                                            ${storeMeta.address ? `<span class="bg-white/60 px-2 py-0.5 rounded shadow-sm break-words whitespace-normal"><i class="fa-solid fa-map-location-dot mr-1"></i>${storeMeta.address}</span>` : ''}
-                                            <span class="bg-white/60 px-2 py-0.5 rounded shadow-sm text-orange-700 shrink-0"><i class="fa-solid fa-tag mr-1"></i>${catInfo ? catInfo.name : '綜合'}</span>
+                                        <div class="mt-1 flex flex-wrap gap-2 text-[10px] md:text-xs font-bold text-slate-700 w-full">
+                                            ${storeMeta.phone ? `<a href="tel:${storeMeta.phone}" class="bg-white/70 hover:bg-white px-2 py-0.5 rounded transition shadow-sm break-all"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</a>` : ''}
+                                            ${storeMeta.address ? `<span class="bg-white/70 px-2 py-0.5 rounded shadow-sm break-words whitespace-normal"><i class="fa-solid fa-map-location-dot mr-1"></i>${storeMeta.address}</span>` : ''}
+                                            <span class="bg-white/70 px-2 py-0.5 rounded shadow-sm text-slate-800 shrink-0"><i class="fa-solid fa-tag mr-1"></i>${catInfo ? catInfo.name : '綜合'}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <span class="text-xs md:text-sm font-black bg-white/80 px-3 md:px-4 py-2 rounded-xl text-slate-700 shadow-sm whitespace-nowrap border border-white/50 shrink-0"><i class="fa-solid fa-cubes mr-1 md:mr-2"></i>共 ${items.length} 筆資料</span>
+                                <span class="text-xs md:text-sm font-black bg-white/90 px-3 md:px-4 py-2 rounded-xl text-slate-800 shadow-sm whitespace-nowrap border border-white/50 shrink-0"><i class="fa-solid fa-cubes mr-1 md:mr-2"></i>共 ${items.length} 筆資料</span>
                             </div>
                             <div class="p-0 w-full">
                     `;
                 }
                 
-                items.forEach(item => {
+                items.forEach((item, index) => {
                     const lockIcon = item.isLocked ? 'fa-lock text-slate-300' : 'fa-lock-open text-red-500';
                     const actionCls = item.isLocked ? 'disabled' : 'hover:text-orange-500';
                     const imgUrl = item.img || DEFAULT_IMG;
                     const displayUpdateDate = item.updateDate || window.state.menuUpdateDate || '無紀錄';
 
+                    // 奇數偶數列跳色設計
+                    const rowBgClass = index % 2 === 0 ? 'bg-white' : 'bg-slate-100';
+
                     if (String(window.editingItemId) === String(item.id)) {
                         html += `
-                        <div class="p-4 md:p-6 border-b border-orange-200 bg-orange-50/50 shadow-inner w-full">
+                        <div class="p-4 md:p-6 border-b border-orange-200 bg-orange-50/80 shadow-inner w-full">
                             <h5 class="font-black text-orange-600 mb-4 flex items-center text-lg border-b border-orange-200/50 pb-2 break-words"><i class="fa-solid fa-pen-to-square mr-2"></i>編輯餐點資料</h5>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 w-full">
                                 <div>
@@ -2169,7 +2252,7 @@
                                         <input type="file" id="inline-file-${item.id}" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'inline-img-${item.id}', 'inline-preview-${item.id}')">
                                         <button type="button" onclick="document.getElementById('inline-file-${item.id}').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
                                     </div>
-                                    <img id="inline-preview-${item.id}" src="${imgUrl}" class="mt-3 h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm">
+                                    <img id="inline-preview-${item.id}" src="${imgUrl}" class="mt-3 h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm" loading="lazy" decoding="async">
                                 </div>
                                 <div class="md:col-span-2 bg-white p-4 rounded-xl border border-orange-200 mt-2 shadow-sm w-full">
                                     <label class="block text-xs font-bold text-orange-600 mb-3 break-words whitespace-normal"><i class="fa-solid fa-sliders mr-2"></i>勾選欲套用的客製化選項模組 (選填)</label>
@@ -2188,25 +2271,25 @@
                     } 
                     else {
                         html += `
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 pl-4 md:pl-6 border-b border-slate-100 hover:bg-orange-50/30 transition group gap-4 w-full">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 pl-4 md:pl-6 border-b border-slate-200 ${rowBgClass} hover:bg-orange-50/50 transition group gap-4 w-full">
                             <div class="flex items-center gap-3 md:gap-5 w-full sm:w-auto flex-1 overflow-hidden">
-                                <img src="${imgUrl}" class="w-14 h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-200 shadow-sm bg-white p-0.5 group-hover:border-orange-300 transition-colors shrink-0">
+                                <img src="${imgUrl}" loading="lazy" decoding="async" class="w-14 h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-300 shadow-sm bg-white p-0.5 group-hover:border-orange-300 transition-colors shrink-0">
                                 <div class="min-w-0 flex-1">
                                     <p class="font-black text-slate-800 text-lg md:text-xl group-hover:text-orange-700 transition-colors flex items-center flex-wrap gap-2 leading-tight w-full">
                                         <span class="break-words whitespace-normal">${item.name}</span>
                                         <span class="text-xs md:text-sm text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-lg font-black border border-orange-100 shrink-0">$${item.price}</span>
                                     </p>
-                                    <p class="text-xs md:text-sm text-slate-400 mt-1.5 font-bold flex flex-wrap gap-2 items-center w-full">
-                                        <span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-600 break-words whitespace-normal">${item.subCat || '無細項分類'}</span>
-                                        ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 whitespace-nowrap"><i class="fa-solid fa-list-ul mr-1"></i>含選項 (${item.customOptionIds.length})</span>` : ''}
-                                        <span class="bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-slate-400 break-words whitespace-normal" title="最後更新日期"><i class="fa-regular fa-clock mr-1"></i>${displayUpdateDate}</span>
+                                    <p class="text-xs md:text-sm text-slate-500 mt-1.5 font-bold flex flex-wrap gap-2 items-center w-full">
+                                        <span class="bg-white px-2 py-0.5 rounded border border-slate-300 text-slate-600 shadow-sm break-words whitespace-normal">${item.subCat || '無細項分類'}</span>
+                                        ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-200 shadow-sm whitespace-nowrap"><i class="fa-solid fa-list-ul mr-1"></i>含選項 (${item.customOptionIds.length})</span>` : ''}
+                                        <span class="bg-white px-2 py-0.5 rounded border border-slate-300 text-slate-500 shadow-sm break-words whitespace-normal" title="最後更新日期"><i class="fa-regular fa-clock mr-1"></i>${displayUpdateDate}</span>
                                     </p>
                                 </div>
                             </div>
-                            <div class="flex gap-4 sm:gap-6 text-xl md:text-2xl sm:pr-4 w-full sm:w-auto justify-end shrink-0 mt-2 sm:mt-0 border-t sm:border-0 border-slate-100 pt-3 sm:pt-0">
+                            <div class="flex gap-4 sm:gap-6 text-xl md:text-2xl sm:pr-4 w-full sm:w-auto justify-end shrink-0 mt-2 sm:mt-0 border-t sm:border-0 border-slate-200 pt-3 sm:pt-0">
                                 <i onclick="toggleLock('${item.id}')" class="fa-solid ${lockIcon} admin-action hover:scale-125 transform transition-transform p-2 sm:p-0" title="解鎖以啟用編輯與刪除功能"></i>
-                                <i onclick="setInlineEdit('${item.id}')" class="fa-solid fa-pen-to-square text-slate-300 admin-action ${actionCls} hover:text-orange-500 hover:scale-110 transform transition-transform p-2 sm:p-0" title="行內直接編輯"></i>
-                                <i onclick="requestPassword('輸入密碼確認刪除餐點', pwd => { if(pwd==='suting') deleteItem('${item.id}'); else alert('密碼錯誤') })" class="fa-solid fa-trash-can text-slate-300 admin-action ${actionCls} hover:!text-red-600 hover:scale-110 transform transition-transform p-2 sm:p-0" title="刪除此餐點"></i>
+                                <i onclick="setInlineEdit('${item.id}')" class="fa-solid fa-pen-to-square text-slate-400 admin-action ${actionCls} hover:text-orange-500 hover:scale-110 transform transition-transform p-2 sm:p-0" title="行內直接編輯"></i>
+                                <i onclick="requestPassword('輸入密碼確認刪除餐點', pwd => { if(pwd==='suting') deleteItem('${item.id}'); else alert('密碼錯誤') })" class="fa-solid fa-trash-can text-slate-400 admin-action ${actionCls} hover:!text-red-600 hover:scale-110 transform transition-transform p-2 sm:p-0" title="刪除此餐點"></i>
                             </div>
                         </div>`;
                     }
@@ -2300,7 +2383,6 @@
             
             alert("✅ 新增成功！店家資訊已保留，可繼續新增該店家的其他餐點。\n如需新增其他店家請點擊左側「清空表單」。");
 
-            // 僅清空餐點屬性欄位，保留店家屬性
             ['admin-input-item', 'admin-input-price', 'admin-input-img-url', 'admin-input-file'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('admin-img-preview').classList.add('hidden');
             document.querySelectorAll('.new-item-opt-cb').forEach(cb => cb.checked = false);
@@ -2309,7 +2391,6 @@
             await window.saveState(); 
             window.renderAdmin();
             
-            // 自動聚焦，方便快速輸入下一個
             setTimeout(() => document.getElementById('admin-input-item').focus(), 100);
         };
 
@@ -2391,6 +2472,50 @@
                 const originalIdx = window.state.orderHistory.findIndex(o => o.id === order.id);
                 const displayId = originalIdx !== -1 ? window.state.orderHistory.length - originalIdx : filteredHistory.length - idx;
 
+                const cartByStore = order.cart.reduce((acc, c) => {
+                    const sName = c.storeName || '綜合店家';
+                    if (!acc[sName]) acc[sName] = {};
+                    if (!acc[sName][c.userName]) acc[sName][c.userName] = [];
+                    acc[sName][c.userName].push(c);
+                    return acc;
+                }, {});
+
+                let cartDetailsHtml = '';
+                for (const [storeName, users] of Object.entries(cartByStore)) {
+                    cartDetailsHtml += `<div class="mb-4 last:mb-0">
+                        <div class="text-slate-800 font-black text-lg md:text-xl mb-3 flex items-center gap-2 border-b border-orange-100 pb-2 w-full">
+                            <i class="fa-solid fa-store text-orange-500 shrink-0"></i>
+                            <span class="break-words whitespace-normal leading-tight">${storeName}</span>
+                        </div>
+                        <div class="space-y-3">`;
+                    
+                    const sortedUsers = Object.keys(users).sort((a,b) => a.localeCompare(b));
+                    sortedUsers.forEach(user => {
+                        const userItems = users[user];
+                        cartDetailsHtml += `
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div class="bg-slate-200/50 px-3 py-2 flex justify-between items-center border-b border-slate-200">
+                                    <span class="text-white bg-slate-800 px-2.5 py-1 rounded text-xs font-black shadow-sm break-words max-w-full">${user}</span>
+                                    <span class="text-slate-500 font-bold text-xs">共 ${userItems.reduce((sum, i) => sum + i.qty, 0)} 份</span>
+                                </div>
+                                <div class="p-2 space-y-2">`;
+                        
+                        userItems.forEach(c => {
+                            cartDetailsHtml += `
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pl-2 border-b border-slate-200/40 last:border-0 pb-1 last:pb-0">
+                                    <div class="flex items-center flex-wrap gap-2 w-full pr-2">
+                                        <span class="font-bold text-slate-800 text-sm break-words whitespace-normal leading-snug">${c.itemName}</span> 
+                                        <span class="text-slate-500 font-black text-xs bg-white border border-slate-200 px-1.5 rounded shrink-0">x${c.qty}</span> 
+                                        ${c.note ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-bold border border-blue-100 break-words whitespace-pre-wrap mt-1 sm:mt-0"><i class="fa-solid fa-pen mr-1"></i>${c.note}</span>` : ''}
+                                    </div>
+                                    <span class="text-slate-700 font-black text-sm shrink-0 self-end sm:self-auto">$${c.price * c.qty}</span>
+                                </div>`;
+                        });
+                        cartDetailsHtml += `</div></div>`;
+                    });
+                    cartDetailsHtml += `</div></div>`;
+                }
+
                 html += `
                     <div class="border border-slate-200 rounded-[2rem] p-4 md:p-8 bg-white shadow-sm hover:shadow-lg transition flex flex-col transform hover:-translate-y-1 w-full overflow-hidden">
                         <div class="flex flex-col xl:flex-row justify-between xl:items-center border-b border-slate-100 pb-5 mb-5 gap-4 w-full">
@@ -2404,23 +2529,8 @@
                             </div>
                         </div>
                         
-                        <div class="text-slate-800 font-black text-xl md:text-2xl mb-5 flex items-start gap-3 w-full">
-                            <i class="fa-solid fa-store mt-1 text-orange-500 bg-orange-50 p-2 rounded-lg shrink-0"></i>
-                            <span class="leading-tight break-words whitespace-normal w-full">${order.store}</span>
-                        </div>
-                        
-                        <div class="space-y-2 bg-slate-50 p-4 md:p-5 rounded-2xl text-sm border border-slate-100 flex-1 w-full">
-                            ${order.cart.map(c => `
-                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200/70 pb-3 mb-3 last:border-0 last:pb-0 last:mb-0 gap-3 w-full">
-                                    <div class="flex items-center flex-wrap gap-2 w-full pr-2">
-                                        <span class="text-white bg-orange-500 px-2.5 py-1 rounded-lg text-xs font-black shadow-sm break-words max-w-full">${c.userName}</span> 
-                                        <span class="font-bold text-slate-800 text-base break-words whitespace-normal leading-snug">${c.itemName}</span> 
-                                        <span class="text-slate-400 font-black text-sm bg-white border border-slate-200 px-1.5 rounded shrink-0">x${c.qty}</span> 
-                                        ${c.note ? `<div class="w-full mt-1 mb-1 sm:mt-0 sm:mb-0 sm:w-auto"><span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-md font-bold border border-blue-100 break-words whitespace-pre-wrap inline-block max-w-full"><i class="fa-solid fa-pen mr-1"></i>${c.note}</span></div>` : ''}
-                                    </div>
-                                    <span class="text-slate-700 font-black text-lg shrink-0 self-end sm:self-auto">$${c.price * c.qty}</span>
-                                </div>
-                            `).join('')}
+                        <div class="flex-1 w-full space-y-4">
+                            ${cartDetailsHtml}
                         </div>
                     </div>`;
             });
@@ -2433,7 +2543,13 @@
             window.state.orderHistory.forEach((order, idx) => {
                 content += `[紀錄 #${window.state.orderHistory.length - idx}] 結單時間: ${order.date} ${order.time} | 店家: ${order.store}\n`;
                 content += `>>> 總結算金額: $${order.total}\n明細：\n`;
-                order.cart.forEach(c => { content += `  - ${c.userName}: ${c.itemName} x${c.qty} (小計 $${c.price * c.qty}) ${c.note ? '備註:'+c.note : ''}\n`; });
+                
+                let sortedCart = [...order.cart].sort((a,b) => {
+                    if (a.storeName !== b.storeName) return (a.storeName || '').localeCompare(b.storeName || '');
+                    return a.userName.localeCompare(b.userName);
+                });
+                
+                sortedCart.forEach(c => { content += `  - [${c.storeName || '店家'}] ${c.userName}: ${c.itemName} x${c.qty} (小計 $${c.price * c.qty}) ${c.note ? '備註:'+c.note : ''}\n`; });
                 content += "--------------------------------------------------\n";
             });
             const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
@@ -2451,8 +2567,6 @@
                 await window.saveState(); window.renderHistory(); alert("✅ 歷史紀錄已成功清空！");
             } else alert("❌ 密碼錯誤，拒絕執行！");
         };
-
-        // ================= ExcelJS 高階樣式匯出與匯入功能 =================
 
         window.exportDatabaseExcel = async function() {
             if (window.state.items.length === 0) return alert('資料庫目前沒有餐點可供匯出！');
@@ -2651,7 +2765,10 @@
                 cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
             });
 
-            order.cart.sort((a,b) => a.userName.localeCompare(b.userName)).forEach((c, idx) => {
+            order.cart.sort((a,b) => {
+                if (a.storeName !== b.storeName) return (a.storeName || '').localeCompare(b.storeName || '');
+                return a.userName.localeCompare(b.userName);
+            }).forEach((c, idx) => {
                 const row = sheet.addRow({
                     user: c.userName,
                     item: c.itemName,
@@ -2716,7 +2833,10 @@
 
             let isEven = false;
             window.state.orderHistory.forEach(order => {
-                order.cart.sort((a,b) => a.userName.localeCompare(b.userName)).forEach((c, idx) => {
+                order.cart.sort((a,b) => {
+                    if (a.storeName !== b.storeName) return (a.storeName || '').localeCompare(b.storeName || '');
+                    return a.userName.localeCompare(b.userName);
+                }).forEach((c, idx) => {
                     const row = sheet.addRow({
                         date: idx === 0 ? `${order.date} ${order.time}` : '',
                         store: idx === 0 ? order.store : '',

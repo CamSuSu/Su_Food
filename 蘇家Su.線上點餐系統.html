@@ -29,14 +29,20 @@
 /* 提升文字載入效能與優化字體抗鋸齒渲染 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
+        /* ★ 修正 iOS 橡皮筋效應與動態工具列干擾 */
+        html {
+            overscroll-behavior-y: none;
+        }
+
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             transition: background 0.3s; 
-            padding-top: 64px; /* 對應 Navbar 高度，防止內容被遮住 */
+            padding-top: 64px; 
             padding-bottom: 80px; 
             text-rendering: optimizeLegibility; 
             -webkit-font-smoothing: antialiased; 
-            overflow-x: hidden; /* 防止手機版左右晃動影響置頂效果 */
+            /* ★ 關鍵：絕對不能用 overflow-x: hidden，改用 clip 才能完美解決 iOS fixed 跑位問題 */
+            overflow-x: clip; 
             width: 100%;
         }
         
@@ -122,7 +128,7 @@
         </div>
     </nav>
 
-    <div class="fixed z-40 no-print pointer-events-none fixed-gpu" style="bottom: 12px; left: 16px; padding-bottom: env(safe-area-inset-bottom);">
+    <div class="fixed z-40 no-print pointer-events-none fixed-gpu" style="bottom: max(16px, env(safe-area-inset-bottom)); left: 16px;">
         <div class="bg-white/40 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
             <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
             <span class="tracking-widest">菜單更新：<span id="global-update-date" class="font-bold"></span></span>
@@ -1728,20 +1734,19 @@ window.confirmAddToCart = async function() {
                             tbody += `<tr class="border-b border-slate-200 hover:bg-slate-50 transition text-[13px] sm:text-sm md:text-base">`;
                             
                             if (index === 0) {
-                                tbody += `<td rowspan="${userItems.length}" class="py-2 px-1 sm:px-2 font-black text-slate-800 break-words align-middle border-r border-slate-100/50 w-[18%]"><span class="bg-slate-100 border border-slate-200 px-1 sm:px-2 py-0.5 sm:py-1 rounded shadow-sm inline-block break-words max-w-full leading-tight">${c.userName}</span></td>`;
+                                tbody += `<td rowspan="${userItems.length}" class="py-2 px-1 sm:px-2 font-black text-slate-800 break-words align-middle border-r border-slate-100/50 w-[16%]"><span class="bg-slate-100 border border-slate-200 px-1 sm:px-2 py-0.5 sm:py-1 rounded shadow-sm inline-block break-words max-w-full leading-tight">${c.userName}</span></td>`;
                             }
                             
-                            // ★ 移除強制寬度，按比例分配欄位寬度
+                            // ★ 完美比例修正：數量鎖死在 40px，備註改為 w-auto 彈性吸收所有剩下的畫面空間
                             tbody += `
-                                <td class="py-2 px-1 sm:px-2 font-bold text-slate-800 break-words w-[35%] leading-snug">${c.itemName}</td>
-                                <td class="py-2 px-1 sm:px-2 font-black text-center text-slate-800 w-[10%]">${c.qty}</td>
-                                <td class="py-2 px-1 sm:px-2 text-blue-600 text-[11px] sm:text-sm font-bold break-words whitespace-pre-wrap leading-tight w-[22%]">${c.note ? `[${c.note}]` : ''}</td>
-                                <td class="py-2 px-1 sm:px-2 font-black text-right text-slate-800 w-[15%]">$${sub}</td>
+                                <td class="py-2 px-1 sm:px-2 font-bold text-slate-800 break-words w-[32%] leading-snug">${c.itemName}</td>
+                                <td class="py-2 px-1 sm:px-2 font-black text-center text-slate-800 w-[40px] sm:w-[50px]">${c.qty}</td>
+                                <td class="py-2 px-1 sm:px-2 text-blue-600 text-[11px] sm:text-sm font-bold break-words whitespace-pre-wrap leading-tight w-auto">${c.note ? `[${c.note}]` : ''}</td>
+                                <td class="py-2 px-1 sm:px-2 font-black text-right text-slate-800 w-[14%] sm:w-[12%]">$${sub}</td>
                             </tr>`;
                         });
                     });
 
-                    // ★ 將表格改為 table-fixed，並移除導致溢出的 min-w-[500px] 與橫向卷軸
                     tablesHtml += `
                         <div class="mb-8 border-2 border-slate-800 rounded-2xl overflow-hidden print-no-shadow w-full">
                             <div class="bg-slate-800 text-white p-3 sm:p-4 font-black text-base sm:text-lg md:text-xl flex flex-wrap justify-between items-center gap-2">
@@ -1752,11 +1757,11 @@ window.confirmAddToCart = async function() {
                                 <table class="w-full text-left border-collapse bg-white table-fixed">
                                     <thead>
                                         <tr class="bg-slate-100 text-slate-600 text-[12px] sm:text-sm md:text-base border-b-2 border-slate-300">
-                                            <th class="py-2 px-1 sm:px-2 font-black w-[18%] text-center sm:text-left">點餐人</th>
-                                            <th class="py-2 px-1 sm:px-2 font-black w-[35%]">餐點名稱</th>
-                                            <th class="py-2 px-1 sm:px-2 font-black text-center w-[10%]">數量</th>
-                                            <th class="py-2 px-1 sm:px-2 font-black w-[22%]">備註</th>
-                                            <th class="py-2 px-1 sm:px-2 font-black text-right w-[15%]">小計</th>
+                                            <th class="py-2 px-1 sm:px-2 font-black w-[16%] text-center sm:text-left">點餐人</th>
+                                            <th class="py-2 px-1 sm:px-2 font-black w-[32%]">餐點名稱</th>
+                                            <th class="py-2 px-1 sm:px-2 font-black text-center w-[40px] sm:w-[50px]">數量</th>
+                                            <th class="py-2 px-1 sm:px-2 font-black w-auto">備註</th>
+                                            <th class="py-2 px-1 sm:px-2 font-black text-right w-[14%] sm:w-[12%]">小計</th>
                                         </tr>
                                     </thead>
                                     <tbody>

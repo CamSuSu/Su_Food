@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* 提升文字載入效能與優化字體抗鋸齒渲染 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -84,12 +85,12 @@
 <body class="bg-slate-50 text-slate-900 relative">
 
     <nav class="bg-white shadow-sm border-b sticky top-0 z-40 no-print">
-        <div class="container mx-auto px-4 h-16 flex justify-between items-center">
-            <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80" onclick="showView('home')">
+        <div class="container mx-auto px-4 h-16 flex justify-between items-center w-full">
+            <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80 min-w-0 pr-4" onclick="showView('home')">
                 <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm shrink-0"><i class="fa-solid fa-store"></i></div>
                 <h1 class="text-xl font-black tracking-tight truncate">Su.線上點餐系統</h1>
             </div>
-            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div class="flex items-center gap-3 sm:gap-4 shrink-0 ml-auto">
                 <button id="nav-cart-btn" onclick="openModal('cart-modal')" class="hidden lg:hidden bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full font-bold hover:bg-orange-200 transition border border-orange-200 shadow-sm items-center text-sm md:text-base whitespace-nowrap">
                     <i class="fa-solid fa-basket-shopping sm:mr-1"></i> <span id="nav-cart-count" class="ml-1 sm:ml-0">0</span>
                 </button>
@@ -106,7 +107,7 @@
     <div class="fixed z-30 no-print pointer-events-none" style="bottom: 16px; left: 16px; padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left);">
         <div class="bg-white/30 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
             <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
-            <span class="tracking-widest">菜單更新日：<span id="global-update-date" class="font-bold"></span></span>
+            <span class="tracking-widest">菜單更新：<span id="global-update-date" class="font-bold"></span></span>
         </div>
     </div>
 
@@ -120,9 +121,9 @@
             <div class="mb-8 bg-gradient-to-r from-orange-500 to-amber-500 p-8 md:p-10 rounded-3xl text-white shadow-xl relative overflow-hidden">
                 <div class="relative z-10">
                     <h2 class="text-3xl md:text-4xl font-black mb-3">今天您想吃什麼呢？</h2>
-                    <p class="opacity-95 text-lg font-bold mb-6">瀏覽各類的店家，與家禾一同發起團體點餐活動</p>
+                    <p class="opacity-95 text-lg font-bold mb-6">與家禾一起發起 團體點餐活動</p>
                     <button onclick="openStartOrderModal()" class="bg-white text-orange-600 px-6 py-3.5 rounded-xl font-black shadow-lg hover:bg-orange-50 transition transform hover:-translate-y-1 hover:shadow-xl text-lg flex items-center w-full md:w-max justify-center">
-                        <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>發起團體點餐活動
+                        <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>發起 團體點餐活動
                     </button>
                 </div>
                 <i class="fa-solid fa-burger absolute -right-10 -bottom-10 text-[180px] opacity-20 transform -rotate-12"></i>
@@ -130,7 +131,7 @@
             
             <div class="flex justify-between items-end mb-3 px-2">
                 <h3 class="text-lg md:text-xl font-black text-slate-700 tracking-wide">選擇店家類別</h3>
-                <span class="text-[11px] md:hidden text-slate-400 font-bold flex items-center animate-pulse tracking-widest"><i class="fa-solid fa-arrows-left-right mr-1.5"></i>滑動看更多</span>
+                <span class="text-[11px] md:hidden text-slate-400 font-bold flex items-center animate-pulse tracking-widest"><i class="fa-solid fa-arrows-left-right mr-1.5"></i>滑動看更多..</span>
             </div>
             <div class="relative w-full mb-6">
                 <div id="category-tabs" class="flex gap-3 overflow-x-auto pb-5 pt-2 px-2 custom-scrollbar snap-x snap-mandatory pr-16 scroll-smooth" style="-webkit-overflow-scrolling: touch;"></div>
@@ -162,7 +163,7 @@
                     <div class="absolute top-0 left-0 w-full h-2 bg-red-500 animate-pulse"></div>
                     <p class="text-slate-500 font-black mb-2 tracking-widest uppercase"><i class="fa-solid fa-stopwatch mr-2 text-red-500"></i>點餐活動倒數中</p>
                     <div id="big-timer" class="text-6xl md:text-7xl font-black text-red-600 tracking-tighter drop-shadow-sm">00:00</div>
-                    <button onclick="requestPassword('輸入密碼以提早結單', pwd => { if(pwd === '24331561') window.autoCheckout(); else alert('密碼錯誤！'); })" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
+                    <button onclick="requestPassword('輸入密碼 提早結單', pwd => { if(pwd === '24331561') window.autoCheckout(); else alert('密碼錯誤！'); })" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
                         <i class="fa-solid fa-lock-open mr-2 text-slate-400"></i>提早結單
                     </button>
                 </div>
@@ -196,7 +197,7 @@
 
         <div id="view-admin" class="view-section hidden">
             <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4 border-b-2 border-slate-200 pb-4">
-                <h2 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-database text-orange-500 mr-3 text-3xl"></i>系統資料庫管理</h2>
+                <h2 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-database text-orange-500 mr-3 text-3xl"></i>Su.資料庫管理</h2>
                 <div class="flex flex-wrap gap-3 w-full xl:w-auto">
                     <button onclick="exportDatabaseExcel()" class="flex-1 xl:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center whitespace-nowrap"><i class="fa-solid fa-file-excel mr-2"></i>匯出 Excel</button>
                     <label class="flex-1 xl:flex-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center cursor-pointer whitespace-nowrap mb-0">
@@ -215,7 +216,6 @@
             </div>
 
             <div id="admin-tab-menu" class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-                
                 <div class="xl:col-span-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100 xl:sticky xl:top-24 max-h-[85vh] overflow-y-auto custom-scrollbar">
                     <h3 id="admin-form-title" class="text-2xl font-black mb-6 text-orange-600 flex justify-between items-center border-b pb-4">
                         <span><i class="fa-solid fa-square-plus mr-2"></i>新增餐點與店家</span>
@@ -229,7 +229,6 @@
                                     <input list="store-datalist" id="admin-input-store" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 font-bold" placeholder="選擇或輸入新店家" onchange="autoFillStoreInfo()">
                                     <datalist id="store-datalist"></datalist>
                                 </div>
-                                
                                 <div>
                                     <label class="block text-xs font-bold mb-1 text-slate-500">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label>
                                     <div class="flex gap-2">
@@ -237,7 +236,6 @@
                                         <button onclick="switchAdminTab('settings')" class="bg-orange-100 hover:bg-orange-200 text-orange-600 px-4 rounded-xl font-bold transition shadow-sm shrink-0" title="大分類管理請至設定頁"><i class="fa-solid fa-gear"></i></button>
                                     </div>
                                 </div>
-
                                 <div>
                                     <label class="block text-xs font-bold mb-1 text-slate-500">店家封面圖 (自動極限壓縮)</label>
                                     <div class="flex gap-2">
@@ -258,8 +256,7 @@
                                 </div>
                                 <div class="pt-2 border-t border-slate-200">
                                     <label class="block text-xs font-black mb-2 text-slate-600"><i class="fa-regular fa-clock mr-1"></i>營業時間 (選填)</label>
-                                    <div id="admin-hours-container" class="space-y-2 border border-slate-200 p-3 rounded-xl bg-white max-h-48 overflow-y-auto custom-scrollbar">
-                                    </div>
+                                    <div id="admin-hours-container" class="space-y-2 border border-slate-200 p-3 rounded-xl bg-white max-h-48 overflow-y-auto custom-scrollbar"></div>
                                 </div>
                             </div>
                         </div>
@@ -303,7 +300,7 @@
                         </div>
 
                         <div class="flex flex-col sm:flex-row gap-3 mt-2 w-full">
-                            <button onclick="clearNewItemForm()" class="w-full sm:w-1/3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 md:py-5 rounded-2xl shadow-sm transition text-lg flex items-center justify-center whitespace-nowrap"><i class="fa-solid fa-eraser mr-2"></i>清空表單</button>
+                            <button onclick="clearNewItemForm()" class="w-full sm:w-1/3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 md:py-5 rounded-2xl shadow-sm transition text-lg flex items-center justify-center whitespace-nowrap"><i class="fa-solid fa-eraser mr-2"></i>清空</button>
                             <button onclick="saveNewItemData()" class="w-full sm:w-2/3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-4 md:py-5 rounded-2xl shadow-xl hover:from-orange-600 hover:to-amber-600 transition transform hover:-translate-y-1 text-xl flex items-center justify-center whitespace-nowrap"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>確認新增至資料庫</button>
                         </div>
                     </div>
@@ -313,7 +310,7 @@
                     <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 p-4 md:p-8 w-full">
                         <div class="mb-8 relative w-full">
                             <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-400 text-lg"></i>
-                            <input type="text" id="admin-search-input" oninput="handleSearchInput()" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-slate-700 text-lg shadow-inner" placeholder="快速搜尋：輸入店家、分類或餐點名稱...">
+                            <input type="text" id="admin-search-input" oninput="handleSearchInput()" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-slate-700 text-lg shadow-inner" placeholder="快速搜尋：店家、分類或餐點">
                         </div>
                         <div id="admin-data-grouped-list" class="space-y-8 w-full"></div>
                     </div>
@@ -430,7 +427,7 @@
 
     <div id="view-receipt" class="view-section hidden print-no-shadow relative">
         <div id="receipt-capture-area" class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
-            <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">Su.線上點餐明細總表</h2>
+            <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">Su.線上點餐 明細總表</h2>
             <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2 w-full break-words">
                 <p class="font-bold text-lg md:text-xl break-words">結單時間：<span id="receipt-time" class="ml-2 text-slate-600 whitespace-nowrap"></span></p>
             </div>
@@ -445,13 +442,28 @@
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
                 
-                <button id="btn-new-tab-receipt" onclick="openReceiptInNewTab()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
-                    <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>新分頁開啟明細
+                <button id="btn-generate-img" onclick="generateReceiptImage()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                    <i class="fa-solid fa-image mr-2"></i>產生明細圖片
                 </button>
                 
                 <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-house mr-2"></i>結束並返回首頁
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="receipt-image-modal" class="fixed inset-0 bg-black/90 hidden z-[500] flex-col items-center justify-start pt-10 pb-6 px-4 backdrop-blur-md transition-opacity">
+        <div class="w-full flex justify-between items-center mb-4 max-w-4xl no-print shrink-0">
+            <button onclick="closeReceiptImage()" class="bg-red-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg"><i class="fa-solid fa-arrow-left mr-2"></i>返回系統</button>
+            <span class="text-white font-bold text-sm bg-black/50 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-hand-pointer mr-1"></i>長按圖片儲存</span>
+        </div>
+        <div class="flex-1 w-full max-w-4xl overflow-y-auto custom-scrollbar flex flex-col items-center bg-slate-100 rounded-xl relative shadow-2xl">
+            <div id="receipt-image-container" class="w-full min-h-full flex items-start justify-center"></div>
+            <div id="receipt-image-loader" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-10">
+                <i class="fa-solid fa-spinner fa-spin text-5xl text-orange-500 mb-4"></i>
+                <p class="text-slate-600 font-black text-xl tracking-wider">正在生成明細圖片...</p>
+                <p class="text-slate-400 font-bold text-sm mt-2">這可能需要幾秒鐘的時間</p>
             </div>
         </div>
     </div>
@@ -496,7 +508,7 @@
             <input id="pwd-prompt-input" type="password" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 outline-none focus:border-red-500 focus:bg-white text-center tracking-widest font-black text-2xl mb-6 transition shadow-inner" placeholder="●●●●●●●●" onkeypress="if(event.key === 'Enter') submitPwdPrompt()">
             <div class="flex gap-3">
                 <button onclick="closeModal('pwd-prompt-modal')" class="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition border border-transparent hover:border-slate-200">取消</button>
-                <button onclick="submitPwdPrompt()" class="flex-[2] bg-red-500 text-white py-3 rounded-xl font-black shadow-lg hover:bg-red-600 transition hover:-translate-y-0.5 whitespace-nowrap">確認執行</button>
+                <button onclick="submitPwdPrompt()" class="flex-[2] bg-red-500 text-white py-3 rounded-xl font-black shadow-lg hover:bg-red-600 transition hover:-translate-y-0.5 whitespace-nowrap">確認</button>
             </div>
         </div>
     </div>
@@ -621,69 +633,58 @@
             return `hsl(${hue}, ${sat}%, ${light}%)`;
         };
 
-        // 開啟新分頁顯示明細 PDF：加入返回按鈕確保手機可順利關閉
-        window.openReceiptInNewTab = function() {
+        // ★★★ 移動裝置專用：產生圖片彈跳視窗，解決另開分頁死當/白畫面問題 ★★★
+        window.generateReceiptImage = async function() {
             const captureArea = document.getElementById('receipt-capture-area');
             if (!captureArea) return;
             
-            const tailwindScript = '<script src="https://cdn.tailwindcss.com"><\/script>';
-            const faLink = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
-            const fontLink = `<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">`;
+            const actionBtns = document.getElementById('receipt-action-buttons');
+            const originalDisplay = actionBtns.style.display;
             
-            const newWin = window.open('', '_blank');
-            if (!newWin) {
-                alert('彈出視窗被瀏覽器封鎖，請允許開啟新分頁以查看明細！');
-                return;
-            }
+            // 截圖前暫時隱藏按鈕區塊，避免按鈕被印入圖片中
+            actionBtns.style.display = 'none';
+            
+            const modal = document.getElementById('receipt-image-modal');
+            const loader = document.getElementById('receipt-image-loader');
+            const container = document.getElementById('receipt-image-container');
+            
+            modal.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            container.innerHTML = ''; // 清空上一次的截圖
 
-            newWin.document.write(`
-                <!DOCTYPE html>
-                <html lang="zh-TW">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                    <title>訂單明細總表</title>
-                    ${tailwindScript}
-                    ${faLink}
-                    ${fontLink}
-                    <style>
-                        body { 
-                            font-family: 'Noto Sans TC', sans-serif; 
-                            background-color: #f8fafc; 
-                            padding: 0; 
-                            margin: 0;
-                            -webkit-font-smoothing: antialiased;
-                        }
-                        #receipt-action-buttons { display: none !important; }
-                        #receipt-capture-area {
-                            box-shadow: none !important;
-                            border: none !important;
-                            margin: 0 auto !important;
-                            padding: 16px !important;
-                            background-color: transparent !important;
-                        }
-                        @media print {
-                            body { background: white !important; padding: 0 !important; }
-                            .top-close-bar { display: none !important; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="top-close-bar no-print" style="padding: 15px; text-align: center; background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                        <button onclick="window.close(); history.back();" style="background: #ef4444; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 900; border: none; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);">
-                            <i class="fa-solid fa-xmark" style="margin-right: 8px;"></i>關閉明細並返回原系統
-                        </button>
-                    </div>
-                    ${captureArea.outerHTML}
-                    <script>
-                        setTimeout(() => {
-                            window.print();
-                        }, 800);
-                    <\/script>
-                </body>
-                </html>
-            `);
-            newWin.document.close();
+            try {
+                // 使用 html2canvas，設定適當的 scale 防止記憶體炸掉，並允許跨域載入圖片
+                const canvas = await html2canvas(captureArea, {
+                    scale: 2, // 畫質夠用且不會造成 iOS 崩潰
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+
+                // 將畫布轉為 JPEG 格式以大幅減少記憶體佔用
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                const img = document.createElement('img');
+                img.src = imgData;
+                img.className = 'w-full h-auto object-contain';
+                
+                // 圖片讀取完成後放入容器並隱藏 loader
+                img.onload = () => {
+                    container.appendChild(img);
+                    loader.classList.add('hidden');
+                };
+            } catch (error) {
+                console.error("生成圖片失敗:", error);
+                loader.classList.add('hidden');
+                container.innerHTML = '<p class="text-red-500 font-bold p-8 text-xl">圖片生成失敗，請重試或改用電腦版列印。</p>';
+            } finally {
+                // 恢復操作按鈕顯示
+                actionBtns.style.display = originalDisplay;
+            }
+        };
+
+        window.closeReceiptImage = function() {
+            document.getElementById('receipt-image-modal').classList.add('hidden');
+            document.getElementById('receipt-image-container').innerHTML = ''; // 清空記憶體
         };
 
         window.compressData = function(data) {
@@ -1296,6 +1297,8 @@
         window.startTimer = function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.remove('hidden');
+            
+            // ★ 將原本 600 毫秒改為 500 毫秒，減少行動裝置上的視覺延遲，讓兩端更同步
             window.timerInterval = setInterval(() => {
                 if (!window.state.session || !window.state.session.isActive) {
                     clearInterval(window.timerInterval);
@@ -1313,7 +1316,7 @@
                 const str = h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
                 document.getElementById('big-timer').innerText = str; 
                 document.getElementById('nav-timer-val').innerText = str;
-            }, 600);
+            }, 500); 
         };
 
         window.renderActiveOrder = function() {
@@ -1326,7 +1329,7 @@
                 const storeInfo = window.state.stores.find(s => s.name === storeName) || {};
                 infoHtml += `
                     <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-3 w-full max-w-2xl transform transition hover:scale-[1.01]">
-                        <span class="bg-slate-800 text-white font-black px-3 py-1 rounded-lg text-sm shrink-0 whitespace-nowrap">店家 ${idx+1}</span>
+                        <span class="bg-slate-800 text-white font-black px-3 py-1 rounded-lg text-sm shrink-0 whitespace-nowrap">店家 </span>
                         <span class="text-xl font-black text-slate-800 shrink-0 break-words w-full sm:w-auto text-center sm:text-left">${storeName}</span>
                         <div class="flex flex-wrap justify-center md:justify-start gap-2 text-xs w-full">
                             ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-slate-50 hover:bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 transition text-slate-700 break-all"><i class="fa-solid fa-phone text-orange-500 mr-1"></i>${storeInfo.phone}</a>` : ''}
@@ -1666,7 +1669,7 @@
             document.getElementById('receipt-time').innerText = `${latestOrder.date} ${latestOrder.time}`;
             
             const btnPrint = document.getElementById('btn-print-pdf');
-            const btnNewTab = document.getElementById('btn-new-tab-receipt');
+            const btnNewTab = document.getElementById('btn-generate-img');
 
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
@@ -1760,7 +1763,7 @@
                 document.getElementById('receipt-content').innerHTML = `
                     ${tablesHtml}
                     <div class="bg-orange-50 border-4 border-orange-200 rounded-2xl p-6 flex flex-wrap justify-between items-center mt-4 gap-4">
-                        <span class="font-black text-2xl md:text-3xl text-slate-800 shrink-0">總結算：</span>
+                        <span class="font-black text-2xl md:text-3xl text-slate-800 shrink-0">結算：</span>
                         <span class="font-black text-4xl md:text-5xl text-red-600 drop-shadow-sm shrink-0">$${grandTotal}</span>
                     </div>
                 `;
@@ -2528,7 +2531,7 @@
             
             window.addAdminLog('新增', `新增餐點「${name}」於店家「${store}」`);
             
-            alert("✅ 新增成功！店家資訊已保留，可繼續新增該店家的其他餐點。\n如需新增其他店家請點擊左側「清空表單」。");
+            alert("✅ 新增成功！店家資訊已保留，可繼續新增該店家的其他餐點。\n如需新增其他店家請點擊左側「清空」。");
 
             ['admin-input-item', 'admin-input-price', 'admin-input-img-url', 'admin-input-file'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('admin-img-preview').classList.add('hidden');
@@ -2689,7 +2692,7 @@
             let content = "--- Su.線上點餐系統 歷史訂單紀錄 ---\n\n";
             window.state.orderHistory.forEach((order, idx) => {
                 content += `[紀錄 #${window.state.orderHistory.length - idx}] 結單時間: ${order.date} ${order.time} | 店家: ${order.store}\n`;
-                content += `>>> 總結算金額: $${order.total}\n明細：\n`;
+                content += `>>> 結算金額: $${order.total}\n明細：\n`;
                 
                 let sortedCart = [...order.cart].sort((a,b) => {
                     if (a.storeName !== b.storeName) return (a.storeName || '').localeCompare(b.storeName || '');
@@ -2996,7 +2999,7 @@
             });
             
             sheet.addRow({}); // 留空行
-            const totalRow = sheet.addRow({ store: '總結算', subtotal: order.total });
+            const totalRow = sheet.addRow({ store: '結算', subtotal: order.total });
             totalRow.getCell('subtotal').font = { bold: true, color: { argb: 'FFDC2626' } };
 
             const buffer = await workbook.xlsx.writeBuffer();

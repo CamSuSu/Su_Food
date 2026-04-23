@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px;}
@@ -200,7 +199,7 @@
                                     <label class="block text-xs font-bold mb-1 text-slate-500">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label>
                                     <div class="flex gap-2">
                                         <select id="admin-input-cat" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold"></select>
-                                        <button onclick="switchAdminTab('settings')" class="bg-orange-100 hover:bg-orange-200 text-orange-600 px-4 rounded-xl font-bold transition shadow-sm shrink-0" title="大分類管理請至設定頁"><i class="fa-solid fa-gear"></i></button>
+                                        <button onclick="addNewCategoryPrompt()" class="bg-orange-100 hover:bg-orange-200 text-orange-600 px-4 rounded-xl font-bold transition shadow-sm shrink-0" title="大分類管理請至設定頁"><i class="fa-solid fa-gear"></i></button>
                                     </div>
                                 </div>
 
@@ -268,10 +267,7 @@
                             <div id="admin-input-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 w-full"></div>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row gap-3 mt-2 w-full">
-                            <button onclick="clearNewItemForm()" class="w-full sm:w-1/3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 md:py-5 rounded-2xl shadow-sm transition text-lg flex items-center justify-center whitespace-nowrap"><i class="fa-solid fa-eraser mr-2"></i>清空表單</button>
-                            <button onclick="saveNewItemData()" class="w-full sm:w-2/3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-4 md:py-5 rounded-2xl shadow-xl hover:from-orange-600 hover:to-amber-600 transition transform hover:-translate-y-1 text-xl flex items-center justify-center whitespace-nowrap"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>確認新增至資料庫</button>
-                        </div>
+                        <button onclick="saveNewItemData()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-4 md:py-5 rounded-2xl shadow-xl hover:from-orange-600 hover:to-amber-600 transition transform hover:-translate-y-1 text-xl"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>確認新增至資料庫</button>
                     </div>
                 </div>
 
@@ -321,17 +317,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-blue-800 mb-1">選項群組名稱</label>
-                                <input id="setting-opt-name" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 甜度、加料">
+                                <input id="setting-opt-name" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 甜度、加飯">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-blue-800 mb-1">選項內容 (請以半形逗號 , 分隔)</label>
+                                <label class="block text-xs font-bold text-blue-800 mb-1">下拉選單內容 (請以半形逗號 , 分隔)</label>
                                 <input id="setting-opt-choices" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 正常甜,少糖,半糖,無糖">
-                            </div>
-                            <div class="md:col-span-3 mt-1">
-                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm text-blue-800 bg-white p-2.5 rounded-xl border border-blue-200 shadow-sm w-full sm:w-auto inline-flex hover:shadow transition">
-                                    <input type="checkbox" id="setting-opt-ismulti" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-blue-300">
-                                    允許使用者複選此選項 (若未勾選則強制為單選必填)
-                                </label>
                             </div>
                         </div>
                         <button onclick="addGlobalOption()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-md transition"><i class="fa-solid fa-folder-plus mr-2"></i>建立新選項模組</button>
@@ -390,7 +380,7 @@
     </main>
 
     <div id="view-receipt" class="view-section hidden print-no-shadow relative">
-        <div id="receipt-capture-area" class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
+        <div class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
             <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">蘇家Su.線上點餐明細總表</h2>
             <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2 w-full break-words">
                 <p class="font-bold text-lg md:text-xl break-words">結單時間：<span id="receipt-time" class="ml-2 text-slate-600 whitespace-nowrap"></span></p>
@@ -399,34 +389,14 @@
             
             <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200 break-words whitespace-normal">請依照此表單內容進行點餐與收費作業</div>
             
-            <div id="receipt-action-buttons" class="flex flex-col sm:flex-row gap-4 justify-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
-                <button onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
+                <button onclick="setTimeout(() => window.print(), 500)" class="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
-                <button onclick="generateReceiptImage()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
-                    <i class="fa-solid fa-image mr-2"></i>下載明細圖片
-                </button>
-                
                 <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-house mr-2"></i>結束並返回首頁
                 </button>
             </div>
-        </div>
-    </div>
-
-    <div id="image-modal" class="fixed inset-0 bg-black/90 hidden z-[300] overflow-y-auto transition-opacity no-print">
-        <div class="min-h-full flex flex-col items-center justify-start p-4">
-            <div class="w-full max-w-2xl flex justify-between items-center mb-4 sticky top-0 pt-2 pb-2 z-10">
-                <p class="text-white font-black text-sm md:text-lg bg-black/60 px-4 py-2 rounded-xl backdrop-blur-md shadow-sm border border-white/10"><i class="fa-solid fa-mobile-screen mr-2 text-orange-400"></i>請長按圖片儲存至相簿</p>
-                <button onclick="closeModal('image-modal')" class="bg-white/20 text-white hover:bg-orange-500 w-10 h-10 rounded-full transition flex items-center justify-center backdrop-blur-md shadow-lg shrink-0 border border-white/20"><i class="fa-solid fa-times text-xl"></i></button>
-            </div>
-            
-            <div id="image-modal-loader" class="text-white text-lg font-bold flex flex-col items-center justify-center mt-32">
-                <i class="fa-solid fa-spinner fa-spin text-4xl mb-4 text-orange-500"></i>
-                明細圖片產生中，請稍候...
-            </div>
-            
-            <img id="generated-receipt-img" src="" class="w-full max-w-2xl bg-white rounded-xl shadow-2xl mb-8 hidden border border-slate-200 pointer-events-auto select-none" style="-webkit-touch-callout: default;">
         </div>
     </div>
 
@@ -483,9 +453,9 @@
                 <div>
                     <label class="block text-xs font-bold mb-2 text-slate-500">2. 設定倒數時間 (結單限制)</label>
                     <div class="grid grid-cols-4 gap-2 mb-2 w-full">
+                        <button onclick="selectTime(3)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="3">3分</button>
                         <button onclick="selectTime(5)" class="time-btn bg-orange-500 text-white py-2 rounded-lg font-bold transition text-sm border-2 border-orange-500 shadow-sm transform hover:-translate-y-0.5 shrink-0" data-val="5">5分</button>
                         <button onclick="selectTime(10)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="10">10分</button>
-                        <button onclick="selectTime(15)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="15">15分</button>
                         <button onclick="selectTime(30)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="30">30分</button>
                         <button onclick="selectTime(60)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="60">60分</button>
                         <button onclick="selectTime(180)" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="180">180分</button>
@@ -519,7 +489,7 @@
                     <p id="modal-price" class="text-2xl md:text-3xl font-black text-orange-500 ml-2 shrink-0">$0</p>
                     <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 shadow-inner shrink-0">
                         <button onclick="adjQty(-1)" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center font-bold text-2xl hover:bg-white hover:shadow rounded-lg transition text-slate-600 active:bg-slate-200">-</button>
-                        <input id="modal-qty" type="number" value="1" min="1" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value === '0') this.value = '1';" onchange="if(!this.value || parseInt(this.value) < 1) this.value = 1;" class="w-12 md:w-14 text-center bg-transparent font-black text-2xl outline-none text-slate-800">
+                        <input id="modal-qty" type="number" value="1" readonly class="w-12 md:w-14 text-center bg-transparent font-black text-2xl outline-none text-slate-800">
                         <button onclick="adjQty(1)" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center font-bold text-2xl hover:bg-white hover:shadow rounded-lg transition text-slate-600 active:bg-slate-200">+</button>
                     </div>
                 </div>
@@ -562,54 +532,14 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
-        window.generateReceiptImage = async function() {
-            const btnArea = document.getElementById('receipt-action-buttons');
-            const captureArea = document.getElementById('receipt-capture-area');
-            
-            const originalDisplay = btnArea.style.display;
-            btnArea.style.display = 'none';
-            
-            window.openModal('image-modal');
-            document.getElementById('image-modal-loader').classList.remove('hidden');
-            document.getElementById('generated-receipt-img').classList.add('hidden');
-            document.getElementById('generated-receipt-img').src = '';
-            
-            setTimeout(async () => {
-                try {
-                    const canvas = await html2canvas(captureArea, {
-                        scale: window.devicePixelRatio > 1 ? window.devicePixelRatio : 2, 
-                        useCORS: true,
-                        backgroundColor: '#ffffff'
-                    });
-                    
-                    const dataUrl = canvas.toDataURL('image/png');
-                    document.getElementById('generated-receipt-img').src = dataUrl;
-                    document.getElementById('image-modal-loader').classList.add('hidden');
-                    document.getElementById('generated-receipt-img').classList.remove('hidden');
-                } catch (e) {
-                    console.error('Image generation failed', e);
-                    alert('圖片產生失敗，請確認您的裝置瀏覽器是否支援此功能。');
-                    window.closeModal('image-modal');
-                } finally {
-                    btnArea.style.display = originalDisplay;
-                }
-            }, 300);
-        };
-
-        // 高效能 Base64 壓縮機制，並提供 UTF-16 的向下相容解碼
+        // 壓縮與解壓縮演算法模組
         window.compressData = function(data) {
             if (!data) return null;
-            return LZString.compressToBase64(JSON.stringify(data));
+            return LZString.compressToUTF16(JSON.stringify(data));
         };
         window.decompressData = function(str, defaultVal = []) {
             if (!str) return defaultVal;
-            try { 
-                let decompressed = LZString.decompressFromBase64(str);
-                if (decompressed === null) {
-                    decompressed = LZString.decompressFromUTF16(str);
-                }
-                return JSON.parse(decompressed) || defaultVal; 
-            } 
+            try { return JSON.parse(LZString.decompressFromUTF16(str)) || defaultVal; } 
             catch(e) { console.error("資料解壓縮失敗", e); return defaultVal; }
         };
 
@@ -634,9 +564,9 @@
         ];
         const DEFAULT_SUBCATS = ['主餐', '副餐', '套餐', '單點', '飲料', '甜點', '飯類', '麵類', '湯品'];
         const DEFAULT_GLOBAL_OPTIONS = [
-            { id: 'gopt_1', name: '冰塊', choices: ['正常冰', '少冰', '微冰', '去冰', '完全去冰', '溫熱'], isMulti: false },
-            { id: 'gopt_2', name: '甜度', choices: ['正常甜', '少糖', '半糖', '微糖', '無糖'], isMulti: false },
-            { id: 'gopt_3', name: '加料區', choices: ['不加', '加飯(+15)', '加麵(+15)', '加蛋(+15)'], isMulti: true }
+            { id: 'gopt_1', name: '冰塊', choices: ['正常冰', '少冰', '微冰', '去冰', '完全去冰', '溫熱'] },
+            { id: 'gopt_2', name: '甜度', choices: ['正常甜', '少糖', '半糖', '微糖', '無糖'] },
+            { id: 'gopt_3', name: '加購', choices: ['不加', '加飯(+15)', '加麵(+15)', '加蛋(+15)'] }
         ];
         const DEFAULT_ITEMS = [
             { id: 1, cat: 'cat_1', store: '老王香雞排飯', subCat: '飯類', name: '巨無霸雞排飯', price: 110, img: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: [], updateDate: window.getFormattedDate() },
@@ -668,20 +598,6 @@
         window.hasInitialLoaded = false;
         window.selectedActivityStores = []; 
 
-        function checkBodyScroll() {
-            const openModals = Array.from(document.querySelectorAll('[id$="-modal"]')).filter(el => !el.classList.contains('hidden'));
-            if(openModals.length === 0) document.body.style.overflow = '';
-        }
-
-        window.closeModal = function(id) { 
-            document.getElementById(id).classList.add('hidden'); 
-            checkBodyScroll();
-        };
-        window.openModal = function(id) { 
-            document.getElementById(id).classList.remove('hidden'); 
-            document.body.style.overflow = 'hidden'; 
-        };
-
         window.pendingPwdCallback = null;
         window.requestPassword = function(msg, callback) {
             document.getElementById('pwd-prompt-msg').innerText = msg;
@@ -699,7 +615,7 @@
             }
         };
 
-        // 更新圖片壓縮機制，採用 WebP 格式大幅減少資料庫佔用空間
+        // 圖片破壞性極限壓縮
         window.compressImage = function(file, event, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -707,8 +623,7 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    // 解析度微調至 320px，在行動裝置呈現完美且容量極小
-                    const maxW = 320; const maxH = 320;
+                    const maxW = 400; const maxH = 400;
                     let w = img.width; let h = img.height;
                     if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
                     else { if (h > maxH) { w *= maxH / h; h = maxH; } }
@@ -718,14 +633,14 @@
                     ctx.fillRect(0, 0, w, h);
                     ctx.drawImage(img, 0, 0, w, h);
                     
-                    let quality = 0.8;
+                    let quality = 0.7;
                     const attemptCompress = () => {
-                        const dataUrl = canvas.toDataURL('image/webp', quality);
-                        if (dataUrl.length > 70000 && quality > 0.1) {
-                            quality -= 0.15;
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        if (dataUrl.length > 130000 && quality > 0.1) {
+                            quality -= 0.2;
                             attemptCompress();
-                        } else if (dataUrl.length > 100000) {
-                            alert('⚠️ 圖片過於複雜，壓縮後仍超過系統單檔容量安全限制。請手動更換較簡單或檔案更小的圖片！');
+                        } else if (dataUrl.length > 130000) {
+                            alert('⚠️ 圖片過於複雜，壓縮後仍超過系統單檔容量安全限制 (100KB)。請手動更換較簡單或檔案更小的圖片！');
                             if(event && event.target) event.target.value = '';
                         } else {
                             callback(dataUrl);
@@ -853,25 +768,26 @@
 
         window.saveState = async function() {
             try {
-                const safeState = { ...window.state };
+                const safeState = JSON.parse(JSON.stringify(window.state));
                 
                 safeState.orderHistoryStr = window.compressData(safeState.orderHistory);
                 safeState.adminLogsStr = window.compressData(safeState.adminLogs);
                 safeState.itemsStr = window.compressData(safeState.items);
                 safeState.storesStr = window.compressData(safeState.stores);
                 
-                delete safeState.orderHistory;
-                delete safeState.adminLogs;
-                delete safeState.items;
-                delete safeState.stores;
+                safeState.orderHistory = deleteField();
+                safeState.adminLogs = deleteField();
+                safeState.items = deleteField();
+                safeState.stores = deleteField();
 
                 const jsonString = JSON.stringify(safeState);
                 const sizeInBytes = new Blob([jsonString]).size;
                 
-                // Firestore 單個文檔 1MB 極限保護，避免崩潰
                 if (sizeInBytes > 1040000) {
-                    alert("❌ 嚴重錯誤：資料總容量已超過 Firebase 單一文檔 1MB 限制！本次修改已被系統攔截以防崩潰。\n\n請至歷史紀錄中「清空紀錄」，或刪除不需要的店家圖片！");
+                    alert("❌ 嚴重錯誤：資料總容量已超過 Firebase 1MB 限制！本次修改已被系統攔截以防崩潰。\n\n請至歷史紀錄中「清空紀錄」，或刪除不需要的店家圖片！");
                     return;
+                } else if (sizeInBytes > 800000) {
+                    alert("⚠️ 系統容量警告：資料庫容量已達 80%。建議您定期清理歷史紀錄，以維持系統最佳效能！");
                 }
 
                 await setDoc(dbRef, safeState, { merge: true });
@@ -918,6 +834,9 @@
             else if (viewName === 'active-order') window.renderActiveOrder();
         };
 
+        window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); };
+        window.openModal = function(id) { document.getElementById(id).classList.remove('hidden'); };
+
         window.formatStoreHoursHTML = function(hoursObj) {
             if (!hoursObj || Object.keys(hoursObj).length === 0) return '';
             let html = '<div class="flex items-start gap-2 w-full"><i class="fa-regular fa-clock text-orange-500 mt-1 shrink-0"></i><div class="flex flex-col text-sm text-slate-600 gap-1 w-full break-words">';
@@ -934,19 +853,9 @@
 
         window.renderHome = function() {
             let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-transparent shrink-0">全部店家</button>`;
-            
-            const regularCats = window.state.categories.filter(c => c.id !== 'cat_other');
-            const otherCat = window.state.categories.find(c => c.id === 'cat_other');
-
-            regularCats.forEach(c => {
+            window.state.categories.forEach(c => {
                 tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${c.name}</button>`;
             });
-            
-            // 確保其他永遠在最後
-            if (otherCat) {
-                tabsHtml += `<button data-id="${otherCat.id}" onclick="filterStore('${otherCat.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${otherCat.name}</button>`;
-            }
-            
             document.getElementById('category-tabs').innerHTML = tabsHtml;
             window.filterStore('all');
         };
@@ -1055,23 +964,6 @@
                     const bgColor = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'; 
                     const imgUrl = item.img || DEFAULT_IMG;
                     
-                    let optionsHtmlStr = '';
-                    if (item.customOptionIds && item.customOptionIds.length > 0) {
-                        if (isActiveMode) {
-                            optionsHtmlStr = `<p class="text-[10px] md:text-xs text-blue-500 font-bold mt-1.5 bg-blue-50 inline-block px-2 py-0.5 rounded border border-blue-100 whitespace-nowrap"><i class="fa-solid fa-list-ul mr-1"></i>含客製選項</p>`;
-                        } else {
-                            const appliedOpts = item.customOptionIds.map(optId => window.state.globalOptions.find(g => g.id === optId)).filter(Boolean);
-                            if (appliedOpts.length > 0) {
-                                optionsHtmlStr = `<div class="mt-2 w-full flex flex-col gap-1">` + appliedOpts.map(opt => `
-                                    <div class="bg-blue-50/70 border border-blue-100/70 p-1.5 rounded text-[10px] md:text-xs w-full leading-tight">
-                                        <span class="font-black text-blue-700 mr-1"><i class="fa-solid fa-tag mr-1 opacity-70"></i>${opt.name} <span class="opacity-60 font-bold">(${opt.isMulti ? '可複選' : '單選'})</span>:</span>
-                                        <span class="text-blue-600 font-bold break-words whitespace-normal">${opt.choices.join('、')}</span>
-                                    </div>
-                                `).join('') + `</div>`;
-                            }
-                        }
-                    }
-                    
                     html += `
                         <div ${action} class="${bgColor} p-4 md:p-5 rounded-[1.5rem] shadow-sm border flex items-center gap-4 md:gap-5 transition-all duration-300 ${pointer} group">
                             <div class="relative w-24 h-24 md:w-28 md:h-28 shrink-0">
@@ -1081,7 +973,7 @@
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-black text-lg md:text-xl text-slate-800 group-hover:text-orange-700 transition-colors break-words">${item.name}</h4>
                                 <p class="text-orange-600 font-black text-xl md:text-2xl mt-1">$${item.price}</p>
-                                ${optionsHtmlStr}
+                                ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<p class="text-[10px] md:text-xs text-blue-500 font-bold mt-1.5 bg-blue-50 inline-block px-2 py-0.5 rounded border border-blue-100 whitespace-nowrap"><i class="fa-solid fa-list-ul mr-1"></i>含客製選項</p>` : ''}
                             </div>
                             ${isActiveMode ? `<div class="w-12 h-12 bg-slate-100 text-slate-400 group-hover:bg-orange-500 group-hover:text-white rounded-2xl flex items-center justify-center font-bold shadow-sm text-xl transition-all transform group-hover:rotate-90 shrink-0"><i class="fa-solid fa-plus"></i></div>` : ''}
                         </div>`;
@@ -1295,24 +1187,12 @@
 
             if (appliedOptions.length > 0) {
                 appliedOptions.forEach((opt, idx) => {
-                    const isMulti = opt.isMulti === true;
-                    const inputType = isMulti ? 'checkbox' : 'radio';
-                    const inputName = isMulti ? '' : `name="modal-opt-${opt.id}"`;
-                    const typeLabel = isMulti ? '(可複選)' : '(單選必填)';
-
                     optionsHtml += `
-                        <div class="bg-orange-50/50 p-4 md:p-5 rounded-2xl border border-orange-100 shadow-inner w-full">
-                            <label class="block text-sm font-black text-orange-800 mb-3 break-words"><i class="fa-solid fa-caret-right text-orange-500 mr-2"></i>${opt.name} <span class="text-xs text-orange-500 font-normal ml-1">${typeLabel}</span></label>
-                            <div class="flex flex-wrap gap-2 w-full">
-                                ${opt.choices.map((c, cIdx) => {
-                                    const isChecked = (!isMulti && cIdx === 0) ? 'checked' : '';
-                                    return `
-                                    <label class="flex items-center gap-2 cursor-pointer bg-white px-3 py-2.5 rounded-xl border border-orange-200 hover:border-orange-400 hover:shadow-sm transition">
-                                        <input type="${inputType}" ${inputName} value="${c}" class="modal-dynamic-opt-input w-5 h-5 text-orange-500 ${isMulti ? 'rounded' : 'rounded-full'} border-slate-300 focus:ring-orange-500 shrink-0" ${isChecked}>
-                                        <span class="text-sm font-bold text-slate-700 select-none">${c}</span>
-                                    </label>
-                                `}).join('')}
-                            </div>
+                        <div class="bg-orange-50/50 p-5 rounded-2xl border border-orange-100 shadow-inner w-full">
+                            <label class="block text-sm font-black text-orange-800 mb-3 break-words"><i class="fa-solid fa-caret-right text-orange-500 mr-2"></i>${opt.name}</label>
+                            <select class="modal-dynamic-opt w-full bg-white border-2 border-orange-200 rounded-xl p-4 outline-none focus:border-orange-500 transition font-bold text-lg text-slate-800 shadow-sm appearance-none cursor-pointer break-words whitespace-normal">
+                                ${opt.choices.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
                         </div>`;
                 });
             }
@@ -1322,8 +1202,7 @@
 
         window.adjQty = function(val) { 
             const el = document.getElementById('modal-qty');
-            let current = parseInt(el.value) || 1;
-            el.value = Math.max(1, current + val); 
+            el.value = Math.max(1, parseInt(el.value) + val); 
         };
 
         window.confirmAddToCart = async function() {
@@ -1333,8 +1212,8 @@
             let note = document.getElementById('modal-note').value.trim();
             
             let dynamicNotes = [];
-            document.querySelectorAll('.modal-dynamic-opt-input:checked').forEach(input => {
-                if (input.value) dynamicNotes.push(input.value);
+            document.querySelectorAll('.modal-dynamic-opt').forEach(sel => {
+                if (sel.value) dynamicNotes.push(sel.value);
             });
             if (dynamicNotes.length > 0) {
                 note = `[${dynamicNotes.join(', ')}] ` + note;
@@ -1346,7 +1225,7 @@
                 itemName: window.activeItemForModal.name, 
                 storeName: window.activeItemForModal.store, 
                 price: window.activeItemForModal.price, 
-                qty: parseInt(document.getElementById('modal-qty').value) || 1, 
+                qty: parseInt(document.getElementById('modal-qty').value), 
                 note 
             };
 
@@ -1413,8 +1292,6 @@
         window.autoCheckout = async function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.add('hidden');
-            window.closeModal('order-modal');
-            window.closeModal('start-modal');
 
             try {
                 await runTransaction(db, async (transaction) => {
@@ -1681,7 +1558,7 @@
             } else {
                 document.getElementById('setting-global-opt-list').innerHTML = window.state.globalOptions.map(opt => `
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group hover:border-blue-300 transition hover:shadow-md transform hover:-translate-y-0.5 w-full">
-                        <h4 class="font-black text-slate-800 text-lg mb-2 flex items-center pr-6 break-words"><i class="fa-solid fa-caret-right text-blue-500 mr-2 shrink-0"></i>${opt.name} <span class="text-xs ml-2 ${opt.isMulti ? 'text-emerald-600 bg-emerald-50' : 'text-blue-600 bg-blue-50'} px-2 py-0.5 rounded shadow-sm border ${opt.isMulti ? 'border-emerald-100' : 'border-blue-100'}">${opt.isMulti ? '可複選' : '單選必填'}</span></h4>
+                        <h4 class="font-black text-slate-800 text-lg mb-2 flex items-center pr-6 break-words"><i class="fa-solid fa-caret-right text-blue-500 mr-2 shrink-0"></i>${opt.name}</h4>
                         <div class="flex flex-wrap gap-2 w-full">
                             ${opt.choices.map(c => `<span class="text-xs font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 shadow-sm break-words whitespace-normal max-w-full leading-tight">${c}</span>`).join('')}
                         </div>
@@ -1784,18 +1661,16 @@
         window.addGlobalOption = function() {
             const name = document.getElementById('setting-opt-name').value.trim();
             const choicesStr = document.getElementById('setting-opt-choices').value.trim();
-            const isMulti = document.getElementById('setting-opt-ismulti').checked;
             if (!name || !choicesStr) return alert('請完整填寫選項名稱與下拉內容！');
             const choices = choicesStr.split(',').map(s => s.trim()).filter(s => s !== '');
-            if (choices.length === 0) return alert('選項內容無效！');
+            if (choices.length === 0) return alert('下拉選單內容無效！');
             
-            window.state.globalOptions.push({ id: 'gopt_' + Date.now(), name, choices, isMulti });
+            window.state.globalOptions.push({ id: 'gopt_' + Date.now(), name, choices });
             window.addAdminLog('設定', `建立全域客製化選項模組「${name}」`);
             window.saveState();
             window.renderAdminSettings();
             document.getElementById('setting-opt-name').value = '';
             document.getElementById('setting-opt-choices').value = '';
-            document.getElementById('setting-opt-ismulti').checked = false;
         };
 
         window.deleteGlobalOption = function(id) {
@@ -1903,28 +1778,6 @@
                 document.getElementById('admin-input-phone').value = '';
                 document.getElementById('admin-input-address').value = '';
                 document.getElementById('admin-input-store-cover').value = '';
-                window.renderAdminStoreHours({});
-            }
-        };
-
-        window.clearNewItemForm = function() {
-            if(confirm('確定要清空所有欄位嗎？(不會影響已儲存的資料)')) {
-                document.getElementById('admin-input-store').value = '';
-                if(window.state.categories.length > 0) document.getElementById('admin-input-cat').value = window.state.categories[0].id;
-                document.getElementById('admin-input-store-cover').value = '';
-                document.getElementById('admin-input-store-cover-file').value = '';
-                document.getElementById('admin-input-phone').value = '';
-                document.getElementById('admin-input-address').value = '';
-                
-                if(window.state.subCategories.length > 0) document.getElementById('admin-input-subcat').value = window.state.subCategories[0];
-                document.getElementById('admin-input-item').value = '';
-                document.getElementById('admin-input-price').value = '';
-                document.getElementById('admin-input-img-url').value = '';
-                document.getElementById('admin-input-file').value = '';
-                document.getElementById('admin-img-preview').classList.add('hidden');
-                document.getElementById('admin-img-preview').src = '';
-                
-                document.querySelectorAll('.new-item-opt-cb').forEach(cb => cb.checked = false);
                 window.renderAdminStoreHours({});
             }
         };
@@ -2298,9 +2151,8 @@
             
             window.addAdminLog('新增', `新增餐點「${name}」於店家「${store}」`);
             
-            alert("✅ 新增成功！店家資訊已保留，可繼續新增該店家的其他餐點。\n如需新增其他店家請點擊左側「清空表單」。");
+            alert("✅ 新增成功！資料已自動上鎖保護，如需修改請點擊該行鎖頭解鎖。");
 
-            // 僅清空餐點屬性欄位，保留店家屬性
             ['admin-input-item', 'admin-input-price', 'admin-input-img-url', 'admin-input-file'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('admin-img-preview').classList.add('hidden');
             document.querySelectorAll('.new-item-opt-cb').forEach(cb => cb.checked = false);
@@ -2308,9 +2160,6 @@
             window.state.menuUpdateDate = updateDate;
             await window.saveState(); 
             window.renderAdmin();
-            
-            // 自動聚焦，方便快速輸入下一個
-            setTimeout(() => document.getElementById('admin-input-item').focus(), 100);
         };
 
         window.toggleLock = async function(id) { 
@@ -2452,28 +2301,24 @@
             } else alert("❌ 密碼錯誤，拒絕執行！");
         };
 
-        // ================= ExcelJS 高階樣式匯出與匯入功能 =================
-
         window.exportDatabaseExcel = async function() {
             if (window.state.items.length === 0) return alert('資料庫目前沒有餐點可供匯出！');
             
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet('蘇家系統資料庫', {
-                pageSetup: { 
-                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
-                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
-                }
+                pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75 } }
             });
             
             sheet.columns = [
-                { header: '系統大分類', key: 'cat', width: 20 },
-                { header: '店家名稱', key: 'store', width: 30 },
-                { header: '店家電話(選填)', key: 'phone', width: 18 },
-                { header: '店家地址(選填)', key: 'address', width: 40 },
-                { header: '菜單子分類', key: 'subcat', width: 18 },
-                { header: '餐點名稱', key: 'item', width: 35 },
-                { header: '價格', key: 'price', width: 15 },
-                { header: '套用客製化選項(用逗號分隔)', key: 'options', width: 45 }
+                { header: '系統大分類', key: 'cat', width: 18 },
+                { header: '店家名稱', key: 'store', width: 25 },
+                { header: '店家電話(選填)', key: 'phone', width: 16 },
+                { header: '店家地址(選填)', key: 'address', width: 35 },
+                { header: '菜單子分類', key: 'subcat', width: 15 },
+                { header: '餐點名稱', key: 'item', width: 30 },
+                { header: '價格', key: 'price', width: 12 },
+                { header: '餐點圖片網址(選填)', key: 'img', width: 45 },
+                { header: '選項模組(用逗號分隔)', key: 'options', width: 25 }
             ];
 
             sheet.getRow(1).eachCell(cell => {
@@ -2487,11 +2332,6 @@
                 const catObj = window.state.categories.find(c => c.id === item.cat);
                 const storeObj = window.state.stores.find(s => s.name === item.store) || {};
                 
-                const optionsString = (item.customOptionIds || []).map(optId => {
-                    const opt = window.state.globalOptions.find(g => g.id === optId);
-                    return opt ? opt.name : '';
-                }).filter(Boolean).join(', ');
-
                 const row = sheet.addRow({
                     cat: catObj ? catObj.name : '未分類',
                     store: item.store,
@@ -2500,7 +2340,8 @@
                     subcat: item.subCat || '主餐',
                     item: item.name,
                     price: item.price,
-                    options: optionsString
+                    img: (item.img === DEFAULT_IMG ? '' : item.img),
+                    options: (item.customOptionIds || []).join(', ')
                 });
 
                 if (index % 2 === 0) { 
@@ -2548,9 +2389,9 @@
                             const address = row.getCell(4).value?.toString().trim() || '';
                             const subCat = row.getCell(5).value?.toString().trim() || '主餐';
                             const itemName = row.getCell(6).value?.toString().trim();
-                            const priceVal = row.getCell(7).value;
-                            const price = parseInt(priceVal);
-                            const optionsStr = row.getCell(8).value?.toString().trim() || '';
+                            const price = parseInt(row.getCell(7).value) || 0;
+                            const img = row.getCell(8).value?.toString().trim() || '';
+                            const optionsStr = row.getCell(9).value?.toString().trim() || '';
                             
                             if (!storeName || !itemName || isNaN(price)) return; 
 
@@ -2573,12 +2414,7 @@
                                 if(!storeObj.cat) storeObj.cat = catObj.id;
                             }
 
-                            const optionNames = optionsStr ? optionsStr.split(',').map(s=>s.trim()).filter(s=>s) : [];
-                            const customOptionIds = [];
-                            optionNames.forEach(optName => {
-                                let optObj = window.state.globalOptions.find(g => g.name === optName);
-                                if(optObj) customOptionIds.push(optObj.id);
-                            });
+                            const customOptionIds = optionsStr ? optionsStr.split(',').map(s=>s.trim()).filter(s=>s) : [];
 
                             window.state.items.push({
                                 id: Date.now().toString() + Math.random().toString(36).substring(2, 8),
@@ -2587,7 +2423,7 @@
                                 subCat: subCat,
                                 name: itemName,
                                 price: price,
-                                img: DEFAULT_IMG,
+                                img: img || DEFAULT_IMG,
                                 isLocked: true, 
                                 customOptionIds: customOptionIds,
                                 updateDate: window.getFormattedDate()
@@ -2603,7 +2439,7 @@
 
                     } catch (err) {
                         console.error(err);
-                        alert("❌ 匯入失敗，請確認檔案格式是否為有效的 .xlsx 檔案。");
+                        alert("❌ 匯入失敗，請確認檔案格式是否正確。");
                     }
                     event.target.value = ''; 
                 };
@@ -2617,10 +2453,7 @@
 
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet('點餐明細', {
-                pageSetup: { 
-                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
-                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
-                }
+                pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5 } }
             });
 
             sheet.mergeCells('A1:E1');
@@ -2637,10 +2470,10 @@
             const tableStartRow = 4;
             sheet.getRow(tableStartRow).values = ['點餐人', '餐點名稱', '數量', '備註', '小計'];
             sheet.columns = [
-                { key: 'user', width: 20 },
-                { key: 'item', width: 35 },
-                { key: 'qty', width: 12 },
-                { key: 'note', width: 30 },
+                { key: 'user', width: 15 },
+                { key: 'item', width: 30 },
+                { key: 'qty', width: 10 },
+                { key: 'note', width: 25 },
                 { key: 'subtotal', width: 15 }
             ];
 
@@ -2648,7 +2481,6 @@
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; 
                 cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                 cell.alignment = { horizontal: 'center' };
-                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
             });
 
             order.cart.sort((a,b) => a.userName.localeCompare(b.userName)).forEach((c, idx) => {
@@ -2660,21 +2492,17 @@
                     subtotal: c.price * c.qty
                 });
                 
-                if (idx % 2 === 0) {
+                if (idx % 2 === 0) { 
                     row.eachCell(cell => cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } });
                 }
-                row.eachCell(cell => {
-                    cell.alignment = { vertical: 'middle', wrapText: true };
-                    cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
-                });
-                row.getCell('qty').alignment = { horizontal: 'center', vertical: 'middle' };
-                row.getCell('subtotal').alignment = { horizontal: 'right', vertical: 'middle' };
+                row.getCell('qty').alignment = { horizontal: 'center' };
+                row.getCell('subtotal').alignment = { horizontal: 'right' };
             });
 
             const totalRow = sheet.addRow(['', '', '', '總結算金額：', `$${order.total}`]);
             totalRow.getCell(4).font = { bold: true, size: 14 };
             totalRow.getCell(4).alignment = { horizontal: 'right' };
-            totalRow.getCell(5).font = { bold: true, size: 14, color: { argb: 'FFDC2626' } };
+            totalRow.getCell(5).font = { bold: true, size: 14, color: { argb: 'FFDC2626' } }; 
             totalRow.getCell(5).alignment = { horizontal: 'right' };
 
             const buffer = await workbook.xlsx.writeBuffer();
@@ -2690,28 +2518,24 @@
 
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet('歷史訂單總表', {
-                pageSetup: { 
-                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
-                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
-                }
+                pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5 } }
             });
 
             sheet.columns = [
-                { header: '結單日期', key: 'date', width: 22 },
-                { header: '店家名稱', key: 'store', width: 30 },
-                { header: '點餐人', key: 'user', width: 20 },
-                { header: '餐點名稱', key: 'item', width: 35 },
-                { header: '數量', key: 'qty', width: 12 },
-                { header: '備註', key: 'note', width: 30 },
-                { header: '小計', key: 'subtotal', width: 15 },
-                { header: '該單總額', key: 'total', width: 18 }
+                { header: '結單日期', key: 'date', width: 15 },
+                { header: '店家名稱', key: 'store', width: 25 },
+                { header: '點餐人', key: 'user', width: 15 },
+                { header: '餐點名稱', key: 'item', width: 30 },
+                { header: '數量', key: 'qty', width: 10 },
+                { header: '備註', key: 'note', width: 25 },
+                { header: '小計', key: 'subtotal', width: 12 },
+                { header: '該單總額', key: 'total', width: 15 }
             ];
 
             sheet.getRow(1).eachCell(cell => {
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } }; 
                 cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                 cell.alignment = { horizontal: 'center' };
-                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
             });
 
             let isEven = false;
@@ -2729,19 +2553,14 @@
                     });
                     
                     if (isEven) {
-                        row.eachCell(cell => cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } });
+                        row.eachCell(cell => cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } }); 
                     }
 
-                    row.eachCell(cell => {
-                        cell.alignment = { vertical: 'middle', wrapText: true };
-                        cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
-                    });
-
-                    row.getCell('qty').alignment = { horizontal: 'center', vertical: 'middle' };
-                    row.getCell('subtotal').alignment = { horizontal: 'right', vertical: 'middle' };
+                    row.getCell('qty').alignment = { horizontal: 'center' };
+                    row.getCell('subtotal').alignment = { horizontal: 'right' };
                     if(idx === 0) {
                         row.getCell('total').font = { bold: true, color: { argb: 'FFDC2626' } };
-                        row.getCell('total').alignment = { horizontal: 'right', vertical: 'middle' };
+                        row.getCell('total').alignment = { horizontal: 'right' };
                     }
                 });
                 isEven = !isEven; 

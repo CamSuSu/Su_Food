@@ -44,6 +44,9 @@
         ::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         
+        /* 全域效能優化：針對長列表使用 content-visibility 提升手機滑動順暢度 */
+        .optimize-render { content-visibility: auto; contain-intrinsic-size: 100px; }
+
         .store-header { position: sticky; top: 0; z-index: 10; }
         .dragging { opacity: 0.5; border: 2px dashed #10b981; }
 
@@ -307,7 +310,7 @@
                             <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-400 text-lg"></i>
                             <input type="text" id="admin-search-input" oninput="handleSearchInput()" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-slate-700 text-lg shadow-inner" placeholder="快速搜尋：輸入店家、分類或餐點名稱...">
                         </div>
-                        <div id="admin-data-grouped-list" class="space-y-8 w-full"></div>
+                        <div id="admin-data-grouped-list" class="space-y-8 w-full optimize-render"></div>
                     </div>
                 </div>
             </div>
@@ -396,7 +399,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="admin-history-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
+                <div id="admin-history-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full optimize-render"></div>
             </div>
 
             <div id="admin-tab-logs" class="hidden bg-white p-4 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
@@ -410,7 +413,7 @@
                         <button onclick="requestPassword('確認清空系統紀錄？輸入管理員密碼', pwd => clearAdminLogs(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
                     </div>
                 </div>
-                <div id="admin-logs-list" class="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
+                <div id="admin-logs-list" class="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full optimize-render"></div>
             </div>
         </div>
     </main>
@@ -448,19 +451,18 @@
         </div>
     </div>
 
-    <div id="image-modal" class="fixed inset-0 bg-black/90 hidden z-[300] overflow-y-auto transition-opacity no-print">
-        <div class="min-h-full flex flex-col items-center justify-start p-4">
-            <div class="w-full max-w-2xl flex justify-between items-center mb-4 sticky top-0 pt-2 pb-2 z-10">
-                <p class="text-white font-black text-sm md:text-lg bg-black/60 px-4 py-2 rounded-xl backdrop-blur-md shadow-sm border border-white/10"><i class="fa-solid fa-mobile-screen mr-2 text-orange-400"></i>請長按圖片儲存至相簿</p>
-                <button onclick="closeModal('image-modal')" class="bg-white/20 text-white hover:bg-orange-500 w-10 h-10 rounded-full transition flex items-center justify-center backdrop-blur-md shadow-lg shrink-0 border border-white/20"><i class="fa-solid fa-times text-xl"></i></button>
-            </div>
+    <div id="image-modal" class="fixed inset-0 bg-black hidden z-[600] overflow-y-auto transition-opacity no-print">
+        <div class="min-h-full flex flex-col items-center justify-start p-4 relative">
+            <button onclick="closeModal('image-modal')" class="fixed top-4 right-4 bg-white/20 text-white hover:bg-orange-500 w-12 h-12 rounded-full transition flex items-center justify-center backdrop-blur-md shadow-lg z-50 border border-white/20"><i class="fa-solid fa-times text-2xl"></i></button>
+            
+            <p class="text-white font-black text-sm md:text-lg mt-2 mb-6 bg-white/10 px-5 py-2.5 rounded-xl backdrop-blur-md shadow-sm border border-white/10 z-10 sticky top-4"><i class="fa-solid fa-mobile-screen mr-2 text-orange-400"></i>請長按圖片儲存至相簿</p>
             
             <div id="image-modal-loader" class="text-white text-lg font-bold flex flex-col items-center justify-center mt-32">
                 <i class="fa-solid fa-spinner fa-spin text-4xl mb-4 text-orange-500"></i>
                 明細圖片產生中，請稍候...
             </div>
             
-            <img id="generated-receipt-img" src="" class="w-full max-w-2xl bg-white rounded-xl shadow-2xl mb-8 hidden border border-slate-200 pointer-events-auto select-none" style="-webkit-touch-callout: default;">
+            <img id="generated-receipt-img" src="" class="w-full max-w-3xl bg-white rounded-xl mb-12 hidden pointer-events-auto" style="-webkit-touch-callout: default;">
         </div>
     </div>
 
@@ -613,37 +615,56 @@
             return `hsl(${hue}, ${sat}%, ${light}%)`;
         };
 
+        // ★★★ 針對行動裝置極限優化的截圖機制 ★★★
         window.generateReceiptImage = async function() {
-            const btnArea = document.getElementById('receipt-action-buttons');
             const captureArea = document.getElementById('receipt-capture-area');
+            if (!captureArea) return;
             
             window.openModal('image-modal');
             document.getElementById('image-modal-loader').classList.remove('hidden');
             document.getElementById('generated-receipt-img').classList.add('hidden');
             document.getElementById('generated-receipt-img').src = '';
             
-            // 縮短 Timeout 使 UI 反應更敏捷
-            setTimeout(async () => {
-                try {
-                    // ★直接強制比例設定為 1 (不放大)，避免高解析度裝置 OOM 死當
-                    const canvas = await html2canvas(captureArea, {
-                        scale: 1, 
-                        useCORS: true,
-                        backgroundColor: '#ffffff',
-                        logging: false // 關閉日誌以提升效能
-                    });
-                    
-                    // ★改用 image/jpeg 與 0.8 壓縮率，大幅降低 Base64 字串大小與記憶體負擔
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                    document.getElementById('generated-receipt-img').src = dataUrl;
-                    document.getElementById('image-modal-loader').classList.add('hidden');
-                    document.getElementById('generated-receipt-img').classList.remove('hidden');
-                } catch (e) {
-                    console.error('Image generation failed', e);
-                    alert('圖片產生失敗，請稍後再試。');
-                    window.closeModal('image-modal');
-                }
-            }, 300); // 確保 modal 動畫有時間完成，再凍結執行緒
+            // 讓手機強制回滾到最上方，避免截圖時因為畫面滾動造成的空白或破圖問題
+            window.scrollTo(0, 0);
+
+            // 雙層 requestAnimationFrame 確保畫面完全重繪且 DOM 已穩定後再執行截圖
+            requestAnimationFrame(() => {
+                requestAnimationFrame(async () => {
+                    try {
+                        // 針對明細長度動態調整解析度，防止手機記憶體不足死當 (OOM)
+                        let currentScale = window.devicePixelRatio > 1 ? 1.5 : 1;
+                        if (captureArea.offsetHeight > 3000) currentScale = 1; 
+                        if (captureArea.offsetHeight > 6000) currentScale = 0.8; 
+
+                        const canvas = await html2canvas(captureArea, {
+                            scale: currentScale, 
+                            useCORS: true,
+                            backgroundColor: '#ffffff',
+                            logging: false, // 關閉日誌以提升效能
+                            scrollY: -window.scrollY, // 解決滾動偏移
+                            onclone: (clonedDoc) => {
+                                // 在虛擬 DOM 中移除陰影等吃效能的樣式，加速渲染
+                                const clonedArea = clonedDoc.getElementById('receipt-capture-area');
+                                if(clonedArea) {
+                                    clonedArea.style.boxShadow = 'none';
+                                    clonedArea.style.transform = 'none';
+                                }
+                            }
+                        });
+                        
+                        // 改用 image/jpeg 與適當壓縮率，大幅降低記憶體負擔
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                        document.getElementById('generated-receipt-img').src = dataUrl;
+                        document.getElementById('image-modal-loader').classList.add('hidden');
+                        document.getElementById('generated-receipt-img').classList.remove('hidden');
+                    } catch (e) {
+                        console.error('Image generation failed', e);
+                        alert('圖片產生失敗，請確保網路連線穩定或使用 PDF 匯出再試一次。');
+                        window.closeModal('image-modal');
+                    }
+                });
+            });
         };
 
         window.compressData = function(data) {
@@ -916,7 +937,6 @@
                 delete safeState.items;
                 delete safeState.stores;
 
-                // ★移除原有的 Firebase 1MB 容量阻擋機制，讓系統可以完整存檔
                 await setDoc(dbRef, safeState, { merge: true });
             } catch(e) {
                 console.error("資料存檔失敗", e);
@@ -1022,7 +1042,7 @@
                 }
 
                 gridHtml += `
-                    <div class="category-card bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col cursor-pointer relative group" onclick="openStoreBrowse('${storeName}')">
+                    <div class="category-card bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col cursor-pointer relative group optimize-render" onclick="openStoreBrowse('${storeName}')">
                         <div class="w-full aspect-[4/3] bg-slate-100 flex justify-center items-center overflow-hidden p-2">
                             <img src="${coverImg}" loading="lazy" decoding="async" class="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" alt="${storeName}">
                         </div>
@@ -1264,7 +1284,6 @@
             }
         };
 
-        // 縮短計時器更新間隔至 600 毫秒，極限降低跨平台視覺誤差並保持效能
         window.startTimer = function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.remove('hidden');
@@ -1372,7 +1391,6 @@
             el.value = Math.max(1, current + val); 
         };
 
-        // 購物車新增：加入同人同店相同品項的「聚合」邏輯
         window.confirmAddToCart = async function() {
             const user = document.getElementById('modal-user').value.trim();
             if (!user) return alert('請務必輸入或點選您的姓名！');
@@ -1389,7 +1407,6 @@
 
             const qtyToAdd = parseInt(document.getElementById('modal-qty').value) || 1;
 
-            // 1. 本地狀態聚合：檢查是否已有完全一樣的餐點
             const existingLocalIndex = window.state.cart.findIndex(c => 
                 c.userName === user && 
                 c.storeName === window.activeItemForModal.store && 
@@ -1415,7 +1432,6 @@
             window.updateCartUI();
             window.closeModal('order-modal');
 
-            // 2. 資料庫同步聚合
             try {
                 await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(dbRef);
@@ -1524,7 +1540,6 @@
             } catch(e) { console.error(e); }
         };
 
-        // ★核心修正：加入結單鎖定防護，並在資料庫寫入後，強制將最新明細同步給本地端記憶體，解決手機看見舊明細或空明細的問題
         window.autoCheckout = async function() {
             if (window.isCheckingOut) return;
             window.isCheckingOut = true;
@@ -1535,7 +1550,6 @@
             window.closeModal('start-modal');
             window.closeModal('pwd-prompt-modal');
 
-            // 顯示結算過渡動畫
             const loader = document.getElementById('checkout-loader');
             if (loader) loader.classList.remove('hidden');
 
@@ -1552,7 +1566,6 @@
                     
                     let finalCart = dbState.cart || [];
                     
-                    // 結單前進行最終防呆聚合，避免任何網路意外產生重複明細，同時極大化壓縮資料庫空間
                     let aggregatedCartMap = {};
                     finalCart.forEach(c => {
                         const key = `${c.storeName}::${c.userName}::${c.itemName}::${c.note || ''}`;
@@ -1596,18 +1609,15 @@
                         cart: [] 
                     });
                     
-                    // 回傳最新建立的歷史陣列給外部
                     return history;
                 });
 
-                // 本地狀態強制更新，確保在 snapshot 延遲抵達前，明細畫面讀取的是「剛結算完」的最新資料
                 if (newHistory) {
                     window.state.orderHistory = newHistory;
                     window.state.session.isActive = false;
                     window.state.cart = [];
                     window.showReceiptFromHistory();
                 } else {
-                    // 如果沒有回傳 history，代表可能已經被其他人結單了
                     window.showView('home');
                 }
 
@@ -1633,8 +1643,7 @@
 
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐</p>';
-                document.getElementById('receipt-phone-buttons').innerHTML = ''; // 清空按鈕
-                // 若為空單，直接隱藏下載與列印按鈕
+                document.getElementById('receipt-phone-buttons').innerHTML = '';
                 if (btnPrint) btnPrint.style.display = 'none';
                 if (btnImg) btnImg.style.display = 'none';
                 
@@ -2252,7 +2261,6 @@
                 const storeMeta = window.state.stores.find(s => s.name === store) || {};
                 const coverImg = storeMeta.coverImg || items.find(i=>i.img && i.img !== DEFAULT_IMG)?.img || DEFAULT_IMG;
                 
-                // 管理者專屬莫蘭迪色系
                 const storeColor = window.getStoreColor(store);
 
                 if (window.editingStoreName === store) {
@@ -2335,7 +2343,6 @@
                     const imgUrl = item.img || DEFAULT_IMG;
                     const displayUpdateDate = item.updateDate || window.state.menuUpdateDate || '無紀錄';
 
-                    // 奇數偶數列跳色設計
                     const rowBgClass = index % 2 === 0 ? 'bg-white' : 'bg-slate-100';
 
                     if (String(window.editingItemId) === String(item.id)) {
@@ -2988,7 +2995,6 @@
             link.click();
         };
 
-        // 在 Firebase 連線完成前，先使用預設資料與快取渲染首頁，達到「零秒載入」的體驗
         if (document.getElementById('view-home') && !document.getElementById('view-home').classList.contains('hidden')) {
             window.renderHome();
         }

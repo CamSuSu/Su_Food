@@ -629,7 +629,7 @@
             setTimeout(async () => {
                 try {
                     const isMobile = window.innerWidth < 768;
-                    // ★核心修正：行動裝置限制最大倍率不超過 1.5 倍，防止繪製時 OOM (記憶體溢位) 死當
+                    // ★行動裝置限制最大倍率不超過 1.5 倍，防止繪製時 OOM (記憶體溢位) 死當
                     const deviceScale = isMobile ? Math.min(window.devicePixelRatio, 1.5) : 2;
 
                     const canvas = await html2canvas(captureArea, {
@@ -639,7 +639,7 @@
                         logging: false // 關閉日誌以提升效能
                     });
                     
-                    // ★核心修正：改用 image/jpeg 與 0.85 壓縮率，大幅降低 Base64 字串大小與記憶體負擔
+                    // ★改用 image/jpeg 與 0.85 壓縮率，大幅降低 Base64 字串大小與記憶體負擔
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
                     document.getElementById('generated-receipt-img').src = dataUrl;
                     document.getElementById('image-modal-loader').classList.add('hidden');
@@ -1540,7 +1540,7 @@
             } catch(e) { console.error(e); }
         };
 
-        // ★核心修正：加入結單鎖定防護，避免與 Snapshot 衝突造成當機
+        // ★核心修正：加入結單鎖定防護，並在資料庫寫入後，強制將最新明細同步給本地端記憶體，解決手機看見舊明細或空明細的問題
         window.autoCheckout = async function() {
             if (window.isCheckingOut) return;
             window.isCheckingOut = true;
@@ -1556,18 +1556,19 @@
             if (loader) loader.classList.remove('hidden');
 
             try {
-                await runTransaction(db, async (transaction) => {
+                const newHistory = await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(dbRef);
-                    if (!sfDoc.exists()) return;
+                    if (!sfDoc.exists()) return null;
                     let dbState = sfDoc.data();
                     
-                    if (!dbState.session || !dbState.session.isActive) return; 
+                    if (!dbState.session || !dbState.session.isActive) return null; 
                     
                     let history = window.decompressData(dbState.orderHistoryStr, dbState.orderHistory || []);
                     if (!Array.isArray(history)) history = [];
                     
                     let finalCart = dbState.cart || [];
                     
+                    // 結單前進行最終防呆聚合，避免任何網路意外產生重複明細，同時極大化壓縮資料庫空間
                     let aggregatedCartMap = {};
                     finalCart.forEach(c => {
                         const key = `${c.storeName}::${c.userName}::${c.itemName}::${c.note || ''}`;
@@ -1590,15 +1591,16 @@
                     
                     const storeNamesStr = dbState.session.storeNames ? dbState.session.storeNames.join('、') : dbState.session.storeName;
 
-                    history.unshift({ 
+                    const newRecord = { 
                         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                         date: window.getFormattedDate(), 
                         time: new Date().toLocaleTimeString('zh-TW'), 
                         store: storeNamesStr || '綜合店家', 
                         total: total || 0, 
                         cart: safeCart 
-                    });
+                    };
                     
+                    history.unshift(newRecord);
                     if (history.length > 1000) history.pop();
                     
                     dbState.session.isActive = false;
@@ -1609,11 +1611,21 @@
                         orderHistory: deleteField(), 
                         cart: [] 
                     });
+                    
+                    // 回傳最新建立的歷史陣列給外部
+                    return history;
                 });
 
-                // 本地狀態強制更新，並主動切換至明細畫面
-                window.state.session.isActive = false;
-                window.showReceiptFromHistory();
+                // 本地狀態強制更新，確保在 snapshot 延遲抵達前，明細畫面讀取的是「剛結算完」的最新資料
+                if (newHistory) {
+                    window.state.orderHistory = newHistory;
+                    window.state.session.isActive = false;
+                    window.state.cart = [];
+                    window.showReceiptFromHistory();
+                } else {
+                    // 如果沒有回傳 history，代表可能已經被其他人結單了
+                    window.showView('home');
+                }
 
             } catch(e) { 
                 console.error("Checkout failed", e); 
@@ -1637,7 +1649,7 @@
 
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
-                document.getElementById('receipt-phone-buttons').innerHTML = '';
+                document.getElementById('receipt-phone-buttons').innerHTML = ''; // 清空按鈕
                 // 若為空單，直接隱藏下載與列印按鈕
                 if (btnPrint) btnPrint.style.display = 'none';
                 if (btnImg) btnImg.style.display = 'none';

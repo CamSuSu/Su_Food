@@ -807,34 +807,29 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // ★ 黃金平衡 1：尺寸設定為 240x240 (畫質清晰，也不會太佔空間)
-                    const maxW = 240; const maxH = 240;
+                    // ★ 終極空間拯救版：尺寸降至 160x160 (檔案大小將縮減至 4KB~8KB)
+                    const maxW = 160; const maxH = 160;
                     let w = img.width; let h = img.height;
                     if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
                     else { if (h > maxH) { w *= maxH / h; h = maxH; } }
                     canvas.width = w; canvas.height = h;
                     
-                    // 鋪上白底，防止透明 PNG 轉 JPEG 時背景變成難看的黑色
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, w, h);
                     ctx.drawImage(img, 0, 0, w, h);
                     
-                    // ★ 黃金平衡 2：畫質設定為 0.7 (70%)，兼顧清晰度與檔案大小
-                    let quality = 0.7;
+                    let quality = 0.6;
                     const attemptCompress = () => {
-                        // ★ 關鍵修復：強制輸出為 image/jpeg，防止蘋果手機偷轉成幾百 KB 的 PNG
                         const dataUrl = canvas.toDataURL('image/jpeg', quality);
                         
-                        // 容量安全防護網：如果大於 30KB，稍微降一點畫質
-                        if (dataUrl.length > 30000 && quality > 0.1) {
+                        // 嚴格容量防護網：超過 15KB 就繼續壓
+                        if (dataUrl.length > 15000 && quality > 0.1) {
                             quality -= 0.15;
                             attemptCompress();
-                        } else if (dataUrl.length > 60000) { 
-                            // 絕對底線：如果極限壓縮後還是超過 60KB，才擋下並警告
-                            alert('⚠️ 圖片紋理過於複雜，檔案太大會導致資料庫當機！請改用截圖或更簡單的圖片。');
+                        } else if (dataUrl.length > 25000) { 
+                            alert('⚠️ 圖片過於複雜，為防止資料庫崩潰，請改用更簡單的圖片！');
                             if(event && event.target) event.target.value = '';
                         } else {
-                            // 壓縮成功，回傳圖片資料
                             callback(dataUrl);
                         }
                     };
@@ -1750,7 +1745,7 @@ window.confirmAddToCart = async function() {
                             tbody += `
                                 <td class="py-2 px-1 sm:px-2 font-bold text-slate-800 break-words w-[32%] leading-snug">${c.itemName}</td>
                                 <td class="py-2 px-1 sm:px-2 font-black text-center text-slate-800 w-[40px] sm:w-[50px]">${c.qty}</td>
-                                <td class="py-2 px-1 sm:px-2 text-blue-700 text-[11px] sm:text-sm font-bold break-words whitespace-pre-wrap leading-tight w-auto text-center">${c.note ? `[${c.note}]` : ''}</td>o">${c.note ? `[${c.note}]` : ''}</td>
+                                <td class="py-2 px-1 sm:px-2 text-blue-700 text-[11px] sm:text-sm font-bold break-words whitespace-pre-wrap leading-tight w-auto text-center">${c.note ? `[${c.note}]` : ''}</td>
                                 <td class="py-2 px-1 sm:px-2 font-black text-right text-slate-800 w-[14%] sm:w-[12%]">$${sub}</td>
                             </tr>`;
                         });

@@ -1459,15 +1459,14 @@ window.confirmAddToCart = async function() {
         window.updateCartUI = function() {
             let html = '', total = 0;
             
-            // ★ 新增：用來計算「不重複項目」的集合
+            // 用來計算「不重複項目」的集合
             let uniqueItemsSet = new Set();
             
             const groupedCart = {};
             (window.state.cart || []).forEach((c) => {
                 total += c.price * c.qty; 
                 
-                // ★ 關鍵邏輯：建立唯一金鑰 (姓名+店名+品項+備註)
-                // 只要這四個條件一樣，無論數量多少，uniqueItemsSet 內只會存入一個值
+                // 建立唯一金鑰 (姓名+店名+品項+備註)
                 const uniqueKey = `${c.userName}-${c.storeName}-${c.itemName}-${c.note || ''}`;
                 uniqueItemsSet.add(uniqueKey);
 
@@ -1492,10 +1491,9 @@ window.confirmAddToCart = async function() {
                 groupedCart[groupKey].storeTotal += (c.price * c.qty);
             });
 
-            // ★ 這是外面小圓圈要顯示的數字：不重複的項目總數
+            // 外面小圓圈要顯示的數字：不重複的項目總數
             const bubbleCount = uniqueItemsSet.size;
 
-            // 渲染 HTML 列表 (此部分邏輯維持不變，確保進入購物車後看得到正確數量)
             for (const key in groupedCart) {
                 const group = groupedCart[key];
                 let itemsHtml = '';
@@ -1532,15 +1530,23 @@ window.confirmAddToCart = async function() {
                     </div>`;
             }
 
-            // 更新 UI 上的數字
+            const emptyCartHtml = '<div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl bg-white/50"><p class="text-slate-400 font-bold"><i class="fa-solid fa-basket-shopping text-3xl mb-3 opacity-50 block"></i>目前購物車空空如也</p></div>';
+
+            // 電腦版側邊購物車更新
             const activeCartList = document.getElementById('active-cart-list');
             if (activeCartList) {
-                activeCartList.innerHTML = html || '<p class="text-center py-10 text-slate-400 font-bold">目前購物車空空如也</p>';
+                activeCartList.innerHTML = html || emptyCartHtml;
                 document.getElementById('active-cart-total').innerText = `$${total}`; 
-                document.getElementById('cart-count').innerText = `${bubbleCount} 份`; // 這裡顯示不重複份數
+                document.getElementById('cart-count').innerText = `${bubbleCount} 份`; 
             }
 
-            // ★ 更新導覽列與彈窗標題的小圓圈數字
+            // ★ 修復：更新手機版彈跳視窗內的明細列表
+            const modalCartList = document.getElementById('modal-cart-list');
+            if (modalCartList) {
+                modalCartList.innerHTML = html || emptyCartHtml;
+            }
+
+            // 更新導覽列與彈窗標題的小圓圈數字
             document.getElementById('modal-cart-count-title').innerText = bubbleCount;
             document.getElementById('nav-cart-count').innerText = bubbleCount;
             document.getElementById('modal-cart-total').innerText = `$${total}`;
@@ -1718,39 +1724,42 @@ window.confirmAddToCart = async function() {
                         const userItems = userGroups[user];
                         userItems.forEach((c, index) => {
                             const sub = c.price * c.qty;
-                            tbody += `<tr class="border-b border-slate-200 hover:bg-slate-50 transition">`;
+                            // ★ 縮小手機版字體，留出空間給所有欄位
+                            tbody += `<tr class="border-b border-slate-200 hover:bg-slate-50 transition text-[13px] sm:text-sm md:text-base">`;
                             
                             if (index === 0) {
-                                tbody += `<td rowspan="${userItems.length}" class="py-4 px-2 md:px-4 font-black text-slate-800 break-words whitespace-normal min-w-[80px] align-middle border-r border-slate-100/50"><span class="bg-slate-100 border border-slate-200 px-2 py-1 rounded shadow-sm inline-block break-words max-w-full">${c.userName}</span></td>`;
+                                tbody += `<td rowspan="${userItems.length}" class="py-2 px-1 sm:px-2 font-black text-slate-800 break-words align-middle border-r border-slate-100/50 w-[18%]"><span class="bg-slate-100 border border-slate-200 px-1 sm:px-2 py-0.5 sm:py-1 rounded shadow-sm inline-block break-words max-w-full leading-tight">${c.userName}</span></td>`;
                             }
                             
+                            // ★ 移除強制寬度，按比例分配欄位寬度
                             tbody += `
-                                <td class="py-4 px-2 md:px-4 font-bold text-slate-800 break-words whitespace-normal min-w-[120px]">${c.itemName}</td>
-                                <td class="py-4 px-2 md:px-4 font-black text-center text-slate-800 shrink-0">${c.qty}</td>
-                                <td class="py-4 px-2 md:px-4 text-blue-600 text-sm font-bold break-words whitespace-pre-wrap min-w-[150px] max-w-[250px] md:max-w-none">${c.note ? `[${c.note}]` : ''}</td>
-                                <td class="py-4 px-2 md:px-4 font-black text-right text-slate-800 shrink-0">$${sub}</td>
+                                <td class="py-2 px-1 sm:px-2 font-bold text-slate-800 break-words w-[35%] leading-snug">${c.itemName}</td>
+                                <td class="py-2 px-1 sm:px-2 font-black text-center text-slate-800 w-[10%]">${c.qty}</td>
+                                <td class="py-2 px-1 sm:px-2 text-blue-600 text-[11px] sm:text-sm font-bold break-words whitespace-pre-wrap leading-tight w-[22%]">${c.note ? `[${c.note}]` : ''}</td>
+                                <td class="py-2 px-1 sm:px-2 font-black text-right text-slate-800 w-[15%]">$${sub}</td>
                             </tr>`;
                         });
                     });
 
+                    // ★ 將表格改為 table-fixed，並移除導致溢出的 min-w-[500px] 與橫向卷軸
                     tablesHtml += `
                         <div class="mb-8 border-2 border-slate-800 rounded-2xl overflow-hidden print-no-shadow w-full">
-                            <div class="bg-slate-800 text-white p-4 font-black text-lg md:text-xl flex flex-wrap justify-between items-center gap-2">
-                                <span class="break-words"><i class="fa-solid fa-store mr-2 text-orange-400"></i>${storeName}</span>
-                                <span class="bg-white/20 px-3 py-1 rounded-lg text-sm shrink-0">小計: $${storeData.total}</span>
+                            <div class="bg-slate-800 text-white p-3 sm:p-4 font-black text-base sm:text-lg md:text-xl flex flex-wrap justify-between items-center gap-2">
+                                <span class="break-words leading-tight"><i class="fa-solid fa-store mr-2 text-orange-400"></i>${storeName}</span>
+                                <span class="bg-white/20 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm shrink-0">小計: $${storeData.total}</span>
                             </div>
-                            <div class="overflow-x-auto w-full custom-scrollbar">
-                                <table class="w-full text-left border-collapse min-w-[500px] md:min-w-full bg-white table-auto">
+                            <div class="w-full">
+                                <table class="w-full text-left border-collapse bg-white table-fixed">
                                     <thead>
-                                        <tr class="bg-slate-100 text-slate-600 text-sm md:text-base border-b-2 border-slate-300">
-                                            <th class="py-3 px-2 md:px-4 font-black w-[15%] md:w-1/5 whitespace-nowrap">點餐人</th>
-                                            <th class="py-3 px-2 md:px-4 font-black w-[35%] md:w-1/3 whitespace-nowrap">餐點名稱</th>
-                                            <th class="py-3 px-2 md:px-4 font-black text-center w-[10%] whitespace-nowrap">數量</th>
-                                            <th class="py-3 px-2 md:px-4 font-black w-[25%] md:w-auto whitespace-nowrap">備註</th>
-                                            <th class="py-3 px-2 md:px-4 font-black text-right w-[15%] whitespace-nowrap">小計</th>
+                                        <tr class="bg-slate-100 text-slate-600 text-[12px] sm:text-sm md:text-base border-b-2 border-slate-300">
+                                            <th class="py-2 px-1 sm:px-2 font-black w-[18%] text-center sm:text-left">點餐人</th>
+                                            <th class="py-2 px-1 sm:px-2 font-black w-[35%]">餐點名稱</th>
+                                            <th class="py-2 px-1 sm:px-2 font-black text-center w-[10%]">數量</th>
+                                            <th class="py-2 px-1 sm:px-2 font-black w-[22%]">備註</th>
+                                            <th class="py-2 px-1 sm:px-2 font-black text-right w-[15%]">小計</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="text-sm md:text-lg">
+                                    <tbody>
                                         ${tbody}
                                     </tbody>
                                 </table>

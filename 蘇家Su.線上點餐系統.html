@@ -589,7 +589,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction, updateDoc, deleteField, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBhLO5Fpv0hQ921p1teY_e9Drmfi9jRsQM",
@@ -1313,7 +1313,7 @@
                 const str = h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
                 document.getElementById('big-timer').innerText = str; 
                 document.getElementById('nav-timer-val').innerText = str;
-            }, 600);
+            }, 250);
         };
 
         window.renderActiveOrder = function() {
@@ -1400,7 +1400,7 @@
             el.value = Math.max(1, current + val); 
         };
 
-        window.confirmAddToCart = async function() {
+window.confirmAddToCart = async function() {
             const user = document.getElementById('modal-user').value.trim();
             if (!user) return alert('請務必輸入或點選您的姓名！');
             
@@ -1416,76 +1416,55 @@
 
             const qtyToAdd = parseInt(document.getElementById('modal-qty').value) || 1;
 
-            const existingLocalIndex = window.state.cart.findIndex(c => 
-                c.userName === user && 
-                c.storeName === window.activeItemForModal.store && 
-                c.itemName === window.activeItemForModal.name && 
-                c.note === note
-            );
+            const newItem = { 
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
+                userName: user, 
+                itemName: window.activeItemForModal.name, 
+                storeName: window.activeItemForModal.store, 
+                price: window.activeItemForModal.price, 
+                qty: qtyToAdd, 
+                note: note 
+            };
 
-            if (existingLocalIndex > -1) {
-                window.state.cart[existingLocalIndex].qty += qtyToAdd;
-            } else {
-                const newItem = { 
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
-                    userName: user, 
-                    itemName: window.activeItemForModal.name, 
-                    storeName: window.activeItemForModal.store, 
-                    price: window.activeItemForModal.price, 
-                    qty: qtyToAdd, 
-                    note: note 
-                };
-                window.state.cart.push(newItem);
-            }
-
-            window.updateCartUI();
             window.closeModal('order-modal');
 
+            // ★ 放棄緩慢的 runTransaction，改用 arrayUnion 並發寫入
+            // Firebase SDK 會在背後自動瞬間更新本地 UI，不再有數十秒延遲與錯亂問題
             try {
-                await runTransaction(db, async (transaction) => {
-                    const sfDoc = await transaction.get(dbRef);
-                    if (!sfDoc.exists()) return;
-                    let dbState = sfDoc.data();
-                    if (!dbState.cart) dbState.cart = [];
-
-                    const existingDbIndex = dbState.cart.findIndex(c => 
-                        c.userName === user && 
-                        c.storeName === window.activeItemForModal.store && 
-                        c.itemName === window.activeItemForModal.name && 
-                        c.note === note
-                    );
-
-                    if (existingDbIndex > -1) {
-                        dbState.cart[existingDbIndex].qty = (parseInt(dbState.cart[existingDbIndex].qty) || 0) + qtyToAdd;
-                    } else {
-                        dbState.cart.push({
-                            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                            userName: user,
-                            itemName: window.activeItemForModal.name,
-                            storeName: window.activeItemForModal.store,
-                            price: window.activeItemForModal.price,
-                            qty: qtyToAdd,
-                            note: note
-                        });
-                    }
-                    transaction.update(dbRef, { cart: dbState.cart });
-                });
+                await updateDoc(dbRef, { cart: arrayUnion(newItem) });
             } catch(e) {
                 console.error("Cart update failed", e);
             }
         };
 
         window.updateCartUI = function() {
-            let html = '', total = 0, count = 0;
+            let html = '', total = 0;
+            let uniqueItemsCount = 0; // ★ 計算「獨一無二」的餐點項目數量
             
             const groupedCart = {};
             (window.state.cart || []).forEach((c) => {
-                total += c.price * c.qty; count += c.qty;
+                total += c.price * c.qty; 
                 const key = `${c.storeName}::${c.userName}`;
+                
                 if (!groupedCart[key]) {
-                    groupedCart[key] = { storeName: c.storeName, userName: c.userName, items: [], storeTotal: 0 };
+                    groupedCart[key] = { storeName: c.storeName, userName: c.userName, itemsMap: {}, storeTotal: 0 };
                 }
-                groupedCart[key].items.push(c);
+                
+                const itemKey = `${c.itemName}::${c.note || ''}`;
+                // ★ 如果這是一個未重複的新項目（同人、同店、同餐點、同備註），數量提示才 +1
+                if (!groupedCart[key].itemsMap[itemKey]) {
+                    groupedCart[key].itemsMap[itemKey] = {
+                        itemName: c.itemName,
+                        price: c.price,
+                        qty: 0,
+                        note: c.note,
+                        ids: [] // 收集背後所有拆分的 ID，以便刪除時一次清空
+                    };
+                    uniqueItemsCount++; 
+                }
+                
+                groupedCart[key].itemsMap[itemKey].qty += c.qty;
+                groupedCart[key].itemsMap[itemKey].ids.push(c.id);
                 groupedCart[key].storeTotal += (c.price * c.qty);
             });
 
@@ -1493,7 +1472,9 @@
                 const group = groupedCart[key];
                 let itemsHtml = '';
                 
-                group.items.forEach(c => {
+                for (const itemKey in group.itemsMap) {
+                    const c = group.itemsMap[itemKey];
+                    const idsStr = c.ids.join(','); // 將 ID 串成字串傳給刪除按鈕
                     itemsHtml += `
                         <div class="relative flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-slate-100 last:border-0 group/item">
                             <div class="flex-1 pr-8">
@@ -1505,10 +1486,10 @@
                             </div>
                             <div class="flex items-center gap-3 mt-2 sm:mt-0">
                                 <span class="font-black text-slate-800 text-base">$${c.price * c.qty}</span>
-                                <button onclick="removeCartItem('${c.id}')" class="text-slate-300 hover:text-red-500 bg-white rounded-full w-7 h-7 flex items-center justify-center lg:opacity-0 lg:group-hover/item:opacity-100 transition shadow-sm border border-slate-200 shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                <button onclick="removeCartItem('${idsStr}')" class="text-slate-300 hover:text-red-500 bg-white rounded-full w-7 h-7 flex items-center justify-center lg:opacity-0 lg:group-hover/item:opacity-100 transition shadow-sm border border-slate-200 shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
                             </div>
                         </div>`;
-                });
+                }
 
                 html += `
                     <div class="bg-white rounded-2xl border border-slate-200 mb-4 shadow-sm hover:shadow-md transition-all overflow-hidden">
@@ -1529,26 +1510,26 @@
 
             const emptyCartHtml = '<div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl bg-white/50"><p class="text-slate-400 font-bold"><i class="fa-solid fa-basket-shopping text-3xl mb-3 opacity-50 block"></i>目前購物車空空如也</p></div>';
 
-            // 電腦版側邊購物車更新
             const activeCartList = document.getElementById('active-cart-list');
             if (activeCartList) {
                 activeCartList.innerHTML = html || emptyCartHtml;
                 document.getElementById('active-cart-total').innerText = `$${total}`; 
-                document.getElementById('cart-count').innerText = `${count} 份`;
+                document.getElementById('cart-count').innerText = `${uniqueItemsCount} 份`; // ★ 更新為「不重複」數量
             }
 
-            // 手機版懸浮購物車 Modal 更新
             const modalCartList = document.getElementById('modal-cart-list');
             if (modalCartList) {
                 modalCartList.innerHTML = html || emptyCartHtml;
                 document.getElementById('modal-cart-total').innerText = `$${total}`;
-                document.getElementById('modal-cart-count-title').innerText = count;
-                document.getElementById('nav-cart-count').innerText = count;
+                document.getElementById('modal-cart-count-title').innerText = uniqueItemsCount;
+                document.getElementById('nav-cart-count').innerText = uniqueItemsCount;
             }
         };
 
-        window.removeCartItem = async function(id) {
-            window.state.cart = window.state.cart.filter(c => c.id !== id);
+        window.removeCartItem = async function(idsStr) {
+            const idsToRemove = idsStr.split(',');
+            // 先在本地做視覺刪除，讓 UI 反應更快
+            window.state.cart = window.state.cart.filter(c => !idsToRemove.includes(c.id));
             window.updateCartUI();
 
             try {
@@ -1557,7 +1538,8 @@
                     if (!sfDoc.exists()) return;
                     let dbState = sfDoc.data();
                     if(dbState.cart) {
-                        dbState.cart = dbState.cart.filter(c => c.id !== id);
+                        // 移除雲端符合的所有 ID
+                        dbState.cart = dbState.cart.filter(c => !idsToRemove.includes(c.id));
                         transaction.update(dbRef, { cart: dbState.cart });
                     }
                 });

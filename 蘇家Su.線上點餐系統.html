@@ -14,7 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* 加入 swap 提升文字載入效能 */
+        /* 加入 swap 提升文字載入效能，並優化字體抗鋸齒渲染 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
         
@@ -27,10 +27,10 @@
         .category-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; }
         .category-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); z-index: 10; border-color: #fb923c; }
         
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         
         .store-header { position: sticky; top: 0; z-index: 10; }
         .dragging { opacity: 0.5; border: 2px dashed #10b981; }
@@ -83,14 +83,16 @@
         </div>
     </nav>
 
-    <div class="fixed bottom-4 left-4 bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 rounded-xl p-3 text-xs text-slate-600 z-30 no-print max-w-[calc(100vw-5rem)] break-words">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left text-orange-500 shrink-0"></i>
-            <span>線上菜單最後更新日期：<span id="global-update-date" class="font-bold text-slate-800"></span></span>
+    <div class="fixed z-50 no-print pointer-events-none" style="bottom: max(1rem, env(safe-area-inset-bottom)); left: max(1rem, env(safe-area-inset-left)); max-width: calc(100vw - 2rem);">
+        <div class="bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 rounded-xl p-3 text-xs text-slate-600 break-words pointer-events-auto inline-block">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-orange-500 shrink-0"></i>
+                <span>線上菜單最後更新日期：<span id="global-update-date" class="font-bold text-slate-800"></span></span>
+            </div>
         </div>
     </div>
 
-    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-4 right-4 bg-slate-800 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-50 no-print">
+    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-4 right-4 bg-slate-800 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-50 no-print" style="bottom: max(1rem, env(safe-area-inset-bottom)); right: max(1rem, env(safe-area-inset-right));">
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 
@@ -107,7 +109,16 @@
                 </div>
                 <i class="fa-solid fa-burger absolute -right-10 -bottom-10 text-[180px] opacity-20 transform -rotate-12"></i>
             </div>
-            <div id="category-tabs" class="flex gap-3 overflow-x-auto pb-4 mb-4 custom-scrollbar"></div>
+            
+            <div class="flex justify-between items-end mb-3 px-1">
+                <h3 class="text-lg md:text-xl font-black text-slate-700">選擇店家類別</h3>
+                <span class="text-xs md:text-sm text-slate-400 font-bold flex items-center animate-pulse"><i class="fa-solid fa-arrows-left-right mr-1.5"></i>左右滑動看更多</span>
+            </div>
+            <div class="relative w-full mb-6">
+                <div id="category-tabs" class="flex gap-2.5 overflow-x-auto pb-4 pt-1 custom-scrollbar snap-x snap-mandatory pr-16 scroll-smooth"></div>
+                <div class="absolute top-0 right-0 h-full w-16 bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent pointer-events-none"></div>
+            </div>
+
             <div id="store-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
         </div>
 
@@ -569,7 +580,7 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
-        // 優化為莫蘭迪色系：極低飽和度、高明度，視覺柔和且高雅
+        // 莫蘭迪色系生成器 (管理員介面專用)
         window.getStoreColor = function(str) {
             let hash = 0;
             if (str) {
@@ -578,8 +589,8 @@
                 }
             }
             const hue = Math.abs(hash) % 360;
-            const sat = 20 + (Math.abs(hash) % 15); // 20% - 35% 飽和度
-            const light = 80 + (Math.abs(hash) % 10); // 80% - 90% 明度
+            const sat = 20 + (Math.abs(hash) % 15); // 極低飽和度 20% - 35%
+            const light = 80 + (Math.abs(hash) % 10); // 高明度 80% - 90%
             return `hsl(${hue}, ${sat}%, ${light}%)`;
         };
 
@@ -949,19 +960,19 @@
             return hasHours ? html : '';
         };
 
-        // ====== 首頁排版大躍進：白底、大字、不重疊、圖片完整顯示 ======
+        // 重新設計的首頁類別分籤，加入 snap 及膠囊造型
         window.renderHome = function() {
-            let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-transparent shrink-0">全部店家</button>`;
+            let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab snap-start bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0">全部店家</button>`;
             
             const regularCats = window.state.categories.filter(c => c.id !== 'cat_other');
             const otherCat = window.state.categories.find(c => c.id === 'cat_other');
 
             regularCats.forEach(c => {
-                tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${c.name}</button>`;
+                tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${c.name}</button>`;
             });
             
             if (otherCat) {
-                tabsHtml += `<button data-id="${otherCat.id}" onclick="filterStore('${otherCat.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${otherCat.name}</button>`;
+                tabsHtml += `<button data-id="${otherCat.id}" onclick="filterStore('${otherCat.id}')" class="cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${otherCat.name}</button>`;
             }
             
             document.getElementById('category-tabs').innerHTML = tabsHtml;
@@ -971,9 +982,9 @@
         window.filterStore = function(catId) {
             document.querySelectorAll('.cat-tab').forEach(btn => {
                 if (btn.dataset.id === catId) {
-                    btn.className = 'cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0';
+                    btn.className = 'cat-tab snap-start bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0';
                 } else {
-                    btn.className = 'cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-500 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition shadow-sm hover:-translate-y-0.5 shrink-0';
+                    btn.className = 'cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-500 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition shadow-sm hover:-translate-y-0.5 shrink-0';
                 }
             });
 
@@ -994,12 +1005,13 @@
                     else coverImg = DEFAULT_IMG;
                 }
 
+                // 首頁卡片統一白底，保留 object-contain 讓圖片不裁切不重疊文字
                 gridHtml += `
                     <div class="category-card bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col cursor-pointer relative group" onclick="openStoreBrowse('${storeName}')">
-                        <div class="w-full aspect-[4/3] bg-slate-100 flex justify-center items-center overflow-hidden">
+                        <div class="w-full aspect-[4/3] bg-slate-100 flex justify-center items-center overflow-hidden p-2">
                             <img src="${coverImg}" loading="lazy" decoding="async" class="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" alt="${storeName}">
                         </div>
-                        <div class="p-5 md:p-6 flex-1 flex flex-col relative z-10">
+                        <div class="p-5 md:p-6 flex-1 flex flex-col relative z-10 bg-white">
                             <div class="mb-3">
                                 <span class="text-[11px] font-black text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg shadow-sm border border-orange-100">${cat ? cat.name : '綜合'}</span>
                             </div>
@@ -1237,6 +1249,7 @@
             }
         };
 
+        // 縮短計時器更新間隔至 100 毫秒，極限降低跨平台視覺誤差
         window.startTimer = function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.remove('hidden');
@@ -1257,7 +1270,7 @@
                 const str = h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
                 document.getElementById('big-timer').innerText = str; 
                 document.getElementById('nav-timer-val').innerText = str;
-            }, 1000);
+            }, 100);
         };
 
         window.renderActiveOrder = function() {
@@ -2874,6 +2887,11 @@
             link.download = `全部訂單紀錄_${window.getFormattedDate()}.xlsx`;
             link.click();
         };
+
+        // 在 Firebase 連線完成前，先使用預設資料與快取渲染首頁，達到「零秒載入」的體驗
+        if (document.getElementById('view-home') && !document.getElementById('view-home').classList.contains('hidden')) {
+            window.renderHome();
+        }
 
     </script>
 </body>

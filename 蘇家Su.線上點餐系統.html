@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>蘇家Su.線上點餐系統</title>
     <link rel="icon" href="images/sufood.ico" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,9 +14,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* 加入 swap 提升文字載入效能，並優化字體抗鋸齒渲染 */
+        /* 提升文字載入效能與優化字體抗鋸齒渲染 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
         
         img { -webkit-user-drag: none; } /* 防止手機誤觸拖曳圖片 */
         
@@ -83,16 +83,14 @@
         </div>
     </nav>
 
-    <div class="fixed z-50 no-print pointer-events-none" style="bottom: max(1rem, env(safe-area-inset-bottom)); left: max(1rem, env(safe-area-inset-left)); max-width: calc(100vw - 2rem);">
-        <div class="bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 rounded-xl p-3 text-xs text-slate-600 break-words pointer-events-auto inline-block">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-clock-rotate-left text-orange-500 shrink-0"></i>
-                <span>線上菜單最後更新日期：<span id="global-update-date" class="font-bold text-slate-800"></span></span>
-            </div>
+    <div class="fixed z-30 no-print pointer-events-none" style="bottom: 16px; left: 16px; padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left);">
+        <div class="bg-white/30 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
+            <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
+            <span class="tracking-widest">更新：<span id="global-update-date" class="font-bold"></span></span>
         </div>
     </div>
 
-    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-4 right-4 bg-slate-800 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-50 no-print" style="bottom: max(1rem, env(safe-area-inset-bottom)); right: max(1rem, env(safe-area-inset-right));">
+    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-50 no-print bg-slate-800/90 backdrop-blur-sm" style="margin-bottom: env(safe-area-inset-bottom); margin-right: env(safe-area-inset-right);">
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 
@@ -110,13 +108,13 @@
                 <i class="fa-solid fa-burger absolute -right-10 -bottom-10 text-[180px] opacity-20 transform -rotate-12"></i>
             </div>
             
-            <div class="flex justify-between items-end mb-3 px-1">
-                <h3 class="text-lg md:text-xl font-black text-slate-700">選擇店家類別</h3>
-                <span class="text-xs md:text-sm text-slate-400 font-bold flex items-center animate-pulse"><i class="fa-solid fa-arrows-left-right mr-1.5"></i>左右滑動看更多</span>
+            <div class="flex justify-between items-end mb-3 px-2">
+                <h3 class="text-lg md:text-xl font-black text-slate-700 tracking-wide">選擇店家類別</h3>
+                <span class="text-[11px] md:hidden text-slate-400 font-bold flex items-center animate-pulse tracking-widest"><i class="fa-solid fa-arrows-left-right mr-1.5"></i>滑動看更多</span>
             </div>
             <div class="relative w-full mb-6">
-                <div id="category-tabs" class="flex gap-2.5 overflow-x-auto pb-4 pt-1 custom-scrollbar snap-x snap-mandatory pr-16 scroll-smooth"></div>
-                <div class="absolute top-0 right-0 h-full w-16 bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent pointer-events-none"></div>
+                <div id="category-tabs" class="flex gap-3 overflow-x-auto pb-5 pt-2 px-2 custom-scrollbar snap-x snap-mandatory pr-16 scroll-smooth" style="-webkit-overflow-scrolling: touch;"></div>
+                <div class="absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent pointer-events-none"></div>
             </div>
 
             <div id="store-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
@@ -960,7 +958,7 @@
             return hasHours ? html : '';
         };
 
-        // 重新設計的首頁類別分籤，加入 snap 及膠囊造型
+        // ====== 首頁排版大躍進：白底、大字、不重疊、圖片完整顯示 ======
         window.renderHome = function() {
             let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab snap-start bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0">全部店家</button>`;
             
@@ -1249,7 +1247,7 @@
             }
         };
 
-        // 縮短計時器更新間隔至 100 毫秒，極限降低跨平台視覺誤差
+        // 縮短計時器更新間隔至 600 毫秒，極限降低跨平台視覺誤差並保持效能
         window.startTimer = function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.remove('hidden');
@@ -1270,7 +1268,7 @@
                 const str = h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
                 document.getElementById('big-timer').innerText = str; 
                 document.getElementById('nav-timer-val').innerText = str;
-            }, 100);
+            }, 600);
         };
 
         window.renderActiveOrder = function() {

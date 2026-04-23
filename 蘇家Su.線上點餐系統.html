@@ -37,7 +37,7 @@
         /* 現代 CSS 渲染優化技術：content-visibility */
         .content-vis-auto {
             content-visibility: auto;
-            contain-intrinsic-size: auto 400px; /* 提供預設高度避免捲動條跳動 */
+            contain-intrinsic-size: auto 400px;
         }
         
         /* 強化卡片選取視覺回饋，加入 will-change 優化渲染效能 */
@@ -89,7 +89,10 @@
                 <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm shrink-0"><i class="fa-solid fa-store"></i></div>
                 <h1 class="text-xl font-black tracking-tight truncate">蘇家Su.線上點餐系統</h1>
             </div>
-            <div class="flex items-center gap-3 shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                <button id="nav-cart-btn" onclick="openModal('cart-modal')" class="hidden lg:hidden bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full font-bold hover:bg-orange-200 transition border border-orange-200 shadow-sm items-center text-sm md:text-base whitespace-nowrap">
+                    <i class="fa-solid fa-basket-shopping sm:mr-1"></i> <span id="nav-cart-count" class="ml-1 sm:ml-0">0</span>
+                </button>
                 <div id="nav-timer" class="hidden bg-red-50 text-red-600 px-3 py-1 rounded-full font-bold animate-pulse border border-red-200 shadow-sm text-sm md:text-base whitespace-nowrap">
                     <i class="fa-solid fa-clock mr-1"></i> <span id="nav-timer-val">00:00</span>
                 </div>
@@ -113,7 +116,7 @@
 
     <main class="container mx-auto px-4 py-6 md:py-8 no-print">
         
-        <div id="view-home" class="view-section">
+        <div id="view-home" class="view-section hidden">
             <div class="mb-8 bg-gradient-to-r from-orange-500 to-amber-500 p-8 md:p-10 rounded-3xl text-white shadow-xl relative overflow-hidden">
                 <div class="relative z-10">
                     <h2 class="text-3xl md:text-4xl font-black mb-3">今天想吃什麼？</h2>
@@ -173,7 +176,7 @@
                 <div class="lg:col-span-2">
                     <div id="active-menu-container"></div>
                 </div>
-                <div class="lg:col-span-1 sticky top-24">
+                <div class="hidden lg:block lg:col-span-1 sticky top-24">
                     <div class="bg-white rounded-[2rem] shadow-xl p-6 md:p-8 border border-slate-100">
                         <h3 class="text-2xl font-black mb-6 border-b-2 border-slate-100 pb-4 flex justify-between items-center text-slate-800">
                             <span><i class="fa-solid fa-basket-shopping text-orange-500 mr-2"></i>已點餐點</span>
@@ -318,7 +321,6 @@
             </div>
 
             <div id="admin-tab-settings" class="hidden space-y-6 max-w-4xl mx-auto pb-10">
-                
                 <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
                     <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-2">
                         <div class="flex items-center"><i class="fa-solid fa-layer-group text-orange-500 mr-3"></i>系統大分類管理</div>
@@ -450,6 +452,22 @@
                 <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-house mr-2"></i>結束並返回首頁
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cart-modal" class="fixed inset-0 bg-black/60 hidden z-[150] flex flex-col justify-end lg:justify-center items-center p-0 lg:p-4 backdrop-blur-md transition-opacity">
+        <div class="bg-white w-full lg:max-w-md rounded-t-[2.5rem] lg:rounded-[2.5rem] shadow-2xl flex flex-col max-h-[85vh] lg:max-h-[80vh] overflow-hidden">
+            <div class="p-5 md:p-6 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+                <h3 class="text-2xl font-black text-slate-800"><i class="fa-solid fa-basket-shopping text-orange-500 mr-2"></i>已點餐點 (<span id="modal-cart-count-title">0</span>)</h3>
+                <button onclick="closeModal('cart-modal')" class="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="modal-cart-list" class="p-4 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50 w-full"></div>
+            <div class="p-6 border-t border-slate-100 bg-white shrink-0">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-lg font-bold text-slate-500">總計金額</span>
+                    <span id="modal-cart-total" class="text-3xl font-black text-red-600">$0</span>
+                </div>
             </div>
         </div>
     </div>
@@ -603,24 +621,21 @@
             return `hsl(${hue}, ${sat}%, ${light}%)`;
         };
 
-        // 新增：開啟新分頁顯示明細 PDF，取代原本無法執行的手機端 html2canvas
+        // 開啟新分頁顯示明細 PDF：加入返回按鈕確保手機可順利關閉
         window.openReceiptInNewTab = function() {
             const captureArea = document.getElementById('receipt-capture-area');
             if (!captureArea) return;
             
-            // 取得 Tailwind CSS 與 FontAwesome 以確保新分頁樣式正常
             const tailwindScript = '<script src="https://cdn.tailwindcss.com"><\/script>';
             const faLink = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
             const fontLink = `<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">`;
             
-            // 開啟新分頁
             const newWin = window.open('', '_blank');
             if (!newWin) {
                 alert('彈出視窗被瀏覽器封鎖，請允許開啟新分頁以查看明細！');
                 return;
             }
 
-            // 將明細內容寫入新分頁
             newWin.document.write(`
                 <!DOCTYPE html>
                 <html lang="zh-TW">
@@ -635,29 +650,32 @@
                         body { 
                             font-family: 'Noto Sans TC', sans-serif; 
                             background-color: #f8fafc; 
-                            padding: 16px; 
+                            padding: 0; 
                             margin: 0;
                             -webkit-font-smoothing: antialiased;
                         }
-                        /* 隱藏操作按鈕區 */
                         #receipt-action-buttons { display: none !important; }
-                        /* 移除部分不必要的陰影與邊框以利閱讀與列印 */
                         #receipt-capture-area {
                             box-shadow: none !important;
                             border: none !important;
                             margin: 0 auto !important;
-                            padding: 0 !important;
+                            padding: 16px !important;
                             background-color: transparent !important;
                         }
                         @media print {
                             body { background: white !important; padding: 0 !important; }
+                            .top-close-bar { display: none !important; }
                         }
                     </style>
                 </head>
                 <body>
+                    <div class="top-close-bar no-print" style="padding: 15px; text-align: center; background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                        <button onclick="window.close(); history.back();" style="background: #ef4444; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 900; border: none; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);">
+                            <i class="fa-solid fa-xmark" style="margin-right: 8px;"></i>關閉明細並返回原系統
+                        </button>
+                    </div>
                     ${captureArea.outerHTML}
                     <script>
-                        // 自動觸發列印選單，手機版可在此直接另存PDF
                         setTimeout(() => {
                             window.print();
                         }, 800);
@@ -695,30 +713,16 @@
         const DEFAULT_IMG = "images/Default_cover.png";
         const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
         
-        const DEFAULT_CATEGORIES = [
-            { id: 'cat_1', name: '便當快餐', color: '#FFF7ED' },
-            { id: 'cat_2', name: '異國料理', color: '#F0F9FF' },
-            { id: 'cat_3', name: '手搖飲料', color: '#FEF2F2' },
-            { id: 'cat_4', name: '日式料理', color: '#F0FDF4' },
-            { id: 'cat_5', name: '甜點午茶', color: '#FAF5FF' },
-            { id: 'cat_other', name: '其他', color: '#F8FAFC' }
-        ];
+        // ★修正 FOUC 閃爍問題：將預設資料清空，網頁載入時直接依靠 Firebase 資料更新畫面
+        const DEFAULT_CATEGORIES = [];
         const DEFAULT_SUBCATS = ['主餐', '副餐', '套餐', '單點', '飲料', '甜點', '飯類', '麵類', '湯品'];
-        const DEFAULT_GLOBAL_OPTIONS = [
-            { id: 'gopt_1', name: '冰塊', choices: ['正常冰', '少冰', '微冰', '去冰', '完全去冰', '溫熱'], isMulti: false },
-            { id: 'gopt_2', name: '甜度', choices: ['正常甜', '少糖', '半糖', '微糖', '無糖'], isMulti: false },
-            { id: 'gopt_3', name: '加料區', choices: ['不加', '加飯(+15)', '加麵(+15)', '加蛋(+15)'], isMulti: true }
-        ];
-        const DEFAULT_ITEMS = [
-            { id: 1, cat: 'cat_1', store: '老王香雞排飯', subCat: '飯類', name: '巨無霸雞排飯', price: 110, img: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: [], updateDate: window.getFormattedDate() },
-            { id: 4, cat: 'cat_2', store: '米蘭義式工坊', subCat: '麵類', name: '白醬海鮮麵', price: 180, img: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: ['gopt_3'], updateDate: window.getFormattedDate() },
-            { id: 5, cat: 'cat_3', store: '五十嵐', subCat: '飲料', name: '波霸奶茶', price: 55, img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=500&q=60', isLocked: true, customOptionIds: ['gopt_1', 'gopt_2'], updateDate: window.getFormattedDate() }
-        ];
+        const DEFAULT_GLOBAL_OPTIONS = [];
+        const DEFAULT_ITEMS = [];
 
         window.state = {
             categories: DEFAULT_CATEGORIES,
             items: DEFAULT_ITEMS,
-            stores: [...new Set(DEFAULT_ITEMS.map(i => i.store))].map(s => ({name: s, phone: '', address: '', coverImg: '', hours: {}})),
+            stores: [],
             session: { isActive: false, endTime: null, storeNames: [] },
             cart: [],
             orderHistory: [],
@@ -829,7 +833,7 @@
                         if (!storesDecoded || storesDecoded.length === 0) {
                             storesDecoded = [...new Set(newData.items.map(i => i.store || 'Unknown'))].map(s => {
                                 const firstItem = newData.items.find(i => i.store === s);
-                                return {name: s, phone: '', address: '', coverImg: '', hours: {}, cat: firstItem ? firstItem.cat : DEFAULT_CATEGORIES[0].id};
+                                return {name: s, phone: '', address: '', coverImg: '', hours: {}, cat: firstItem ? firstItem.cat : (newData.categories.length > 0 ? newData.categories[0].id : 'cat_other')};
                             });
                         }
                         newData.stores = storesDecoded;
@@ -872,6 +876,7 @@
                             if (isNowActive) {
                                 window.showView('active-order');
                                 window.startTimer();
+                                document.getElementById('nav-cart-btn').classList.remove('hidden');
                             } else {
                                 window.showView('home');
                             }
@@ -882,13 +887,15 @@
                             if (isNowActive && !wasActive) {
                                 window.showView('active-order');
                                 window.startTimer();
+                                document.getElementById('nav-cart-btn').classList.remove('hidden');
                             } 
-                            // ★核心修正：加上 !window.isCheckingOut 判斷，確保結單當下 Snapshot 不會互相干擾
                             else if (justFinished && !window.isCheckingOut) {
                                 clearInterval(window.timerInterval);
                                 document.getElementById('nav-timer').classList.add('hidden');
+                                document.getElementById('nav-cart-btn').classList.add('hidden');
                                 window.closeModal('order-modal');
                                 window.closeModal('start-modal');
+                                window.closeModal('cart-modal');
                                 window.showReceiptFromHistory();
                             } else if (!isNowActive && !document.getElementById('view-active-order').classList.contains('hidden') && !window.isCheckingOut) {
                                 window.showView('home'); 
@@ -938,7 +945,6 @@
                 delete safeState.items;
                 delete safeState.stores;
 
-                // ★移除原有的 Firebase 1MB 容量阻擋機制，讓系統可以完整存檔
                 await setDoc(dbRef, safeState, { merge: true });
             } catch(e) {
                 console.error("資料存檔失敗", e);
@@ -1277,6 +1283,7 @@
             window.closeModal('start-modal');
             window.showView('active-order');
             window.startTimer();
+            document.getElementById('nav-cart-btn').classList.remove('hidden');
 
             try {
                 await updateDoc(dbRef, { session: newSession, cart: [] });
@@ -1498,7 +1505,7 @@
                             </div>
                             <div class="flex items-center gap-3 mt-2 sm:mt-0">
                                 <span class="font-black text-slate-800 text-base">$${c.price * c.qty}</span>
-                                <button onclick="removeCartItem('${c.id}')" class="text-slate-300 hover:text-red-500 bg-white rounded-full w-7 h-7 flex items-center justify-center sm:opacity-0 sm:group-hover/item:opacity-100 transition shadow-sm border border-slate-200 shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                <button onclick="removeCartItem('${c.id}')" class="text-slate-300 hover:text-red-500 bg-white rounded-full w-7 h-7 flex items-center justify-center lg:opacity-0 lg:group-hover/item:opacity-100 transition shadow-sm border border-slate-200 shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
                             </div>
                         </div>`;
                 });
@@ -1520,9 +1527,24 @@
                     </div>`;
             }
 
-            document.getElementById('active-cart-list').innerHTML = html || '<div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50"><p class="text-slate-400 font-bold"><i class="fa-solid fa-basket-shopping text-3xl mb-3 opacity-50 block"></i>目前購物車空空如也</p></div>';
-            document.getElementById('active-cart-total').innerText = `$${total}`; 
-            document.getElementById('cart-count').innerText = `${count} 份`;
+            const emptyCartHtml = '<div class="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl bg-white/50"><p class="text-slate-400 font-bold"><i class="fa-solid fa-basket-shopping text-3xl mb-3 opacity-50 block"></i>目前購物車空空如也</p></div>';
+
+            // 電腦版側邊購物車更新
+            const activeCartList = document.getElementById('active-cart-list');
+            if (activeCartList) {
+                activeCartList.innerHTML = html || emptyCartHtml;
+                document.getElementById('active-cart-total').innerText = `$${total}`; 
+                document.getElementById('cart-count').innerText = `${count} 份`;
+            }
+
+            // 手機版懸浮購物車 Modal 更新
+            const modalCartList = document.getElementById('modal-cart-list');
+            if (modalCartList) {
+                modalCartList.innerHTML = html || emptyCartHtml;
+                document.getElementById('modal-cart-total').innerText = `$${total}`;
+                document.getElementById('modal-cart-count-title').innerText = count;
+                document.getElementById('nav-cart-count').innerText = count;
+            }
         };
 
         window.removeCartItem = async function(id) {
@@ -1548,8 +1570,11 @@
 
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.add('hidden');
+            document.getElementById('nav-cart-btn').classList.add('hidden');
+            
             window.closeModal('order-modal');
             window.closeModal('start-modal');
+            window.closeModal('cart-modal');
             window.closeModal('pwd-prompt-modal');
 
             const loader = document.getElementById('checkout-loader');
@@ -2263,7 +2288,6 @@
                 const storeMeta = window.state.stores.find(s => s.name === store) || {};
                 const coverImg = storeMeta.coverImg || items.find(i=>i.img && i.img !== DEFAULT_IMG)?.img || DEFAULT_IMG;
                 
-                // 管理者專屬莫蘭迪色系
                 const storeColor = window.getStoreColor(store);
 
                 if (window.editingStoreName === store) {
@@ -2346,7 +2370,6 @@
                     const imgUrl = item.img || DEFAULT_IMG;
                     const displayUpdateDate = item.updateDate || window.state.menuUpdateDate || '無紀錄';
 
-                    // 奇數偶數列跳色設計
                     const rowBgClass = index % 2 === 0 ? 'bg-white' : 'bg-slate-100';
 
                     if (String(window.editingItemId) === String(item.id)) {
@@ -2812,158 +2835,95 @@
                             }
 
                             const optionNames = optionsStr ? optionsStr.split(',').map(s=>s.trim()).filter(s=>s) : [];
-                            const customOptionIds = [];
+			    let customOptionIds = [];
                             optionNames.forEach(optName => {
-                                let optObj = window.state.globalOptions.find(g => g.name === optName);
-                                if(optObj) customOptionIds.push(optObj.id);
+                                let gOpt = window.state.globalOptions.find(g => g.name === optName);
+                                if(gOpt) {
+                                    customOptionIds.push(gOpt.id);
+                                }
                             });
 
-                            window.state.items.push({
-                                id: Date.now().toString() + Math.random().toString(36).substring(2, 8),
-                                cat: catObj.id,
-                                store: storeName,
-                                subCat: subCat,
-                                name: itemName,
-                                price: price,
-                                img: DEFAULT_IMG,
-                                isLocked: true, 
-                                customOptionIds: customOptionIds,
-                                updateDate: window.getFormattedDate()
-                            });
-                            importedCount++;
+                            const existingItemIndex = window.state.items.findIndex(i => i.store === storeName && i.name === itemName);
+                            
+                            if (existingItemIndex > -1) {
+                                // 覆寫已存在的餐點資訊
+                                window.state.items[existingItemIndex].price = price;
+                                window.state.items[existingItemIndex].cat = catObj.id;
+                                window.state.items[existingItemIndex].subCat = subCat;
+                                window.state.items[existingItemIndex].customOptionIds = customOptionIds;
+                                window.state.items[existingItemIndex].updateDate = window.getFormattedDate();
+                            } else {
+                                // 新增餐點
+                                window.state.items.push({
+                                    id: Date.now().toString() + Math.random().toString(36).substring(2, 8),
+                                    cat: catObj.id,
+                                    store: storeName,
+                                    subCat: subCat,
+                                    name: itemName,
+                                    price: price,
+                                    img: DEFAULT_IMG,
+                                    isLocked: true,
+                                    customOptionIds: customOptionIds,
+                                    updateDate: window.getFormattedDate()
+                                });
+                                importedCount++;
+                            }
                         });
                         
+                        window.addAdminLog('匯入', `從 Excel 匯入了 ${importedCount} 筆新餐點與店家更新`);
                         window.state.menuUpdateDate = window.getFormattedDate();
-                        window.addAdminLog('匯入', `透過 Excel 批次匯入了 ${importedCount} 筆餐點資料`);
                         await window.saveState();
                         window.renderAdmin();
-                        alert(`✅ 成功匯入 ${importedCount} 筆資料！`);
-
-                    } catch (err) {
-                        console.error(err);
-                        alert("❌ 匯入失敗，請確認檔案格式是否為有效的 .xlsx 檔案。");
+                        alert(`✅ 匯入完成！共新增 ${importedCount} 筆新餐點，並已更新既有同名餐點。`);
+                        
+                    } catch (error) {
+                        console.error(error);
+                        alert('❌ 檔案解析失敗，請確認檔案格式是否正確！');
                     }
-                    event.target.value = ''; 
+                    event.target.value = ''; // 清空檔案選擇器
                 };
                 reader.readAsArrayBuffer(file);
             });
         };
 
-        window.exportSingleHistoryExcel = async function(orderId) {
-            const order = window.state.orderHistory.find(o => String(o.id) === String(orderId));
-            if (!order) return;
-
-            const workbook = new ExcelJS.Workbook();
-            const sheet = workbook.addWorksheet('點餐明細', {
-                pageSetup: { 
-                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
-                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
-                }
-            });
-
-            sheet.mergeCells('A1:E1');
-            const titleCell = sheet.getCell('A1');
-            titleCell.value = '蘇家Su.線上點餐系統 - 訂單明細';
-            titleCell.font = { size: 16, bold: true };
-            titleCell.alignment = { horizontal: 'center' };
-
-            sheet.mergeCells('A2:E2');
-            sheet.getCell('A2').value = `店家：${order.store}   |   結單時間：${order.date} ${order.time}`;
-            sheet.getCell('A2').font = { bold: true };
-            sheet.getCell('A2').alignment = { horizontal: 'center' };
-
-            const tableStartRow = 4;
-            sheet.getRow(tableStartRow).values = ['點餐人', '餐點名稱', '數量', '備註', '小計'];
-            sheet.columns = [
-                { key: 'user', width: 20 },
-                { key: 'item', width: 35 },
-                { key: 'qty', width: 12 },
-                { key: 'note', width: 30 },
-                { key: 'subtotal', width: 15 }
-            ];
-
-            sheet.getRow(tableStartRow).eachCell(cell => {
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; 
-                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                cell.alignment = { horizontal: 'center' };
-                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-            });
-
-            order.cart.sort((a,b) => {
-                if (a.storeName !== b.storeName) return (a.storeName || '').localeCompare(b.storeName || '');
-                return a.userName.localeCompare(b.userName);
-            }).forEach((c, idx) => {
-                const row = sheet.addRow({
-                    user: c.userName,
-                    item: c.itemName,
-                    qty: c.qty,
-                    note: c.note || '',
-                    subtotal: c.price * c.qty
-                });
-                
-                if (idx % 2 === 0) {
-                    row.eachCell(cell => cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } });
-                }
-                row.eachCell(cell => {
-                    cell.alignment = { vertical: 'middle', wrapText: true };
-                    cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
-                });
-                row.getCell('qty').alignment = { horizontal: 'center', vertical: 'middle' };
-                row.getCell('subtotal').alignment = { horizontal: 'right', vertical: 'middle' };
-            });
-
-            const totalRow = sheet.addRow(['', '', '', '總結算金額：', `$${order.total}`]);
-            totalRow.getCell(4).font = { bold: true, size: 14 };
-            totalRow.getCell(4).alignment = { horizontal: 'right' };
-            totalRow.getCell(5).font = { bold: true, size: 14, color: { argb: 'FFDC2626' } };
-            totalRow.getCell(5).alignment = { horizontal: 'right' };
-
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `訂單明細_${order.date.replace(/-/g,'')}_${order.time.replace(/:/g,'')}.xlsx`;
-            link.click();
-        };
-
         window.exportAllHistoryExcel = async function() {
-            if(window.state.orderHistory.length === 0) return alert('沒有歷史訂單可供匯出');
-
+            if(window.state.orderHistory.length === 0) return alert('沒有資料可供匯出');
+            
             const workbook = new ExcelJS.Workbook();
-            const sheet = workbook.addWorksheet('歷史訂單總表', {
-                pageSetup: { 
-                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, 
-                    margins: { left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 } 
-                }
+            const sheet = workbook.addWorksheet('所有歷史訂單', {
+                pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
             });
 
             sheet.columns = [
-                { header: '結單日期', key: 'date', width: 22 },
-                { header: '店家名稱', key: 'store', width: 30 },
-                { header: '點餐人', key: 'user', width: 20 },
-                { header: '餐點名稱', key: 'item', width: 35 },
-                { header: '數量', key: 'qty', width: 12 },
-                { header: '備註', key: 'note', width: 30 },
+                { header: '結單時間', key: 'time', width: 22 },
+                { header: '店家', key: 'store', width: 25 },
+                { header: '點餐人', key: 'user', width: 15 },
+                { header: '餐點名稱', key: 'item', width: 30 },
+                { header: '數量', key: 'qty', width: 10 },
+                { header: '備註', key: 'note', width: 25 },
                 { header: '小計', key: 'subtotal', width: 15 },
-                { header: '該單總額', key: 'total', width: 18 }
+                { header: '該單總計', key: 'total', width: 15 }
             ];
 
             sheet.getRow(1).eachCell(cell => {
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; 
                 cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                cell.alignment = { horizontal: 'center' };
-                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
             });
 
             let isEven = false;
             window.state.orderHistory.forEach(order => {
-                order.cart.sort((a,b) => {
+                const fillArgb = isEven ? 'FFF8FAFC' : 'FFFFFFFF';
+                
+                let sortedCart = [...order.cart].sort((a,b) => {
                     if (a.storeName !== b.storeName) return (a.storeName || '').localeCompare(b.storeName || '');
                     return a.userName.localeCompare(b.userName);
-                }).forEach((c, idx) => {
+                });
+
+                sortedCart.forEach((c, idx) => {
                     const row = sheet.addRow({
-                        date: idx === 0 ? `${order.date} ${order.time}` : '',
-                        store: idx === 0 ? order.store : '',
+                        time: idx === 0 ? `${order.date} ${order.time}` : '',
+                        store: c.storeName || '綜合',
                         user: c.userName,
                         item: c.itemName,
                         qty: c.qty,
@@ -2971,12 +2931,9 @@
                         subtotal: c.price * c.qty,
                         total: idx === 0 ? order.total : ''
                     });
-                    
-                    if (isEven) {
-                        row.eachCell(cell => cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } });
-                    }
 
                     row.eachCell(cell => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillArgb } };
                         cell.alignment = { vertical: 'middle', wrapText: true };
                         cell.border = { top: {style:'thin', color:{argb:'FFCCCCCC'}}, bottom: {style:'thin', color:{argb:'FFCCCCCC'}} };
                     });
@@ -2999,10 +2956,56 @@
             link.click();
         };
 
-        // 在 Firebase 連線完成前，先使用預設資料與快取渲染首頁，達到「零秒載入」的體驗
-        if (document.getElementById('view-home') && !document.getElementById('view-home').classList.contains('hidden')) {
-            window.renderHome();
-        }
+        window.exportSingleHistoryExcel = async function(id) {
+            const order = window.state.orderHistory.find(o => o.id === id);
+            if(!order) return;
+            
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('單筆明細', {
+                pageSetup: { fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+            });
+
+            sheet.columns = [
+                { header: '店家', key: 'store', width: 25 },
+                { header: '點餐人', key: 'user', width: 15 },
+                { header: '餐點名稱', key: 'item', width: 30 },
+                { header: '數量', key: 'qty', width: 10 },
+                { header: '備註', key: 'note', width: 25 },
+                { header: '小計', key: 'subtotal', width: 15 }
+            ];
+
+            sheet.getRow(1).eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; 
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            });
+
+            let sortedCart = [...order.cart].sort((a,b) => {
+                if (a.storeName !== b.storeName) return (a.storeName || '').localeCompare(b.storeName || '');
+                return a.userName.localeCompare(b.userName);
+            });
+
+            sortedCart.forEach((c) => {
+                sheet.addRow({
+                    store: c.storeName || '綜合',
+                    user: c.userName,
+                    item: c.itemName,
+                    qty: c.qty,
+                    note: c.note || '',
+                    subtotal: c.price * c.qty
+                });
+            });
+            
+            sheet.addRow({}); // 留空行
+            const totalRow = sheet.addRow({ store: '總結算', subtotal: order.total });
+            totalRow.getCell('subtotal').font = { bold: true, color: { argb: 'FFDC2626' } };
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `單筆訂單明細_${order.date}.xlsx`;
+            link.click();
+        };
 
     </script>
 </body>

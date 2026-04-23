@@ -634,6 +634,7 @@
         };
 
         // ★★★ 移動裝置專用：產生圖片彈跳視窗，解決另開分頁死當/白畫面問題 ★★★
+        // ★★★ 移動裝置專用：產生圖片彈跳視窗 (已優化為防呆低畫質、防白畫面版本) ★★★
         window.generateReceiptImage = async function() {
             const captureArea = document.getElementById('receipt-capture-area');
             if (!captureArea) return;
@@ -641,44 +642,57 @@
             const actionBtns = document.getElementById('receipt-action-buttons');
             const originalDisplay = actionBtns.style.display;
             
-            // 截圖前暫時隱藏按鈕區塊，避免按鈕被印入圖片中
+            // 1. 截圖前先隱藏底部按鈕，避免被拍進去
             actionBtns.style.display = 'none';
             
-            const modal = document.getElementById('receipt-image-modal');
-            const loader = document.getElementById('receipt-image-loader');
-            const container = document.getElementById('receipt-image-container');
-            
-            modal.classList.remove('hidden');
-            loader.classList.remove('hidden');
-            container.innerHTML = ''; // 清空上一次的截圖
+            // 2. 顯示全域 Loader 擋住畫面操作，注意！這裡還"不要"打開圖片顯示視窗，以免擋住截圖範圍導致全白
+            const sysLoader = document.getElementById('checkout-loader');
+            if (sysLoader) {
+                document.getElementById('loader-title').innerText = "正在產生圖片中...";
+                document.getElementById('loader-desc').innerText = "請稍候，這可能需要幾秒鐘";
+                sysLoader.classList.remove('hidden');
+            }
+
+            // 稍微等待 300 毫秒，讓瀏覽器有時間把按鈕隱藏的畫面更新好
+            await new Promise(resolve => setTimeout(resolve, 300));
 
             try {
-                // 使用 html2canvas，設定適當的 scale 防止記憶體炸掉，並允許跨域載入圖片
+                // 3. 使用最低負載設定截圖，防死當
                 const canvas = await html2canvas(captureArea, {
-                    scale: 2, // 畫質夠用且不會造成 iOS 崩潰
+                    scale: 1, // ★ 改為 1 倍解析度，大幅降低 iOS/Android 記憶體消耗防閃退
                     useCORS: true,
+                    allowTaint: true,
                     backgroundColor: '#ffffff',
                     logging: false
                 });
 
-                // 將畫布轉為 JPEG 格式以大幅減少記憶體佔用
-                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                // 4. 轉為低品質的 JPEG (0.8)，檔案極小，單純記錄用
+                const imgData = canvas.toDataURL('image/jpeg', 0.8);
                 const img = document.createElement('img');
                 img.src = imgData;
-                img.className = 'w-full h-auto object-contain';
-                
-                // 圖片讀取完成後放入容器並隱藏 loader
-                img.onload = () => {
-                    container.appendChild(img);
-                    loader.classList.add('hidden');
-                };
+                img.className = 'w-full h-auto object-contain'; // 單純顯示
+
+                // 5. 將圖片放入容器中
+                const container = document.getElementById('receipt-image-container');
+                container.innerHTML = ''; 
+                container.appendChild(img);
+
+                // 6. 截圖徹底完成後，才把裝著圖片的彈跳視窗打開
+                document.getElementById('receipt-image-loader').classList.add('hidden'); // 隱藏視窗內建的圈圈
+                document.getElementById('receipt-image-modal').classList.remove('hidden');
+
             } catch (error) {
                 console.error("生成圖片失敗:", error);
-                loader.classList.add('hidden');
-                container.innerHTML = '<p class="text-red-500 font-bold p-8 text-xl">圖片生成失敗，請重試或改用電腦版列印。</p>';
+                alert("手機記憶體不足或發生錯誤，請直接使用手機的「螢幕截圖」功能來保存明細！");
             } finally {
-                // 恢復操作按鈕顯示
+                // 7. 恢復原本的按鈕顯示與關閉系統 Loader
                 actionBtns.style.display = originalDisplay;
+                if (sysLoader) {
+                    sysLoader.classList.add('hidden');
+                    // 恢復原本的文字
+                    document.getElementById('loader-title').innerText = "系統結算中，請稍候...";
+                    document.getElementById('loader-desc').innerText = "正在為您產生明細，請勿關閉視窗";
+                }
             }
         };
 

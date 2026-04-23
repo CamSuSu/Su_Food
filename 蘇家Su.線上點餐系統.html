@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>蘇家Su.線上點餐系統</title>
+    <title>Su.線上點餐系統</title>
     
     <link rel="icon" href="images/sufood.ico" type="image/x-icon">
     
@@ -87,7 +87,7 @@
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80" onclick="showView('home')">
                 <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm shrink-0"><i class="fa-solid fa-store"></i></div>
-                <h1 class="text-xl font-black tracking-tight truncate">蘇家Su.線上點餐系統</h1>
+                <h1 class="text-xl font-black tracking-tight truncate">Su.線上點餐系統</h1>
             </div>
             <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <button id="nav-cart-btn" onclick="openModal('cart-modal')" class="hidden lg:hidden bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full font-bold hover:bg-orange-200 transition border border-orange-200 shadow-sm items-center text-sm md:text-base whitespace-nowrap">
@@ -106,7 +106,7 @@
     <div class="fixed z-30 no-print pointer-events-none" style="bottom: 16px; left: 16px; padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left);">
         <div class="bg-white/30 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
             <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
-            <span class="tracking-widest">線上菜單最後更新日期：<span id="global-update-date" class="font-bold"></span></span>
+            <span class="tracking-widest">菜單更新日：<span id="global-update-date" class="font-bold"></span></span>
         </div>
     </div>
 
@@ -119,10 +119,10 @@
         <div id="view-home" class="view-section hidden">
             <div class="mb-8 bg-gradient-to-r from-orange-500 to-amber-500 p-8 md:p-10 rounded-3xl text-white shadow-xl relative overflow-hidden">
                 <div class="relative z-10">
-                    <h2 class="text-3xl md:text-4xl font-black mb-3">今天想吃什麼？</h2>
-                    <p class="opacity-95 text-lg font-bold mb-6">瀏覽各類店家，與家禾發起新的點餐活動</p>
+                    <h2 class="text-3xl md:text-4xl font-black mb-3">今天您想吃什麼呢？</h2>
+                    <p class="opacity-95 text-lg font-bold mb-6">瀏覽各類的店家，與家禾一同發起團體點餐活動</p>
                     <button onclick="openStartOrderModal()" class="bg-white text-orange-600 px-6 py-3.5 rounded-xl font-black shadow-lg hover:bg-orange-50 transition transform hover:-translate-y-1 hover:shadow-xl text-lg flex items-center w-full md:w-max justify-center">
-                        <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>發起點餐活動
+                        <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>發起團體點餐活動
                     </button>
                 </div>
                 <i class="fa-solid fa-burger absolute -right-10 -bottom-10 text-[180px] opacity-20 transform -rotate-12"></i>
@@ -167,7 +167,7 @@
                     </button>
                 </div>
                 
-                <h2 id="active-store-name" class="text-4xl md:text-5xl font-black text-slate-800 mb-4 drop-shadow-sm break-words">聯合訂餐活動</h2>
+                <h2 id="active-store-name" class="text-4xl md:text-5xl font-black text-slate-800 mb-4 drop-shadow-sm break-words">團體點餐活動</h2>
                 <div id="active-store-info" class="flex flex-col gap-4 text-slate-600 font-bold mb-4 items-center justify-center w-full px-2"></div>
                 <p class="text-slate-500 text-sm md:text-lg mt-2 bg-orange-100 text-orange-700 inline-block px-4 py-2 md:px-6 md:py-2 rounded-full font-black shadow-sm border border-orange-200 max-w-full break-words whitespace-normal">活動期間僅限點購清單內店家之餐點</p>
             </div>
@@ -430,7 +430,7 @@
 
     <div id="view-receipt" class="view-section hidden print-no-shadow relative">
         <div id="receipt-capture-area" class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
-            <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">蘇家Su.線上點餐明細總表</h2>
+            <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">Su.線上點餐明細總表</h2>
             <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2 w-full break-words">
                 <p class="font-bold text-lg md:text-xl break-words">結單時間：<span id="receipt-time" class="ml-2 text-slate-600 whitespace-nowrap"></span></p>
             </div>
@@ -441,8 +441,12 @@
             <div id="receipt-action-buttons" data-html2canvas-ignore="true" class="flex flex-col sm:flex-row gap-4 justify-center items-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
                 <div id="receipt-phone-buttons" class="flex flex-wrap justify-center gap-3 w-full sm:w-auto mr-auto"></div>
 
-                <button id="btn-print-pdf" onclick="setTimeout(() => window.print(), 500)" class="flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
-                    <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 存成 PDF
+                <button id="btn-print-pdf" onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                    <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
+                </button>
+                
+                <button id="btn-new-tab-receipt" onclick="openReceiptInNewTab()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                    <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>新分頁開啟明細
                 </button>
                 
                 <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
@@ -499,7 +503,7 @@
 
     <div id="start-modal" class="fixed inset-0 bg-black/60 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-md no-print transition-opacity">
         <div class="bg-white w-full max-w-md rounded-[2rem] p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <h3 class="text-2xl font-black mb-5 text-slate-800 flex items-center border-b-2 border-slate-100 pb-3 break-words"><i class="fa-solid fa-utensils text-orange-500 mr-3"></i>發起聯合點餐</h3>
+            <h3 class="text-2xl font-black mb-5 text-slate-800 flex items-center border-b-2 border-slate-100 pb-3 break-words"><i class="fa-solid fa-utensils text-orange-500 mr-3"></i>發起團體點餐</h3>
             <div class="space-y-4">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
                     <label class="block text-xs font-bold mb-2 text-slate-500">1. 將店家加入本次清單 (最多 5 家)</label>
@@ -615,6 +619,71 @@
             const sat = 20 + (Math.abs(hash) % 15);
             const light = 80 + (Math.abs(hash) % 10);
             return `hsl(${hue}, ${sat}%, ${light}%)`;
+        };
+
+        // 開啟新分頁顯示明細 PDF：加入返回按鈕確保手機可順利關閉
+        window.openReceiptInNewTab = function() {
+            const captureArea = document.getElementById('receipt-capture-area');
+            if (!captureArea) return;
+            
+            const tailwindScript = '<script src="https://cdn.tailwindcss.com"><\/script>';
+            const faLink = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
+            const fontLink = `<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">`;
+            
+            const newWin = window.open('', '_blank');
+            if (!newWin) {
+                alert('彈出視窗被瀏覽器封鎖，請允許開啟新分頁以查看明細！');
+                return;
+            }
+
+            newWin.document.write(`
+                <!DOCTYPE html>
+                <html lang="zh-TW">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                    <title>訂單明細總表</title>
+                    ${tailwindScript}
+                    ${faLink}
+                    ${fontLink}
+                    <style>
+                        body { 
+                            font-family: 'Noto Sans TC', sans-serif; 
+                            background-color: #f8fafc; 
+                            padding: 0; 
+                            margin: 0;
+                            -webkit-font-smoothing: antialiased;
+                        }
+                        #receipt-action-buttons { display: none !important; }
+                        #receipt-capture-area {
+                            box-shadow: none !important;
+                            border: none !important;
+                            margin: 0 auto !important;
+                            padding: 16px !important;
+                            background-color: transparent !important;
+                        }
+                        @media print {
+                            body { background: white !important; padding: 0 !important; }
+                            .top-close-bar { display: none !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="top-close-bar no-print" style="padding: 15px; text-align: center; background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                        <button onclick="window.close(); history.back();" style="background: #ef4444; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 900; border: none; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);">
+                            <i class="fa-solid fa-xmark" style="margin-right: 8px;"></i>關閉明細並返回原系統
+                        </button>
+                    </div>
+                    ${captureArea.outerHTML}
+                    <script>
+                        setTimeout(() => {
+                            window.print();
+                        }, 800);
+                    <\/script>
+                </body>
+                </html>
+            `);
+            newWin.document.close();
         };
 
         window.compressData = function(data) {
@@ -1145,7 +1214,7 @@
         window.addStoreToActivity = function(storeName) {
             if (!storeName) return;
             if (window.selectedActivityStores.length >= 5) {
-                alert('⚠️ 系統限制：一次聯合訂餐最多只能選擇 5 家不同店家！');
+                alert('⚠️ 系統限制：一次團體訂餐最多只能選擇 5 個店家！');
                 return;
             }
             if (window.selectedActivityStores.includes(storeName)) {
@@ -1691,7 +1760,7 @@
                 document.getElementById('receipt-content').innerHTML = `
                     ${tablesHtml}
                     <div class="bg-orange-50 border-4 border-orange-200 rounded-2xl p-6 flex flex-wrap justify-between items-center mt-4 gap-4">
-                        <span class="font-black text-2xl md:text-3xl text-slate-800 shrink-0">全部店家總結算：</span>
+                        <span class="font-black text-2xl md:text-3xl text-slate-800 shrink-0">總結算：</span>
                         <span class="font-black text-4xl md:text-5xl text-red-600 drop-shadow-sm shrink-0">$${grandTotal}</span>
                     </div>
                 `;
@@ -1790,7 +1859,7 @@
 
         window.exportLogsTxt = function() {
             if(!window.state.adminLogs || window.state.adminLogs.length === 0) return alert('沒有資料可供匯出');
-            let content = "--- 蘇家Su.線上點餐系統 系統操作紀錄 ---\n\n";
+            let content = "--- Su.線上點餐系統 系統操作紀錄 ---\n\n";
             window.state.adminLogs.forEach((log) => {
                 content += `[${log.date} ${log.time}] 【${log.action}】 ${log.detail}\n`;
             });
@@ -2617,7 +2686,7 @@
 
         window.exportHistoryTxt = function() {
             if(window.state.orderHistory.length === 0) return alert('沒有資料可供匯出');
-            let content = "--- 蘇家Su.線上點餐系統 歷史訂單紀錄 ---\n\n";
+            let content = "--- Su.線上點餐系統 歷史訂單紀錄 ---\n\n";
             window.state.orderHistory.forEach((order, idx) => {
                 content += `[紀錄 #${window.state.orderHistory.length - idx}] 結單時間: ${order.date} ${order.time} | 店家: ${order.store}\n`;
                 content += `>>> 總結算金額: $${order.total}\n明細：\n`;

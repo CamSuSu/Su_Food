@@ -24,7 +24,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* 提升文字載入效能與優化字體抗鋸齒渲染 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -85,12 +84,12 @@
 <body class="bg-slate-50 text-slate-900 relative">
 
     <nav class="bg-white shadow-sm border-b sticky top-0 z-40 no-print">
-        <div class="container mx-auto px-4 h-16 flex justify-between items-center w-full">
-            <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80 min-w-0 pr-4" onclick="showView('home')">
+        <div class="container mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80" onclick="showView('home')">
                 <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm shrink-0"><i class="fa-solid fa-store"></i></div>
                 <h1 class="text-xl font-black tracking-tight truncate">Su.線上點餐系統</h1>
             </div>
-            <div class="flex items-center gap-3 sm:gap-4 shrink-0 ml-auto">
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <button id="nav-cart-btn" onclick="openModal('cart-modal')" class="hidden lg:hidden bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full font-bold hover:bg-orange-200 transition border border-orange-200 shadow-sm items-center text-sm md:text-base whitespace-nowrap">
                     <i class="fa-solid fa-basket-shopping sm:mr-1"></i> <span id="nav-cart-count" class="ml-1 sm:ml-0">0</span>
                 </button>
@@ -216,6 +215,7 @@
             </div>
 
             <div id="admin-tab-menu" class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+                
                 <div class="xl:col-span-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100 xl:sticky xl:top-24 max-h-[85vh] overflow-y-auto custom-scrollbar">
                     <h3 id="admin-form-title" class="text-2xl font-black mb-6 text-orange-600 flex justify-between items-center border-b pb-4">
                         <span><i class="fa-solid fa-square-plus mr-2"></i>新增餐點與店家</span>
@@ -229,6 +229,7 @@
                                     <input list="store-datalist" id="admin-input-store" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 font-bold" placeholder="選擇或輸入新店家" onchange="autoFillStoreInfo()">
                                     <datalist id="store-datalist"></datalist>
                                 </div>
+                                
                                 <div>
                                     <label class="block text-xs font-bold mb-1 text-slate-500">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label>
                                     <div class="flex gap-2">
@@ -236,6 +237,7 @@
                                         <button onclick="switchAdminTab('settings')" class="bg-orange-100 hover:bg-orange-200 text-orange-600 px-4 rounded-xl font-bold transition shadow-sm shrink-0" title="大分類管理請至設定頁"><i class="fa-solid fa-gear"></i></button>
                                     </div>
                                 </div>
+
                                 <div>
                                     <label class="block text-xs font-bold mb-1 text-slate-500">店家封面圖 (自動極限壓縮)</label>
                                     <div class="flex gap-2">
@@ -256,7 +258,8 @@
                                 </div>
                                 <div class="pt-2 border-t border-slate-200">
                                     <label class="block text-xs font-black mb-2 text-slate-600"><i class="fa-regular fa-clock mr-1"></i>營業時間 (選填)</label>
-                                    <div id="admin-hours-container" class="space-y-2 border border-slate-200 p-3 rounded-xl bg-white max-h-48 overflow-y-auto custom-scrollbar"></div>
+                                    <div id="admin-hours-container" class="space-y-2 border border-slate-200 p-3 rounded-xl bg-white max-h-48 overflow-y-auto custom-scrollbar">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -442,28 +445,13 @@
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
                 
-                <button id="btn-generate-img" onclick="generateReceiptImage()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
-                    <i class="fa-solid fa-image mr-2"></i>產生明細圖片
+                <button id="btn-new-tab-receipt" onclick="openReceiptInNewTab()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                    <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>開啟並列印明細
                 </button>
                 
                 <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-house mr-2"></i>結束並返回首頁
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="receipt-image-modal" class="fixed inset-0 bg-black/90 hidden z-[500] flex-col items-center justify-start pt-10 pb-6 px-4 backdrop-blur-md transition-opacity">
-        <div class="w-full flex justify-between items-center mb-4 max-w-4xl no-print shrink-0">
-            <button onclick="closeReceiptImage()" class="bg-red-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg"><i class="fa-solid fa-arrow-left mr-2"></i>返回系統</button>
-            <span class="text-white font-bold text-sm bg-black/50 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-hand-pointer mr-1"></i>長按圖片儲存</span>
-        </div>
-        <div class="flex-1 w-full max-w-4xl overflow-y-auto custom-scrollbar flex flex-col items-center bg-slate-100 rounded-xl relative shadow-2xl">
-            <div id="receipt-image-container" class="w-full min-h-full flex items-start justify-center"></div>
-            <div id="receipt-image-loader" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-10">
-                <i class="fa-solid fa-spinner fa-spin text-5xl text-orange-500 mb-4"></i>
-                <p class="text-slate-600 font-black text-xl tracking-wider">正在生成明細圖片...</p>
-                <p class="text-slate-400 font-bold text-sm mt-2">這可能需要幾秒鐘的時間</p>
             </div>
         </div>
     </div>
@@ -633,72 +621,69 @@
             return `hsl(${hue}, ${sat}%, ${light}%)`;
         };
 
-        // ★★★ 移動裝置專用：產生圖片彈跳視窗，解決另開分頁死當/白畫面問題 ★★★
-        // ★★★ 移動裝置專用：產生圖片彈跳視窗 (已優化為防呆低畫質、防白畫面版本) ★★★
-        window.generateReceiptImage = async function() {
+        // 開啟新分頁顯示明細 PDF：加入返回按鈕確保手機可順利關閉
+        window.openReceiptInNewTab = function() {
             const captureArea = document.getElementById('receipt-capture-area');
             if (!captureArea) return;
             
-            const actionBtns = document.getElementById('receipt-action-buttons');
-            const originalDisplay = actionBtns.style.display;
+            const tailwindScript = '<script src="https://cdn.tailwindcss.com"><\/script>';
+            const faLink = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
+            const fontLink = `<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">`;
             
-            // 1. 截圖前先隱藏底部按鈕，避免被拍進去
-            actionBtns.style.display = 'none';
-            
-            // 2. 顯示全域 Loader 擋住畫面操作，注意！這裡還"不要"打開圖片顯示視窗，以免擋住截圖範圍導致全白
-            const sysLoader = document.getElementById('checkout-loader');
-            if (sysLoader) {
-                document.getElementById('loader-title').innerText = "正在產生圖片中...";
-                document.getElementById('loader-desc').innerText = "請稍候，這可能需要幾秒鐘";
-                sysLoader.classList.remove('hidden');
+            const newWin = window.open('', '_blank');
+            if (!newWin) {
+                alert('彈出視窗被瀏覽器封鎖，請允許開啟新分頁以查看明細！');
+                return;
             }
 
-            // 稍微等待 300 毫秒，讓瀏覽器有時間把按鈕隱藏的畫面更新好
-            await new Promise(resolve => setTimeout(resolve, 300));
-
-            try {
-                // 3. 使用最低負載設定截圖，防死當
-                const canvas = await html2canvas(captureArea, {
-                    scale: 1, // ★ 改為 1 倍解析度，大幅降低 iOS/Android 記憶體消耗防閃退
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#ffffff',
-                    logging: false
-                });
-
-                // 4. 轉為低品質的 JPEG (0.8)，檔案極小，單純記錄用
-                const imgData = canvas.toDataURL('image/jpeg', 0.8);
-                const img = document.createElement('img');
-                img.src = imgData;
-                img.className = 'w-full h-auto object-contain'; // 單純顯示
-
-                // 5. 將圖片放入容器中
-                const container = document.getElementById('receipt-image-container');
-                container.innerHTML = ''; 
-                container.appendChild(img);
-
-                // 6. 截圖徹底完成後，才把裝著圖片的彈跳視窗打開
-                document.getElementById('receipt-image-loader').classList.add('hidden'); // 隱藏視窗內建的圈圈
-                document.getElementById('receipt-image-modal').classList.remove('hidden');
-
-            } catch (error) {
-                console.error("生成圖片失敗:", error);
-                alert("手機記憶體不足或發生錯誤，請直接使用手機的「螢幕截圖」功能來保存明細！");
-            } finally {
-                // 7. 恢復原本的按鈕顯示與關閉系統 Loader
-                actionBtns.style.display = originalDisplay;
-                if (sysLoader) {
-                    sysLoader.classList.add('hidden');
-                    // 恢復原本的文字
-                    document.getElementById('loader-title').innerText = "系統結算中，請稍候...";
-                    document.getElementById('loader-desc').innerText = "正在為您產生明細，請勿關閉視窗";
-                }
-            }
-        };
-
-        window.closeReceiptImage = function() {
-            document.getElementById('receipt-image-modal').classList.add('hidden');
-            document.getElementById('receipt-image-container').innerHTML = ''; // 清空記憶體
+            newWin.document.write(`
+                <!DOCTYPE html>
+                <html lang="zh-TW">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                    <title>訂單明細總表</title>
+                    ${tailwindScript}
+                    ${faLink}
+                    ${fontLink}
+                    <style>
+                        body { 
+                            font-family: 'Noto Sans TC', sans-serif; 
+                            background-color: #f8fafc; 
+                            padding: 0; 
+                            margin: 0;
+                            -webkit-font-smoothing: antialiased;
+                        }
+                        #receipt-action-buttons { display: none !important; }
+                        #receipt-capture-area {
+                            box-shadow: none !important;
+                            border: none !important;
+                            margin: 0 auto !important;
+                            padding: 16px !important;
+                            background-color: transparent !important;
+                        }
+                        @media print {
+                            body { background: white !important; padding: 0 !important; }
+                            .top-close-bar { display: none !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="top-close-bar no-print" style="padding: 15px; text-align: center; background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                        <button onclick="window.close(); history.back();" style="background: #ef4444; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 900; border: none; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);">
+                            <i class="fa-solid fa-xmark" style="margin-right: 8px;"></i>關閉明細返回系統
+                        </button>
+                    </div>
+                    ${captureArea.outerHTML}
+                    <script>
+                        setTimeout(() => {
+                            window.print();
+                        }, 800);
+                    <\/script>
+                </body>
+                </html>
+            `);
+            newWin.document.close();
         };
 
         window.compressData = function(data) {
@@ -1311,8 +1296,6 @@
         window.startTimer = function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.remove('hidden');
-            
-            // ★ 將原本 600 毫秒改為 500 毫秒，減少行動裝置上的視覺延遲，讓兩端更同步
             window.timerInterval = setInterval(() => {
                 if (!window.state.session || !window.state.session.isActive) {
                     clearInterval(window.timerInterval);
@@ -1330,7 +1313,7 @@
                 const str = h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
                 document.getElementById('big-timer').innerText = str; 
                 document.getElementById('nav-timer-val').innerText = str;
-            }, 500); 
+            }, 600);
         };
 
         window.renderActiveOrder = function() {
@@ -1683,7 +1666,7 @@
             document.getElementById('receipt-time').innerText = `${latestOrder.date} ${latestOrder.time}`;
             
             const btnPrint = document.getElementById('btn-print-pdf');
-            const btnNewTab = document.getElementById('btn-generate-img');
+            const btnNewTab = document.getElementById('btn-new-tab-receipt');
 
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';

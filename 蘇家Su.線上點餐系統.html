@@ -2,21 +2,9 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>蘇家Su.線上點餐系統</title>
-    
     <link rel="icon" href="images/sufood.ico" type="image/x-icon">
-    
-    <link rel="apple-touch-icon" sizes="180x180" href="images/sufood.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="蘇家點餐">
-    
-    <link rel="icon" type="image/png" sizes="192x192" href="images/sufood.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="images/sufood.png">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="蘇家點餐">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
@@ -26,23 +14,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* 提升文字載入效能與優化字體抗鋸齒渲染 */
+        /* 加入 swap 提升文字載入效能 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
         
         img { -webkit-user-drag: none; } /* 防止手機誤觸拖曳圖片 */
         
         .admin-action { cursor: pointer; transition: 0.2s; }
         .admin-action.disabled { opacity: 0.3; pointer-events: none; }
         
-        /* 強化卡片選取視覺回饋，加入 will-change 優化渲染效能 */
-        .category-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; will-change: transform; }
+        /* 強化卡片選取視覺回饋 */
+        .category-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; }
         .category-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); z-index: 10; border-color: #fb923c; }
         
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
         
         .store-header { position: sticky; top: 0; z-index: 10; }
         .dragging { opacity: 0.5; border: 2px dashed #10b981; }
@@ -95,14 +83,14 @@
         </div>
     </nav>
 
-    <div class="fixed z-30 no-print pointer-events-none" style="bottom: 16px; left: 16px; padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left);">
-        <div class="bg-white/30 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
-            <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
-            <span class="tracking-widest">線上菜單最後更新日期：<span id="global-update-date" class="font-bold"></span></span>
+    <div class="fixed bottom-4 left-4 bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 rounded-xl p-3 text-xs text-slate-600 z-30 no-print max-w-[calc(100vw-5rem)] break-words">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-orange-500 shrink-0"></i>
+            <span>線上菜單最後更新日期：<span id="global-update-date" class="font-bold text-slate-800"></span></span>
         </div>
     </div>
 
-    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-50 no-print bg-slate-800/90 backdrop-blur-sm" style="margin-bottom: env(safe-area-inset-bottom); margin-right: env(safe-area-inset-right);">
+    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-4 right-4 bg-slate-800 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-50 no-print">
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 
@@ -112,23 +100,14 @@
             <div class="mb-8 bg-gradient-to-r from-orange-500 to-amber-500 p-8 md:p-10 rounded-3xl text-white shadow-xl relative overflow-hidden">
                 <div class="relative z-10">
                     <h2 class="text-3xl md:text-4xl font-black mb-3">今天想吃什麼？</h2>
-                    <p class="opacity-95 text-lg font-bold mb-6">瀏覽各類店家，與家禾發起新的點餐活動</p>
+                    <p class="opacity-95 text-lg font-bold mb-6">瀏覽各類精選店家，或發起新的點餐活動</p>
                     <button onclick="openStartOrderModal()" class="bg-white text-orange-600 px-6 py-3.5 rounded-xl font-black shadow-lg hover:bg-orange-50 transition transform hover:-translate-y-1 hover:shadow-xl text-lg flex items-center w-full md:w-max justify-center">
                         <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>發起點餐活動
                     </button>
                 </div>
                 <i class="fa-solid fa-burger absolute -right-10 -bottom-10 text-[180px] opacity-20 transform -rotate-12"></i>
             </div>
-            
-            <div class="flex justify-between items-end mb-3 px-2">
-                <h3 class="text-lg md:text-xl font-black text-slate-700 tracking-wide">選擇店家類別</h3>
-                <span class="text-[11px] md:hidden text-slate-400 font-bold flex items-center animate-pulse tracking-widest"><i class="fa-solid fa-arrows-left-right mr-1.5"></i>滑動看更多</span>
-            </div>
-            <div class="relative w-full mb-6">
-                <div id="category-tabs" class="flex gap-3 overflow-x-auto pb-5 pt-2 px-2 custom-scrollbar snap-x snap-mandatory pr-16 scroll-smooth" style="-webkit-overflow-scrolling: touch;"></div>
-                <div class="absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent pointer-events-none"></div>
-            </div>
-
+            <div id="category-tabs" class="flex gap-3 overflow-x-auto pb-4 mb-4 custom-scrollbar"></div>
             <div id="store-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
         </div>
 
@@ -154,7 +133,7 @@
                     <div class="absolute top-0 left-0 w-full h-2 bg-red-500 animate-pulse"></div>
                     <p class="text-slate-500 font-black mb-2 tracking-widest uppercase"><i class="fa-solid fa-stopwatch mr-2 text-red-500"></i>點餐活動倒數中</p>
                     <div id="big-timer" class="text-6xl md:text-7xl font-black text-red-600 tracking-tighter drop-shadow-sm">00:00</div>
-                    <button onclick="requestPassword('輸入密碼以提早結單', pwd => { if(pwd === '24331561') window.autoCheckout(); else alert('密碼錯誤！'); })" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
+                    <button onclick="requestPassword('輸入密碼以提早結單', () => window.autoCheckout())" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
                         <i class="fa-solid fa-lock-open mr-2 text-slate-400"></i>提早結單
                     </button>
                 </div>
@@ -279,7 +258,7 @@
                                     <div class="flex gap-2 mb-2">
                                         <input id="admin-input-img-url" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 text-sm font-bold" placeholder="輸入網址或上傳">
                                         <input type="file" id="admin-input-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'admin-input-img-url', 'admin-img-preview')">
-                                        <button type="button" onclick="document.getElementById('admin-input-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
+                                        <button type="button" onclick="document.getElementById('admin-input-file').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
                                     </div>
                                     <img id="admin-img-preview" src="" class="hidden mt-2 h-32 w-full object-cover rounded-xl border border-slate-200 shadow-sm" loading="lazy" decoding="async">
                                 </div>
@@ -415,12 +394,6 @@
         </div>
     </main>
 
-    <div id="checkout-loader" class="fixed inset-0 bg-black/80 hidden z-[500] flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity">
-        <i class="fa-solid fa-spinner fa-spin text-6xl text-orange-500 mb-6 drop-shadow-lg"></i>
-        <p class="text-white font-black text-2xl tracking-widest drop-shadow-md">系統結算中，請稍候...</p>
-        <p class="text-slate-300 font-bold text-sm mt-2">正在為您產生明細，請勿關閉視窗</p>
-    </div>
-
     <div id="view-receipt" class="view-section hidden print-no-shadow relative">
         <div id="receipt-capture-area" class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
             <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">蘇家Su.線上點餐明細總表</h2>
@@ -431,13 +404,13 @@
             
             <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200 break-words whitespace-normal">請依照此表單內容進行點餐與收費作業</div>
             
-            <div id="receipt-action-buttons" data-html2canvas-ignore="true" class="flex flex-col sm:flex-row gap-4 justify-center items-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
+            <div id="receipt-action-buttons" class="flex flex-col sm:flex-row gap-4 justify-center items-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
                 <div id="receipt-phone-buttons" class="flex flex-wrap justify-center gap-3 w-full sm:w-auto mr-auto"></div>
 
-                <button id="btn-print-pdf" onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                <button onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
                 </button>
-                <button id="btn-download-img" onclick="generateReceiptImage()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                <button onclick="generateReceiptImage()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
                     <i class="fa-solid fa-image mr-2"></i>下載明細圖片
                 </button>
                 
@@ -596,10 +569,7 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
-        // 全域鎖定標籤，防止行動裝置慢速網路時 snapshot 監聽器與結單互搶導致死當
-        window.isCheckingOut = false;
-
-        // 莫蘭迪色系生成器 (管理員介面專用)
+        // 優化為莫蘭迪色系：極低飽和度、高明度，視覺柔和且高雅
         window.getStoreColor = function(str) {
             let hash = 0;
             if (str) {
@@ -608,8 +578,8 @@
                 }
             }
             const hue = Math.abs(hash) % 360;
-            const sat = 20 + (Math.abs(hash) % 15);
-            const light = 80 + (Math.abs(hash) % 10);
+            const sat = 20 + (Math.abs(hash) % 15); // 20% - 35% 飽和度
+            const light = 80 + (Math.abs(hash) % 10); // 80% - 90% 明度
             return `hsl(${hue}, ${sat}%, ${light}%)`;
         };
 
@@ -617,33 +587,34 @@
             const btnArea = document.getElementById('receipt-action-buttons');
             const captureArea = document.getElementById('receipt-capture-area');
             
+            const originalDisplay = btnArea.style.display;
+            btnArea.style.display = 'none';
+            
             window.openModal('image-modal');
             document.getElementById('image-modal-loader').classList.remove('hidden');
             document.getElementById('generated-receipt-img').classList.add('hidden');
             document.getElementById('generated-receipt-img').src = '';
             
-            // 縮短 Timeout 使 UI 反應更敏捷
             setTimeout(async () => {
                 try {
-                    // ★直接強制比例設定為 1 (不放大)，避免高解析度裝置 OOM 死當
                     const canvas = await html2canvas(captureArea, {
-                        scale: 1, 
+                        scale: window.devicePixelRatio > 1 ? window.devicePixelRatio : 2, 
                         useCORS: true,
-                        backgroundColor: '#ffffff',
-                        logging: false // 關閉日誌以提升效能
+                        backgroundColor: '#ffffff'
                     });
                     
-                    // ★改用 image/jpeg 與 0.8 壓縮率，大幅降低 Base64 字串大小與記憶體負擔
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    const dataUrl = canvas.toDataURL('image/png');
                     document.getElementById('generated-receipt-img').src = dataUrl;
                     document.getElementById('image-modal-loader').classList.add('hidden');
                     document.getElementById('generated-receipt-img').classList.remove('hidden');
                 } catch (e) {
                     console.error('Image generation failed', e);
-                    alert('圖片產生失敗，請稍後再試。');
+                    alert('圖片產生失敗，請確認您的裝置瀏覽器是否支援此功能。');
                     window.closeModal('image-modal');
+                } finally {
+                    btnArea.style.display = originalDisplay;
                 }
-            }, 300); // 確保 modal 動畫有時間完成，再凍結執行緒
+            }, 300);
         };
 
         window.compressData = function(data) {
@@ -860,15 +831,13 @@
                             if (isNowActive && !wasActive) {
                                 window.showView('active-order');
                                 window.startTimer();
-                            } 
-                            // ★核心修正：加上 !window.isCheckingOut 判斷，確保結單當下 Snapshot 不會互相干擾
-                            else if (justFinished && !window.isCheckingOut) {
+                            } else if (justFinished) {
                                 clearInterval(window.timerInterval);
                                 document.getElementById('nav-timer').classList.add('hidden');
                                 window.closeModal('order-modal');
                                 window.closeModal('start-modal');
                                 window.showReceiptFromHistory();
-                            } else if (!isNowActive && !document.getElementById('view-active-order').classList.contains('hidden') && !window.isCheckingOut) {
+                            } else if (!isNowActive && !document.getElementById('view-active-order').classList.contains('hidden')) {
                                 window.showView('home'); 
                             }
 
@@ -879,12 +848,10 @@
                             
                             if (viewHome && !isTyping) window.renderHome();
                             else if (viewStoreDetails && !isTyping) window.openStoreBrowse(document.getElementById('browse-store-name').innerText);
-                            else if (viewActiveOrder && !window.isCheckingOut) {
+                            else if (viewActiveOrder) {
                                 window.updateCartUI();
                                 if (!isTyping && document.getElementById('order-modal').classList.contains('hidden')) {
-                                    if (document.getElementById('active-menu-container').innerHTML.trim() === '') {
-                                        window.renderActiveOrder();
-                                    }
+                                    window.renderActiveOrder();
                                 }
                             }
                             else if (viewAdmin && !isTyping) {
@@ -916,10 +883,18 @@
                 delete safeState.items;
                 delete safeState.stores;
 
-                // ★移除原有的 Firebase 1MB 容量阻擋機制，讓系統可以完整存檔
+                const jsonString = JSON.stringify(safeState);
+                const sizeInBytes = new Blob([jsonString]).size;
+                
+                if (sizeInBytes > 1040000) {
+                    alert("❌ 嚴重錯誤：資料總容量已超過 Firebase 單一文檔 1MB 限制！本次修改已被系統攔截以防崩潰。\n\n請至歷史紀錄中「清空紀錄」，或刪除不需要的店家圖片！");
+                    return;
+                }
+
                 await setDoc(dbRef, safeState, { merge: true });
             } catch(e) {
                 console.error("資料存檔失敗", e);
+                alert("資料庫連線異常，存檔失敗！請檢查網路。");
             }
         };
 
@@ -957,10 +932,7 @@
             window.scrollTo({top: 0});
             if (viewName === 'home') window.renderHome();
             else if (viewName === 'admin') window.renderAdmin();
-            else if (viewName === 'active-order') {
-                document.getElementById('active-menu-container').innerHTML = ''; 
-                window.renderActiveOrder();
-            }
+            else if (viewName === 'active-order') window.renderActiveOrder();
         };
 
         window.formatStoreHoursHTML = function(hoursObj) {
@@ -977,18 +949,19 @@
             return hasHours ? html : '';
         };
 
+        // ====== 首頁排版大躍進：白底、大字、不重疊、圖片完整顯示 ======
         window.renderHome = function() {
-            let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab snap-start bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0">全部店家</button>`;
+            let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-transparent shrink-0">全部店家</button>`;
             
             const regularCats = window.state.categories.filter(c => c.id !== 'cat_other');
             const otherCat = window.state.categories.find(c => c.id === 'cat_other');
 
             regularCats.forEach(c => {
-                tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${c.name}</button>`;
+                tabsHtml += `<button data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${c.name}</button>`;
             });
             
             if (otherCat) {
-                tabsHtml += `<button data-id="${otherCat.id}" onclick="filterStore('${otherCat.id}')" class="cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${otherCat.name}</button>`;
+                tabsHtml += `<button data-id="${otherCat.id}" onclick="filterStore('${otherCat.id}')" class="cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${otherCat.name}</button>`;
             }
             
             document.getElementById('category-tabs').innerHTML = tabsHtml;
@@ -998,9 +971,9 @@
         window.filterStore = function(catId) {
             document.querySelectorAll('.cat-tab').forEach(btn => {
                 if (btn.dataset.id === catId) {
-                    btn.className = 'cat-tab snap-start bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0';
+                    btn.className = 'cat-tab bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0';
                 } else {
-                    btn.className = 'cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-500 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition shadow-sm hover:-translate-y-0.5 shrink-0';
+                    btn.className = 'cat-tab bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold whitespace-nowrap text-slate-500 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition shadow-sm hover:-translate-y-0.5 shrink-0';
                 }
             });
 
@@ -1023,10 +996,10 @@
 
                 gridHtml += `
                     <div class="category-card bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col cursor-pointer relative group" onclick="openStoreBrowse('${storeName}')">
-                        <div class="w-full aspect-[4/3] bg-slate-100 flex justify-center items-center overflow-hidden p-2">
+                        <div class="w-full aspect-[4/3] bg-slate-100 flex justify-center items-center overflow-hidden">
                             <img src="${coverImg}" loading="lazy" decoding="async" class="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" alt="${storeName}">
                         </div>
-                        <div class="p-5 md:p-6 flex-1 flex flex-col relative z-10 bg-white">
+                        <div class="p-5 md:p-6 flex-1 flex flex-col relative z-10">
                             <div class="mb-3">
                                 <span class="text-[11px] font-black text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg shadow-sm border border-orange-100">${cat ? cat.name : '綜合'}</span>
                             </div>
@@ -1264,7 +1237,6 @@
             }
         };
 
-        // 縮短計時器更新間隔至 600 毫秒，極限降低跨平台視覺誤差並保持效能
         window.startTimer = function() {
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.remove('hidden');
@@ -1285,7 +1257,7 @@
                 const str = h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
                 document.getElementById('big-timer').innerText = str; 
                 document.getElementById('nav-timer-val').innerText = str;
-            }, 600);
+            }, 1000);
         };
 
         window.renderActiveOrder = function() {
@@ -1372,7 +1344,6 @@
             el.value = Math.max(1, current + val); 
         };
 
-        // 購物車新增：加入同人同店相同品項的「聚合」邏輯
         window.confirmAddToCart = async function() {
             const user = document.getElementById('modal-user').value.trim();
             if (!user) return alert('請務必輸入或點選您的姓名！');
@@ -1387,62 +1358,27 @@
                 note = `[${dynamicNotes.join(', ')}] ` + note;
             }
 
-            const qtyToAdd = parseInt(document.getElementById('modal-qty').value) || 1;
+            const newItem = { 
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
+                userName: user, 
+                itemName: window.activeItemForModal.name, 
+                storeName: window.activeItemForModal.store, 
+                price: window.activeItemForModal.price, 
+                qty: parseInt(document.getElementById('modal-qty').value) || 1, 
+                note 
+            };
 
-            // 1. 本地狀態聚合：檢查是否已有完全一樣的餐點
-            const existingLocalIndex = window.state.cart.findIndex(c => 
-                c.userName === user && 
-                c.storeName === window.activeItemForModal.store && 
-                c.itemName === window.activeItemForModal.name && 
-                c.note === note
-            );
-
-            if (existingLocalIndex > -1) {
-                window.state.cart[existingLocalIndex].qty += qtyToAdd;
-            } else {
-                const newItem = { 
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
-                    userName: user, 
-                    itemName: window.activeItemForModal.name, 
-                    storeName: window.activeItemForModal.store, 
-                    price: window.activeItemForModal.price, 
-                    qty: qtyToAdd, 
-                    note: note 
-                };
-                window.state.cart.push(newItem);
-            }
-
+            window.state.cart.push(newItem);
             window.updateCartUI();
             window.closeModal('order-modal');
 
-            // 2. 資料庫同步聚合
             try {
                 await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(dbRef);
                     if (!sfDoc.exists()) return;
                     let dbState = sfDoc.data();
                     if (!dbState.cart) dbState.cart = [];
-
-                    const existingDbIndex = dbState.cart.findIndex(c => 
-                        c.userName === user && 
-                        c.storeName === window.activeItemForModal.store && 
-                        c.itemName === window.activeItemForModal.name && 
-                        c.note === note
-                    );
-
-                    if (existingDbIndex > -1) {
-                        dbState.cart[existingDbIndex].qty = (parseInt(dbState.cart[existingDbIndex].qty) || 0) + qtyToAdd;
-                    } else {
-                        dbState.cart.push({
-                            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                            userName: user,
-                            itemName: window.activeItemForModal.name,
-                            storeName: window.activeItemForModal.store,
-                            price: window.activeItemForModal.price,
-                            qty: qtyToAdd,
-                            note: note
-                        });
-                    }
+                    dbState.cart.push(newItem);
                     transaction.update(dbRef, { cart: dbState.cart });
                 });
             } catch(e) {
@@ -1524,67 +1460,46 @@
             } catch(e) { console.error(e); }
         };
 
-        // ★核心修正：加入結單鎖定防護，並在資料庫寫入後，強制將最新明細同步給本地端記憶體，解決手機看見舊明細或空明細的問題
         window.autoCheckout = async function() {
-            if (window.isCheckingOut) return;
-            window.isCheckingOut = true;
-
             clearInterval(window.timerInterval);
             document.getElementById('nav-timer').classList.add('hidden');
             window.closeModal('order-modal');
             window.closeModal('start-modal');
-            window.closeModal('pwd-prompt-modal');
-
-            // 顯示結算過渡動畫
-            const loader = document.getElementById('checkout-loader');
-            if (loader) loader.classList.remove('hidden');
 
             try {
-                const newHistory = await runTransaction(db, async (transaction) => {
+                await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(dbRef);
-                    if (!sfDoc.exists()) return null;
+                    if (!sfDoc.exists()) return;
                     let dbState = sfDoc.data();
                     
-                    if (!dbState.session || !dbState.session.isActive) return null; 
+                    if (!dbState.session || !dbState.session.isActive) return; 
                     
                     let history = window.decompressData(dbState.orderHistoryStr, dbState.orderHistory || []);
                     if (!Array.isArray(history)) history = [];
                     
                     let finalCart = dbState.cart || [];
-                    
-                    // 結單前進行最終防呆聚合，避免任何網路意外產生重複明細，同時極大化壓縮資料庫空間
-                    let aggregatedCartMap = {};
-                    finalCart.forEach(c => {
-                        const key = `${c.storeName}::${c.userName}::${c.itemName}::${c.note || ''}`;
-                        if (!aggregatedCartMap[key]) {
-                            aggregatedCartMap[key] = {
-                                userName: c.userName ? String(c.userName) : '未知',
-                                itemName: c.itemName ? String(c.itemName) : '未知',
-                                storeName: c.storeName ? String(c.storeName) : '未知',
-                                price: Number(c.price) || 0,
-                                qty: Number(c.qty) || 1,
-                                note: c.note ? String(c.note) : ''
-                            };
-                        } else {
-                            aggregatedCartMap[key].qty += (Number(c.qty) || 1);
-                        }
-                    });
-
-                    const safeCart = Object.values(aggregatedCartMap);
-                    let total = safeCart.reduce((sum, c) => sum + (c.price * c.qty), 0);
+                    let total = finalCart.reduce((sum, c) => sum + ((Number(c.price) || 0) * (Number(c.qty) || 1)), 0);
                     
                     const storeNamesStr = dbState.session.storeNames ? dbState.session.storeNames.join('、') : dbState.session.storeName;
 
-                    const newRecord = { 
+                    const safeCart = finalCart.map(c => ({
+                        userName: c.userName ? String(c.userName) : '未知',
+                        itemName: c.itemName ? String(c.itemName) : '未知',
+                        storeName: c.storeName ? String(c.storeName) : '未知',
+                        price: Number(c.price) || 0,
+                        qty: Number(c.qty) || 1,
+                        note: c.note ? String(c.note) : ''
+                    }));
+
+                    history.unshift({ 
                         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                         date: window.getFormattedDate(), 
                         time: new Date().toLocaleTimeString('zh-TW'), 
                         store: storeNamesStr || '綜合店家', 
                         total: total || 0, 
                         cart: safeCart 
-                    };
+                    });
                     
-                    history.unshift(newRecord);
                     if (history.length > 1000) history.pop();
                     
                     dbState.session.isActive = false;
@@ -1595,28 +1510,10 @@
                         orderHistory: deleteField(), 
                         cart: [] 
                     });
-                    
-                    // 回傳最新建立的歷史陣列給外部
-                    return history;
                 });
-
-                // 本地狀態強制更新，確保在 snapshot 延遲抵達前，明細畫面讀取的是「剛結算完」的最新資料
-                if (newHistory) {
-                    window.state.orderHistory = newHistory;
-                    window.state.session.isActive = false;
-                    window.state.cart = [];
-                    window.showReceiptFromHistory();
-                } else {
-                    // 如果沒有回傳 history，代表可能已經被其他人結單了
-                    window.showView('home');
-                }
-
             } catch(e) { 
                 console.error("Checkout failed", e); 
                 alert("結單同步時發生錯誤！" + e.message);
-            } finally {
-                window.isCheckingOut = false;
-                if (loader) loader.classList.add('hidden');
             }
         };
 
@@ -1628,21 +1525,11 @@
             const latestOrder = window.state.orderHistory[0];
             document.getElementById('receipt-time').innerText = `${latestOrder.date} ${latestOrder.time}`;
             
-            const btnPrint = document.getElementById('btn-print-pdf');
-            const btnImg = document.getElementById('btn-download-img');
-
             if (latestOrder.cart.length === 0) {
                 document.getElementById('receipt-content').innerHTML = '<p class="text-center text-slate-500 font-bold text-2xl py-12 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal">這是一場寂寞的點餐，本次活動沒有任何人點餐 🥲</p>';
                 document.getElementById('receipt-phone-buttons').innerHTML = ''; // 清空按鈕
-                // 若為空單，直接隱藏下載與列印按鈕
-                if (btnPrint) btnPrint.style.display = 'none';
-                if (btnImg) btnImg.style.display = 'none';
-                
                 setTimeout(() => alert("活動結束！本次活動無人點餐。"), 500);
             } else {
-                if (btnPrint) btnPrint.style.display = '';
-                if (btnImg) btnImg.style.display = '';
-
                 const cartByStore = latestOrder.cart.reduce((acc, c) => {
                     const sName = c.storeName || '綜合店家';
                     if (!acc[sName]) acc[sName] = { items: [], total: 0 };
@@ -2987,11 +2874,6 @@
             link.download = `全部訂單紀錄_${window.getFormattedDate()}.xlsx`;
             link.click();
         };
-
-        // 在 Firebase 連線完成前，先使用預設資料與快取渲染首頁，達到「零秒載入」的體驗
-        if (document.getElementById('view-home') && !document.getElementById('view-home').classList.contains('hidden')) {
-            window.renderHome();
-        }
 
     </script>
 </body>

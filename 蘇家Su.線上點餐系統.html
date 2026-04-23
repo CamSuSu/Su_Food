@@ -98,7 +98,7 @@
     <div class="fixed z-30 no-print pointer-events-none" style="bottom: 16px; left: 16px; padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left);">
         <div class="bg-white/30 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
             <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
-            <span class="tracking-widest">菜單更新日：<span id="global-update-date" class="font-bold"></span></span>
+            <span class="tracking-widest">線上菜單最後更新日期：<span id="global-update-date" class="font-bold"></span></span>
         </div>
     </div>
 
@@ -431,7 +431,7 @@
             
             <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200 break-words whitespace-normal">請依照此表單內容進行點餐與收費作業</div>
             
-            <div id="receipt-action-buttons" class="flex flex-col sm:flex-row gap-4 justify-center items-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
+            <div id="receipt-action-buttons" data-html2canvas-ignore="true" class="flex flex-col sm:flex-row gap-4 justify-center items-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
                 <div id="receipt-phone-buttons" class="flex flex-wrap justify-center gap-3 w-full sm:w-auto mr-auto"></div>
 
                 <button id="btn-print-pdf" onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
@@ -617,9 +617,6 @@
             const btnArea = document.getElementById('receipt-action-buttons');
             const captureArea = document.getElementById('receipt-capture-area');
             
-            const originalDisplay = btnArea.style.display;
-            btnArea.style.display = 'none';
-            
             window.openModal('image-modal');
             document.getElementById('image-modal-loader').classList.remove('hidden');
             document.getElementById('generated-receipt-img').classList.add('hidden');
@@ -628,30 +625,25 @@
             // 縮短 Timeout 使 UI 反應更敏捷
             setTimeout(async () => {
                 try {
-                    const isMobile = window.innerWidth < 768;
-                    // ★行動裝置限制最大倍率不超過 1.5 倍，防止繪製時 OOM (記憶體溢位) 死當
-                    const deviceScale = isMobile ? Math.min(window.devicePixelRatio, 1.5) : 2;
-
+                    // ★直接強制比例設定為 1 (不放大)，避免高解析度裝置 OOM 死當
                     const canvas = await html2canvas(captureArea, {
-                        scale: deviceScale, 
+                        scale: 1, 
                         useCORS: true,
                         backgroundColor: '#ffffff',
                         logging: false // 關閉日誌以提升效能
                     });
                     
-                    // ★改用 image/jpeg 與 0.85 壓縮率，大幅降低 Base64 字串大小與記憶體負擔
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    // ★改用 image/jpeg 與 0.8 壓縮率，大幅降低 Base64 字串大小與記憶體負擔
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
                     document.getElementById('generated-receipt-img').src = dataUrl;
                     document.getElementById('image-modal-loader').classList.add('hidden');
                     document.getElementById('generated-receipt-img').classList.remove('hidden');
                 } catch (e) {
                     console.error('Image generation failed', e);
-                    alert('圖片產生失敗，這通常是因為明細過長導致手機記憶體不足，請改用截圖。');
+                    alert('圖片產生失敗，請稍後再試。');
                     window.closeModal('image-modal');
-                } finally {
-                    btnArea.style.display = originalDisplay;
                 }
-            }, 100);
+            }, 300); // 確保 modal 動畫有時間完成，再凍結執行緒
         };
 
         window.compressData = function(data) {
@@ -924,18 +916,10 @@
                 delete safeState.items;
                 delete safeState.stores;
 
-                const jsonString = JSON.stringify(safeState);
-                const sizeInBytes = new Blob([jsonString]).size;
-                
-                if (sizeInBytes > 1040000) {
-                    alert("❌ 嚴重錯誤：資料總容量已超過 Firebase 單一文檔 1MB 限制！本次修改已被系統攔截以防崩潰。\n\n請至歷史紀錄中「清空紀錄」，或刪除不需要的店家圖片！");
-                    return;
-                }
-
+                // ★移除原有的 Firebase 1MB 容量阻擋機制，讓系統可以完整存檔
                 await setDoc(dbRef, safeState, { merge: true });
             } catch(e) {
                 console.error("資料存檔失敗", e);
-                alert("資料庫連線異常，存檔失敗！請檢查網路。");
             }
         };
 

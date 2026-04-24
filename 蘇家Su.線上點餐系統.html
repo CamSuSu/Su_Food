@@ -25,13 +25,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <style>
-        /* 提升文字載入效能與優化字體抗鋸齒渲染 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
-        /* ★ 修正 iOS 橡皮筋效應與動態工具列干擾 */
-        html {
-            overscroll-behavior-y: none;
-        }
+        html { overscroll-behavior-y: none; }
 
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
@@ -40,30 +36,19 @@
             padding-bottom: 80px; 
             text-rendering: optimizeLegibility; 
             -webkit-font-smoothing: antialiased; 
-            /* ★ 關鍵：絕對不能用 overflow-x: hidden，改用 clip 才能完美解決 iOS fixed 跑位問題 */
             overflow-x: clip; 
             width: 100%;
         }
         
-        /* 強化固定定位的渲染穩定性，強制啟動 GPU 渲染 */
-        .fixed-gpu {
-            transform: translateZ(0);
-            backface-visibility: hidden;
-            perspective: 1000;
-        }
+        .fixed-gpu { transform: translateZ(0); backface-visibility: hidden; perspective: 1000; }
 
-        img { -webkit-user-drag: none; } /* 防止手機誤觸拖曳圖片 */
+        img { -webkit-user-drag: none; }
         
         .admin-action { cursor: pointer; transition: 0.2s; }
         .admin-action.disabled { opacity: 0.3; pointer-events: none; }
         
-        /* 現代 CSS 渲染優化技術：content-visibility */
-        .content-vis-auto {
-            content-visibility: auto;
-            contain-intrinsic-size: auto 400px;
-        }
+        .content-vis-auto { content-visibility: auto; contain-intrinsic-size: auto 400px; }
         
-        /* 強化卡片選取視覺回饋，加入 will-change 優化渲染效能 */
         .category-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; will-change: transform; }
         .category-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); z-index: 10; border-color: #fb923c; }
         
@@ -75,7 +60,6 @@
         .store-header { position: sticky; top: 0; z-index: 10; }
         .dragging { opacity: 0.5; border: 2px dashed #10b981; }
 
-        /* 統一各裝置下拉選單外觀 */
         select {
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -87,7 +71,6 @@
             padding-right: 2.5rem !important;
         }
 
-        /* 修復行動裝置 PDF 列印樣式 */
         @media print { 
             body { background: white !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             body > *:not(main) { display: none !important; }
@@ -263,12 +246,8 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-bold mb-1 text-slate-500">店家封面圖 (自動極限壓縮)</label>
-                                    <div class="flex gap-2">
-                                        <input type="text" id="admin-input-store-cover" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold text-sm" placeholder="輸入網址或上傳">
-                                        <input type="file" id="admin-input-store-cover-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'admin-input-store-cover', null)">
-                                        <button type="button" onclick="document.getElementById('admin-input-store-cover-file').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
-                                    </div>
+                                    <label class="block text-xs font-bold mb-1 text-slate-500">店家封面圖 (請輸入圖片路徑或網址)</label>
+                                    <input type="text" id="admin-input-store-cover" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold text-sm" placeholder="例如: images/store.webp">
                                 </div>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
@@ -307,13 +286,9 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-xs font-bold mb-1 text-slate-500">餐點圖片 (自動極限壓縮)</label>
-                                    <div class="flex gap-2 mb-2">
-                                        <input id="admin-input-img-url" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 text-sm font-bold" placeholder="輸入網址或上傳">
-                                        <input type="file" id="admin-input-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'admin-input-img-url', 'admin-img-preview')">
-                                        <button type="button" onclick="document.getElementById('admin-input-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
-                                    </div>
-                                    <img id="admin-img-preview" src="" class="hidden mt-2 h-32 w-full object-cover rounded-xl border border-slate-200 shadow-sm" loading="lazy" decoding="async">
+                                    <label class="block text-xs font-bold mb-1 text-slate-500">餐點圖片 (請輸入圖片路徑或網址)</label>
+                                    <input id="admin-input-img-url" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 text-sm font-bold mb-2" placeholder="例如: images/food.webp" oninput="const p = document.getElementById('admin-img-preview'); if(this.value) { p.src = this.value; p.classList.remove('hidden'); } else { p.classList.add('hidden'); }">
+                                    <img id="admin-img-preview" src="" class="hidden h-32 w-full object-cover rounded-xl border border-slate-200 shadow-sm" loading="lazy" decoding="async" onerror="this.classList.add('hidden');">
                                 </div>
                             </div>
                         </div>
@@ -578,8 +553,7 @@
             </div>
         </div>
     </div>
-
-    <div id="order-modal" class="fixed inset-0 bg-black/60 hidden z-[110] flex items-center justify-center p-4 backdrop-blur-md no-print transition-opacity">
+<div id="order-modal" class="fixed inset-0 bg-black/60 hidden z-[110] flex items-center justify-center p-4 backdrop-blur-md no-print transition-opacity">
         <div class="bg-white w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh] md:max-h-[85vh]">
             <button onclick="closeModal('order-modal')" class="absolute top-4 right-4 bg-black/50 text-white hover:bg-orange-500 p-2 rounded-full transition z-10 w-10 h-10 flex items-center justify-center backdrop-blur-md shadow-lg"><i class="fa-solid fa-times text-lg"></i></button>
             <div id="modal-image" class="h-40 md:h-64 bg-slate-200 bg-cover bg-center shrink-0 relative w-full">
@@ -637,10 +611,8 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
-        // 全域鎖定標籤，防止行動裝置慢速網路時 snapshot 監聽器與結單互搶導致死當
         window.isCheckingOut = false;
 
-        // 莫蘭迪色系生成器 (管理員介面專用)
         window.getStoreColor = function(str) {
             let hash = 0;
             if (str) {
@@ -654,7 +626,6 @@
             return `hsl(${hue}, ${sat}%, ${light}%)`;
         };
 
-        // 開啟新分頁顯示明細 PDF：加入返回按鈕確保手機可順利關閉
         window.openReceiptInNewTab = function() {
             const captureArea = document.getElementById('receipt-capture-area');
             if (!captureArea) return;
@@ -746,7 +717,6 @@
         const DEFAULT_IMG = "images/Default_cover.png";
         const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
         
-        // ★修正 FOUC 閃爍問題：將預設資料清空，網頁載入時直接依靠 Firebase 資料更新畫面
         const DEFAULT_CATEGORIES = [];
         const DEFAULT_SUBCATS = ['主餐', '副餐', '套餐', '單點', '飲料', '甜點', '飯類', '麵類', '湯品'];
         const DEFAULT_GLOBAL_OPTIONS = [];
@@ -807,47 +777,6 @@
             }
         };
 
-        window.compressImage = function(file, event, callback) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    // ★ 終極空間拯救版：尺寸降至 160x160 (檔案大小將縮減至 4KB~8KB)
-                    const maxW = 160; const maxH = 160;
-                    let w = img.width; let h = img.height;
-                    if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
-                    else { if (h > maxH) { w *= maxH / h; h = maxH; } }
-                    canvas.width = w; canvas.height = h;
-                    
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, w, h);
-                    ctx.drawImage(img, 0, 0, w, h);
-                    
-                    let quality = 0.6;
-                    const attemptCompress = () => {
-                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        
-                        // 嚴格容量防護網：超過 15KB 就繼續壓
-                        if (dataUrl.length > 15000 && quality > 0.1) {
-                            quality -= 0.15;
-                            attemptCompress();
-                        } else if (dataUrl.length > 25000) { 
-                            alert('⚠️ 圖片過於複雜，為防止資料庫崩潰，請改用更簡單的圖片！');
-                            if(event && event.target) event.target.value = '';
-                        } else {
-                            callback(dataUrl);
-                        }
-                    };
-                    attemptCompress();
-                }
-                img.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        };
-
         async function initSystem() {
             try {
                 const docSnap = await getDoc(dbRef);
@@ -870,9 +799,20 @@
                         if (!storesDecoded || storesDecoded.length === 0) {
                             storesDecoded = [...new Set(newData.items.map(i => i.store || 'Unknown'))].map(s => {
                                 const firstItem = newData.items.find(i => i.store === s);
-                                return {name: s, phone: '', address: '', coverImg: '', hours: {}, cat: firstItem ? firstItem.cat : (newData.categories.length > 0 ? newData.categories[0].id : 'cat_other')};
+                                return {
+                                    name: s, 
+                                    phone: '', 
+                                    address: '', 
+                                    coverImg: '', 
+                                    hours: {}, 
+                                    cat: firstItem ? firstItem.cat : (newData.categories.length > 0 ? newData.categories[0].id : 'cat_other'),
+                                    isClosed: false
+                                };
                             });
                         }
+                        storesDecoded.forEach(s => {
+                            if (typeof s.isClosed === 'undefined') s.isClosed = false;
+                        });
                         newData.stores = storesDecoded;
                         
                         if (!Array.isArray(newData.orderHistory)) newData.orderHistory = [];
@@ -1042,6 +982,32 @@
             return hasHours ? html : '';
         };
 
+        // 新增的狀態切換函數：暫停營業
+        window.toggleStoreStatus = async function(storeName) {
+            const scrollPos = window.scrollY;
+            let storeIdx = window.state.stores.findIndex(s => s.name === storeName);
+            if(storeIdx > -1) {
+                window.state.stores[storeIdx].isClosed = !window.state.stores[storeIdx].isClosed;
+                window.addAdminLog('設定', `店家「${storeName}」設定為 ${window.state.stores[storeIdx].isClosed ? '暫停營業' : '正常營業'}`);
+                await window.saveState();
+                window.renderAdmin();
+                setTimeout(() => window.scrollTo(0, scrollPos), 10);
+            }
+        };
+
+        // 新增的狀態切換函數：餐點完售
+        window.toggleItemSoldOut = async function(id) {
+            const scrollPos = window.scrollY;
+            const item = window.state.items.find(i => String(i.id) === String(id));
+            if(item) { 
+                item.isSoldOut = !item.isSoldOut; 
+                window.addAdminLog('設定', `餐點「${item.name}」設定為 ${item.isSoldOut ? '已完售' : '供應中'}`);
+                await window.saveState(); 
+                window.renderAdmin(); 
+            } 
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
+        };
+
         window.renderHome = function() {
             let tabsHtml = `<button data-id="all" onclick="filterStore('all')" class="cat-tab snap-start bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0">全部店家</button>`;
             
@@ -1084,6 +1050,7 @@
                 if (storeItems.length === 0) return;
                 const cat = window.state.categories.find(c => c.id === storeItems[0].cat);
                 const storeInfo = window.state.stores.find(s => s.name === storeName) || {};
+                const isClosed = storeInfo.isClosed === true;
                 
                 let coverImg = storeInfo.coverImg;
                 if (!coverImg) {
@@ -1093,18 +1060,19 @@
                 }
 
                 gridHtml += `
-                    <div class="category-card content-vis-auto bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col cursor-pointer relative group" onclick="openStoreBrowse('${storeName}')">
+                    <div class="category-card content-vis-auto bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col cursor-pointer relative group" onclick="${isClosed ? `alert('很抱歉，該店家目前暫停營業中！')` : `openStoreBrowse('${storeName}')`}">
+                        ${isClosed ? `<div class="absolute inset-0 bg-black/60 z-20 flex items-center justify-center backdrop-blur-[2px]"><span class="bg-red-600 text-white font-black px-5 py-2 rounded-xl transform -rotate-12 border-2 border-white shadow-xl tracking-widest text-lg">暫停營業</span></div>` : ''}
                         <div class="w-full aspect-[4/3] bg-slate-100 flex justify-center items-center overflow-hidden p-2">
-                            <img src="${coverImg}" loading="lazy" decoding="async" class="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" alt="${storeName}">
+                            <img src="${coverImg}" loading="lazy" decoding="async" onerror="this.src='${DEFAULT_IMG}'" class="w-full h-full object-contain transition-transform duration-700 ${isClosed ? 'grayscale' : 'group-hover:scale-105'}" alt="${storeName}">
                         </div>
                         <div class="p-5 md:p-6 flex-1 flex flex-col relative z-10 bg-white">
                             <div class="mb-3">
                                 <span class="text-[11px] font-black text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg shadow-sm border border-orange-100">${cat ? cat.name : '綜合'}</span>
                             </div>
-                            <h3 class="text-2xl md:text-3xl font-black text-slate-800 mb-2 group-hover:text-orange-600 transition-colors leading-snug break-words">${storeName}</h3>
+                            <h3 class="text-2xl md:text-3xl font-black text-slate-800 mb-2 ${isClosed ? 'text-slate-400' : 'group-hover:text-orange-600'} transition-colors leading-snug break-words">${storeName}</h3>
                             <div class="mt-auto pt-4 border-t border-slate-100 flex justify-between items-center w-full">
-                                <span class="text-sm md:text-base text-slate-500 font-bold"><i class="fa-solid fa-utensils mr-2 opacity-70"></i>共 ${storeItems.length} 項</span>
-                                <i class="fa-solid fa-arrow-right text-orange-500 transform translate-x-[-10px] group-hover:translate-x-0 transition-all opacity-0 group-hover:opacity-100"></i>
+                                <span class="text-sm md:text-base ${isClosed ? 'text-slate-300' : 'text-slate-500'} font-bold"><i class="fa-solid fa-utensils mr-2 opacity-70"></i>共 ${storeItems.length} 項</span>
+                                <i class="fa-solid fa-arrow-right text-orange-500 transform translate-x-[-10px] group-hover:translate-x-0 transition-all opacity-0 ${isClosed ? '' : 'group-hover:opacity-100'}"></i>
                             </div>
                         </div>
                     </div>`;
@@ -1166,8 +1134,16 @@
                 const subItems = grouped[subCat];
                 html += `<div class="mb-10 bg-slate-50/70 p-6 md:p-8 rounded-[2rem] border border-slate-100"><h3 class="text-2xl font-black text-slate-800 mb-6 flex items-center break-words"><span class="w-3 h-8 bg-orange-500 rounded-full mr-3 shadow-md shrink-0"></span>${subCat}</h3><div class="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6">`;
                 subItems.forEach((item, index) => {
-                    const action = isActiveMode ? `onclick="openOrderModal('${item.id}')"` : `onclick="alert('請發起活動才能點餐喔！')"` ;
-                    const pointer = isActiveMode ? 'cursor-pointer hover:bg-orange-50 hover:shadow-xl hover:-translate-y-1.5 ring-4 ring-transparent hover:ring-orange-300' : 'cursor-default opacity-85 border-slate-100 hover:opacity-100 hover:border-slate-300';
+                    const isSoldOut = item.isSoldOut === true;
+                    
+                    let action = '';
+                    if (isSoldOut) {
+                        action = `onclick="alert('此餐點目前已完售！')"` ;
+                    } else {
+                        action = isActiveMode ? `onclick="openOrderModal('${item.id}')"` : `onclick="alert('請發起活動才能點餐喔！')"` ;
+                    }
+                    
+                    const pointer = isSoldOut ? 'cursor-not-allowed opacity-60 grayscale' : (isActiveMode ? 'cursor-pointer hover:bg-orange-50 hover:shadow-xl hover:-translate-y-1.5 ring-4 ring-transparent hover:ring-orange-300 group' : 'cursor-default opacity-85 border-slate-100 hover:opacity-100 hover:border-slate-300 group');
                     const bgColor = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'; 
                     const imgUrl = item.img || DEFAULT_IMG;
                     
@@ -1189,17 +1165,17 @@
                     }
                     
                     html += `
-                        <div ${action} class="${bgColor} p-4 md:p-5 rounded-[1.5rem] shadow-sm border flex items-center gap-4 md:gap-5 transition-all duration-300 ${pointer} group">
+                        <div ${action} class="${bgColor} p-4 md:p-5 rounded-[1.5rem] shadow-sm border flex items-center gap-4 md:gap-5 transition-all duration-300 ${pointer}">
                             <div class="relative w-24 h-24 md:w-28 md:h-28 shrink-0">
-                                <img src="${imgUrl}" loading="lazy" decoding="async" class="w-full h-full rounded-2xl object-cover bg-slate-100 shadow-sm border border-slate-200/50 transition transform group-hover:scale-105" alt="${item.name}">
-                                ${isActiveMode ? `<div class="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 transition rounded-2xl"></div>` : ''}
+                                <img src="${imgUrl}" loading="lazy" decoding="async" onerror="this.src='${DEFAULT_IMG}'" class="w-full h-full rounded-2xl object-cover bg-slate-100 shadow-sm border border-slate-200/50 transition transform ${isSoldOut ? '' : 'group-hover:scale-105'}" alt="${item.name}">
+                                ${isSoldOut ? `<div class="absolute inset-0 bg-black/50 z-10 flex items-center justify-center rounded-2xl backdrop-blur-[1px]"><span class="bg-red-600 text-white text-[10px] md:text-xs font-black px-2 py-1 rounded shadow-lg transform -rotate-12 border border-white">已完售</span></div>` : (isActiveMode ? `<div class="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 transition rounded-2xl"></div>` : '')}
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h4 class="font-black text-lg md:text-xl text-slate-800 group-hover:text-orange-700 transition-colors break-words">${item.name}</h4>
+                                <h4 class="font-black text-lg md:text-xl text-slate-800 ${isSoldOut ? '' : 'group-hover:text-orange-700'} transition-colors break-words">${item.name}</h4>
                                 <p class="text-orange-600 font-black text-xl md:text-2xl mt-1">$${item.price}</p>
                                 ${optionsHtmlStr}
                             </div>
-                            ${isActiveMode ? `<div class="w-12 h-12 bg-slate-100 text-slate-400 group-hover:bg-orange-500 group-hover:text-white rounded-2xl flex items-center justify-center font-bold shadow-sm text-xl transition-all transform group-hover:rotate-90 shrink-0"><i class="fa-solid fa-plus"></i></div>` : ''}
+                            ${(isActiveMode && !isSoldOut) ? `<div class="w-12 h-12 bg-slate-100 text-slate-400 group-hover:bg-orange-500 group-hover:text-white rounded-2xl flex items-center justify-center font-bold shadow-sm text-xl transition-all transform group-hover:rotate-90 shrink-0"><i class="fa-solid fa-plus"></i></div>` : ''}
                         </div>`;
                 });
                 html += `</div></div>`;
@@ -1213,11 +1189,14 @@
             if (catId !== 'all') {
                 filteredItems = filteredItems.filter(i => i.cat === catId);
             }
-            const stores = [...new Set(filteredItems.map(i => i.store || 'Unknown'))];
+            // 過濾掉暫停營業的店家
+            const openStores = window.state.stores.filter(s => !s.isClosed).map(s => s.name);
+            const stores = [...new Set(filteredItems.map(i => i.store || 'Unknown'))].filter(s => openStores.includes(s));
+            
             const sel = document.getElementById('start-store-select');
             
             if(stores.length === 0) {
-                sel.innerHTML = '<option value="" disabled selected>該分類無店家資料</option>';
+                sel.innerHTML = '<option value="" disabled selected>該分類無營業中的店家</option>';
             } else {
                 sel.innerHTML = stores.map((s, index) => 
                     `<option value="${s}" class="${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}">${s}</option>`
@@ -1276,9 +1255,11 @@
             const catId = document.getElementById('random-cat-select').value;
             let filteredItems = window.state.items;
             if (catId !== 'all') { filteredItems = filteredItems.filter(i => i.cat === catId); }
-            const stores = [...new Set(filteredItems.map(i => i.store || 'Unknown'))];
             
-            if (stores.length === 0) return alert('此分類目前沒有任何店家資料！');
+            const openStores = window.state.stores.filter(s => !s.isClosed).map(s => s.name);
+            const stores = [...new Set(filteredItems.map(i => i.store || 'Unknown'))].filter(s => openStores.includes(s));
+            
+            if (stores.length === 0) return alert('此分類目前沒有任何「營業中」的店家資料！');
             
             const randomStore = stores[Math.floor(Math.random() * stores.length)];
             window.addStoreToActivity(randomStore);
@@ -1902,6 +1883,7 @@
         };
 
         window.renderAdminSettings = function() {
+            const scrollPos = window.scrollY; // 記住當前捲動位置
             document.getElementById('admin-quick-names').value = window.state.quickNames.join(',');
             
             // 1. 大分類渲染 (加入拖曳功能，並保護「其他」不可拖動且鎖死位置)
@@ -1967,9 +1949,11 @@
                     `).join('');
                 }
             }
+            setTimeout(() => window.scrollTo(0, scrollPos), 10); // 恢復捲動位置
         };
 
         window.addSysCat = function() {
+            const scrollPos = window.scrollY;
             const name = document.getElementById('setting-new-cat').value.trim();
             if(!name) return alert('請輸入大分類名稱');
             if(window.state.categories.some(c => c.name === name)) return alert('該分類已存在！');
@@ -1978,6 +1962,7 @@
             window.saveState();
             window.renderAdminSettings();
             document.getElementById('setting-new-cat').value = '';
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         window.deleteSysCat = function(id) {
@@ -1986,6 +1971,7 @@
             if (!catToDelete) return;
             
             window.requestPassword(`確定要刪除大分類「${catToDelete.name}」嗎？\n\n注意：刪除後，原屬於此分類的店家將自動移至「其他」分類。請輸入密碼以確認：`, async pwd => {
+                const scrollPos = window.scrollY;
                 if (pwd === 'suting') {
                     window.state.stores.forEach(s => { if(s.cat === id) s.cat = 'cat_other'; });
                     window.state.items.forEach(i => { if(i.cat === id) i.cat = 'cat_other'; });
@@ -1994,7 +1980,8 @@
                     window.addAdminLog('刪除', `刪除系統大分類「${catToDelete.name}」並轉移關聯店家`);
                     await window.saveState();
                     window.renderAdminSettings();
-                    alert(`✅ 已成功刪除大分類，原關聯店家已移至「其他」。`);
+                    setTimeout(() => window.scrollTo(0, scrollPos), 10);
+                    setTimeout(() => alert(`✅ 已成功刪除大分類，原關聯店家已移至「其他」。`), 20);
                 } else {
                     alert('❌ 密碼錯誤，拒絕執行！');
                 }
@@ -2012,6 +1999,7 @@
             e.dataTransfer.dropEffect = "move";
         };
         window.handleDrop = async function(e, targetIdx) {
+            const scrollPos = window.scrollY;
             e.preventDefault();
             const draggedElement = document.querySelector('.dragging');
             if(draggedElement) draggedElement.classList.remove('dragging');
@@ -2025,6 +2013,7 @@
             window.addAdminLog('修改', `調整子分類排序順序：${item} 移至第 ${targetIdx + 1} 位`);
             window.renderAdminSettings();
             await window.saveState();
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         // --- 新增：大分類拖曳排序邏輯 (自動維護「其他」在最後) ---
@@ -2032,6 +2021,7 @@
         window.handleCatDragStart = function(e, idx) { draggedCatIndex = idx; e.dataTransfer.effectAllowed = "move"; e.target.classList.add('dragging'); };
         window.handleCatDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; };
         window.handleCatDrop = async function(e, targetIdx) {
+            const scrollPos = window.scrollY;
             e.preventDefault();
             const draggedElement = document.querySelector('.dragging');
             if(draggedElement) draggedElement.classList.remove('dragging');
@@ -2054,6 +2044,7 @@
             window.renderAdminSettings();
             window.renderHome(); 
             await window.saveState();
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         // --- 新增：店家顯示順序拖曳排序邏輯 ---
@@ -2061,6 +2052,7 @@
         window.handleStoreDragStart = function(e, idx) { draggedStoreIndex = idx; e.dataTransfer.effectAllowed = "move"; e.target.classList.add('dragging'); };
         window.handleStoreDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; };
         window.handleStoreDrop = async function(e, targetIdx) {
+            const scrollPos = window.scrollY;
             e.preventDefault();
             const draggedElement = document.querySelector('.dragging');
             if(draggedElement) draggedElement.classList.remove('dragging');
@@ -2074,6 +2066,7 @@
             window.addAdminLog('修改', `調整店家顯示順序：${item.name} 移至第 ${targetIdx + 1} 位`);
             window.renderAdminSettings();
             await window.saveState();
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
         
         document.addEventListener('dragend', () => {
@@ -2089,6 +2082,7 @@
         };
 
         window.addSubcat = function() {
+            const scrollPos = window.scrollY;
             const name = document.getElementById('setting-new-subcat').value.trim();
             if(!name) return alert('請輸入子分類名稱');
             if(window.state.subCategories.includes(name)) return alert('該子分類已存在！');
@@ -2097,9 +2091,11 @@
             window.saveState();
             window.renderAdminSettings();
             document.getElementById('setting-new-subcat').value = '';
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         window.deleteSubcat = function(idx) {
+            const scrollPos = window.scrollY;
             // 保護「主餐」不能被刪除
             if(window.state.subCategories[idx] === '主餐') return alert('系統核心保護：項目「主餐」為必要分類，不可刪除！');
             
@@ -2109,10 +2105,12 @@
                 window.state.subCategories.splice(idx, 1);
                 window.saveState();
                 window.renderAdminSettings();
+                setTimeout(() => window.scrollTo(0, scrollPos), 10);
             }
         };
 
         window.addGlobalOption = function() {
+            const scrollPos = window.scrollY;
             const name = document.getElementById('setting-opt-name').value.trim();
             const choicesStr = document.getElementById('setting-opt-choices').value.trim();
             const isMulti = document.getElementById('setting-opt-ismulti').checked;
@@ -2127,9 +2125,11 @@
             document.getElementById('setting-opt-name').value = '';
             document.getElementById('setting-opt-choices').value = '';
             document.getElementById('setting-opt-ismulti').checked = false;
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         window.deleteGlobalOption = function(id) {
+            const scrollPos = window.scrollY;
             const optInfo = window.state.globalOptions.find(o => o.id === id);
             if (optInfo) window.addAdminLog('設定', `刪除全域客製化選項模組「${optInfo.name}」`);
             
@@ -2141,7 +2141,8 @@
             });
             window.saveState();
             window.renderAdminSettings();
-            alert("選項模組已刪除！");
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
+            setTimeout(() => alert("選項模組已刪除！"), 20);
         };
 
         window.renderGlobalOptionsCheckboxes = function(containerId, checkedIds = [], isInline = false, itemId = null) {
@@ -2239,6 +2240,7 @@
         };
 
         window.clearNewItemForm = function() {
+            const scrollPos = window.scrollY;
             if(confirm('確定要清空所有欄位嗎？(不會影響已儲存的資料)')) {
                 document.getElementById('admin-input-store').value = '';
                 if(window.state.categories.length > 0) document.getElementById('admin-input-cat').value = window.state.categories[0].id;
@@ -2257,6 +2259,7 @@
                 
                 document.querySelectorAll('.new-item-opt-cb').forEach(cb => cb.checked = false);
                 window.renderAdminStoreHours({});
+                setTimeout(() => window.scrollTo(0, scrollPos), 10);
             }
         };
 
@@ -2272,8 +2275,10 @@
         };
 
         window.setStoreEdit = function(storeName) {
+            const scrollPos = window.scrollY;
             window.editingStoreName = storeName;
             window.renderAdmin();
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         window.quickAddItem = function(storeName) {
@@ -2289,6 +2294,7 @@
         };
 
         window.saveStoreEdit = async function(oldStoreName) {
+            const scrollPos = window.scrollY;
             const newName = document.getElementById(`edit-store-name-${oldStoreName}`).value.trim();
             const phone = document.getElementById(`edit-store-phone-${oldStoreName}`).value.trim();
             const address = document.getElementById(`edit-store-address-${oldStoreName}`).value.trim();
@@ -2325,7 +2331,7 @@
                 storeObj.hours = storeHours;
                 storeObj.cat = newCat;
             } else {
-                window.state.stores.push({name: newName, phone, address, coverImg, hours: storeHours, cat: newCat});
+                window.state.stores.push({name: newName, phone, address, coverImg, hours: storeHours, cat: newCat, isClosed: false});
             }
 
             window.state.items.forEach(item => {
@@ -2344,9 +2350,11 @@
             window.editingStoreName = null;
             await window.saveState();
             window.renderAdmin();
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         window.deleteEntireStore = async function(storeName) {
+            const scrollPos = window.scrollY;
             const itemsCount = window.state.items.filter(i => i.store === storeName).length;
             window.state.stores = window.state.stores.filter(s => s.name !== storeName);
             window.state.items = window.state.items.filter(i => i.store !== storeName);
@@ -2355,10 +2363,12 @@
             window.state.menuUpdateDate = window.getFormattedDate();
             await window.saveState();
             window.renderAdmin();
-            alert(`✅ 已成功完整刪除店家「${storeName}」與 ${itemsCount} 筆餐點資料！`);
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
+            setTimeout(() => alert(`✅ 已成功完整刪除店家「${storeName}」與 ${itemsCount} 筆餐點資料！`), 20);
         };
 
         window.renderAdmin = function() {
+            const scrollPos = window.scrollY; // 記住當前捲動位置
             window.updateStoreDatalist();
             document.getElementById('admin-input-cat').innerHTML = window.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             document.getElementById('admin-input-subcat').innerHTML = window.state.subCategories.map(s => `<option value="${s}">${s}</option>`).join('');
@@ -2416,12 +2426,8 @@
                                         <input type="text" id="edit-store-phone-${store}" value="${storeMeta.phone || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-all">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-600 mb-1">店家封面圖</label>
-                                        <div class="flex flex-col sm:flex-row gap-2 w-full">
-                                            <input type="text" id="edit-store-img-${store}" value="${storeMeta.coverImg || ''}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="輸入網址或上傳">
-                                            <input type="file" id="edit-store-file-${store}" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'edit-store-img-${store}', null)">
-                                            <button type="button" onclick="document.getElementById('edit-store-file-${store}').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
-                                        </div>
+                                        <label class="block text-xs font-bold text-slate-600 mb-1">店家封面圖 (圖片路徑或網址)</label>
+                                        <input type="text" id="edit-store-img-${store}" value="${storeMeta.coverImg || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="例如: images/store.jpg">
                                     </div>
                                     <div class="md:col-span-2">
                                         <label class="block text-xs font-bold text-slate-600 mb-1">詳細地址</label>
@@ -2450,7 +2456,8 @@
                                     <div class="flex-1 min-w-0">
                                         <h4 class="text-xl md:text-2xl font-black text-slate-800 flex items-center flex-wrap gap-2 w-full">
                                             <span class="break-words whitespace-normal leading-snug">${store}</span>
-                                            <div class="flex flex-wrap gap-1 shrink-0 mt-1 md:mt-0">
+                                            <div class="flex flex-wrap gap-1 shrink-0 mt-1 md:mt-0 items-center">
+                                                <i onclick="toggleStoreStatus('${store}')" class="fa-solid ${storeMeta.isClosed ? 'fa-store-slash text-red-500' : 'fa-store text-emerald-500'} cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm mr-1" title="${storeMeta.isClosed ? '目前暫停營業，點擊恢復營業' : '目前正常營業，點擊設為暫停營業'}"></i>
                                                 <i onclick="setStoreEdit('${store}')" class="fa-solid fa-pen-to-square text-sm text-slate-600 hover:text-orange-600 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="編輯店家名稱、分類與營業時間等資訊"></i>
                                                 <i onclick="quickAddItem('${store}')" class="fa-solid fa-plus-circle text-sm text-emerald-600 hover:text-emerald-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="快速新增此店家的餐點"></i>
                                                 <i onclick="requestPassword('確定要完整刪除「${store}」店家嗎？\\n\\n【嚴重警告】這將會刪除該店家的基本資訊與「所有菜單餐點」！此操作絕對無法復原。\\n請輸入管理員密碼：', pwd => { if(pwd==='suting') deleteEntireStore('${store}'); else alert('密碼錯誤') })" class="fa-solid fa-trash text-sm text-red-500 hover:text-red-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="完整刪除此店家與所有菜單"></i>
@@ -2498,13 +2505,9 @@
                                     <input type="number" id="inline-price-${item.id}" value="${item.price}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label class="block text-xs font-bold text-slate-500 mb-1">餐點圖片 (輸入 images/圖檔名.jpg、網址或上傳)</label>
-                                    <div class="flex flex-col sm:flex-row gap-2 w-full">
-                                        <input type="text" id="inline-img-${item.id}" value="${item.img === DEFAULT_IMG ? '' : item.img}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="輸入網址或上傳">
-                                        <input type="file" id="inline-file-${item.id}" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'inline-img-${item.id}', 'inline-preview-${item.id}')">
-                                        <button type="button" onclick="document.getElementById('inline-file-${item.id}').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
-                                    </div>
-                                    <img id="inline-preview-${item.id}" src="${imgUrl}" class="mt-3 h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm" loading="lazy" decoding="async">
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">餐點圖片 (輸入 images/圖檔名.jpg 或 網址)</label>
+                                    <input type="text" id="inline-img-${item.id}" value="${item.img === DEFAULT_IMG ? '' : item.img}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all mb-2" placeholder="例如: images/food.jpg" oninput="document.getElementById('inline-preview-${item.id}').src = this.value || '${DEFAULT_IMG}';">
+                                    <img id="inline-preview-${item.id}" src="${imgUrl}" class="h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm" loading="lazy" decoding="async" onerror="this.src='${DEFAULT_IMG}'">
                                 </div>
                                 <div class="md:col-span-2 bg-white p-4 rounded-xl border border-orange-200 mt-2 shadow-sm w-full">
                                     <label class="block text-xs font-bold text-orange-600 mb-3 break-words whitespace-normal"><i class="fa-solid fa-sliders mr-2"></i>勾選欲套用的客製化選項模組 (選填)</label>
@@ -2525,7 +2528,7 @@
                         html += `
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 pl-4 md:pl-6 border-b border-slate-200 ${rowBgClass} hover:bg-orange-50/50 transition group gap-4 w-full">
                             <div class="flex items-center gap-3 md:gap-5 w-full sm:w-auto flex-1 overflow-hidden">
-                                <img src="${imgUrl}" loading="lazy" decoding="async" class="w-14 h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-300 shadow-sm bg-white p-0.5 group-hover:border-orange-300 transition-colors shrink-0">
+                                <img src="${imgUrl}" loading="lazy" decoding="async" onerror="this.src='${DEFAULT_IMG}'" class="w-14 h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-300 shadow-sm bg-white p-0.5 group-hover:border-orange-300 transition-colors shrink-0">
                                 <div class="min-w-0 flex-1">
                                     <p class="font-black text-slate-800 text-lg md:text-xl group-hover:text-orange-700 transition-colors flex items-center flex-wrap gap-2 leading-tight w-full">
                                         <span class="break-words whitespace-normal">${item.name}</span>
@@ -2538,10 +2541,15 @@
                                     </p>
                                 </div>
                             </div>
-                            <div class="flex gap-4 sm:gap-6 text-xl md:text-2xl sm:pr-4 w-full sm:w-auto justify-end shrink-0 mt-2 sm:mt-0 border-t sm:border-0 border-slate-200 pt-3 sm:pt-0">
-                                <i onclick="toggleLock('${item.id}')" class="fa-solid ${lockIcon} admin-action hover:scale-125 transform transition-transform p-2 sm:p-0" title="解鎖以啟用編輯與刪除功能"></i>
-                                <i onclick="setInlineEdit('${item.id}')" class="fa-solid fa-pen-to-square text-slate-400 admin-action ${actionCls} hover:text-orange-500 hover:scale-110 transform transition-transform p-2 sm:p-0" title="行內直接編輯"></i>
-                                <i onclick="requestPassword('輸入密碼確認刪除餐點', pwd => { if(pwd==='suting') deleteItem('${item.id}'); else alert('密碼錯誤') })" class="fa-solid fa-trash-can text-slate-400 admin-action ${actionCls} hover:!text-red-600 hover:scale-110 transform transition-transform p-2 sm:p-0" title="刪除此餐點"></i>
+                            <div class="flex gap-3 sm:gap-4 text-xl md:text-2xl sm:pr-4 w-full sm:w-auto justify-end items-center shrink-0 mt-2 sm:mt-0 border-t sm:border-0 border-slate-200 pt-3 sm:pt-0">
+                                <button onclick="toggleItemSoldOut('${item.id}')" class="text-sm font-black px-3 py-1 rounded shadow-sm border transition ${item.isSoldOut ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'} whitespace-nowrap" title="${item.isSoldOut ? '點擊恢復供應' : '點擊設為完售'}">
+                                    ${item.isSoldOut ? '<i class="fa-solid fa-ban mr-1"></i>已完售' : '<i class="fa-solid fa-check-circle mr-1"></i>供應中'}
+                                </button>
+                                <div class="flex gap-3 sm:gap-4">
+                                    <i onclick="toggleLock('${item.id}')" class="fa-solid ${lockIcon} admin-action hover:scale-125 transform transition-transform" title="解鎖以啟用編輯與刪除功能"></i>
+                                    <i onclick="setInlineEdit('${item.id}')" class="fa-solid fa-pen-to-square text-slate-400 admin-action ${actionCls} hover:text-orange-500 hover:scale-110 transform transition-transform" title="行內直接編輯"></i>
+                                    <i onclick="requestPassword('輸入密碼確認刪除餐點', pwd => { if(pwd==='suting') deleteItem('${item.id}'); else alert('密碼錯誤') })" class="fa-solid fa-trash-can text-slate-400 admin-action ${actionCls} hover:!text-red-600 hover:scale-110 transform transition-transform" title="刪除此餐點"></i>
+                                </div>
                             </div>
                         </div>`;
                     }
@@ -2549,18 +2557,23 @@
                 html += `</div></div>`;
             }
             document.getElementById('admin-data-grouped-list').innerHTML = html || '<div class="p-6 md:p-10 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50 break-words whitespace-normal"><p class="text-slate-400 font-bold text-lg md:text-xl"><i class="fa-solid fa-box-open text-4xl mb-4 block opacity-50"></i>目前資料庫無符合的商品資料</p></div>';
+            
+            setTimeout(() => window.scrollTo(0, scrollPos), 10); // 恢復捲動位置
         };
 
         window.setInlineEdit = function(id) {
+            const scrollPos = window.scrollY;
             if (id !== null) {
                 const item = window.state.items.find(i => String(i.id) === String(id));
                 if (!item || item.isLocked) return alert('⚠️ 系統保護中：請先點擊商品旁的「鎖頭」解鎖後才能進行編輯！');
             }
             window.editingItemId = id;
             window.renderAdmin(); 
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         window.saveInlineEdit = async function(id) {
+            const scrollPos = window.scrollY;
             const idx = window.state.items.findIndex(i => String(i.id) === String(id));
             if(idx > -1) {
                 const name = document.getElementById(`inline-name-${id}`).value.trim();
@@ -2583,9 +2596,11 @@
             window.state.menuUpdateDate = window.getFormattedDate();
             await window.saveState();
             window.renderAdmin();
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         window.saveNewItemData = async function() {
+            const scrollPos = window.scrollY;
             const cat = document.getElementById('admin-input-cat').value;
             const store = document.getElementById('admin-input-store').value.trim();
             const phone = document.getElementById('admin-input-phone').value.trim();
@@ -2619,7 +2634,7 @@
 
             let storeIdx = window.state.stores.findIndex(s => s.name === store);
             if(storeIdx === -1) {
-                window.state.stores.push({ name: store, phone, address, coverImg, hours: storeHours, cat: cat });
+                window.state.stores.push({ name: store, phone, address, coverImg, hours: storeHours, cat: cat, isClosed: false });
             } else {
                 if(phone) window.state.stores[storeIdx].phone = phone;
                 if(address) window.state.stores[storeIdx].address = address;
@@ -2629,29 +2644,33 @@
             }
 
             const updateDate = window.getFormattedDate();
-            window.state.items.push({ id: Date.now().toString() + Math.random().toString(36).substring(2, 8), cat, store, subCat, name, price: parseInt(price), img, isLocked: true, customOptionIds, updateDate });
+            window.state.items.push({ id: Date.now().toString() + Math.random().toString(36).substring(2, 8), cat, store, subCat, name, price: parseInt(price), img, isLocked: true, customOptionIds, updateDate, isSoldOut: false });
             
             window.addAdminLog('新增', `新增餐點「${name}」於店家「${store}」`);
             
             alert("✅ 新增成功！店家資訊已保留，可繼續新增該店家的其他餐點。\n如需新增其他店家請點擊左側「清空」。");
 
-            ['admin-input-item', 'admin-input-price', 'admin-input-img-url', 'admin-input-file'].forEach(id => document.getElementById(id).value = '');
+            ['admin-input-item', 'admin-input-price', 'admin-input-img-url'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('admin-img-preview').classList.add('hidden');
             document.querySelectorAll('.new-item-opt-cb').forEach(cb => cb.checked = false);
 
             window.state.menuUpdateDate = updateDate;
             await window.saveState(); 
             window.renderAdmin();
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
             
             setTimeout(() => document.getElementById('admin-input-item').focus(), 100);
         };
 
         window.toggleLock = async function(id) { 
+            const scrollPos = window.scrollY;
             const item = window.state.items.find(i => String(i.id) === String(id));
             if(item) { item.isLocked = !item.isLocked; await window.saveState(); window.renderAdmin(); } 
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
         
         window.deleteItem = async function(id) {
+            const scrollPos = window.scrollY;
             const itemToDelete = window.state.items.find(i => String(i.id) === String(id));
             if (itemToDelete) {
                 window.addAdminLog('刪除', `永久刪除餐點「${itemToDelete.name}」(原屬店家: ${itemToDelete.store})`);
@@ -2661,6 +2680,7 @@
             if(String(window.editingItemId) === String(id)) window.editingItemId = null;
             window.state.menuUpdateDate = window.getFormattedDate();
             await window.saveState(); window.renderAdmin();
+            setTimeout(() => window.scrollTo(0, scrollPos), 10);
         };
 
         window.updateHistoryFilters = function() {
@@ -2932,7 +2952,7 @@
 
                             let storeObj = window.state.stores.find(s => s.name === storeName);
                             if(!storeObj) {
-                                window.state.stores.push({ name: storeName, phone: phone, address: address, coverImg: '', hours: {}, cat: catObj.id });
+                                window.state.stores.push({ name: storeName, phone: phone, address: address, coverImg: '', hours: {}, cat: catObj.id, isClosed: false });
                             } else {
                                 if(phone && !storeObj.phone) storeObj.phone = phone;
                                 if(address && !storeObj.address) storeObj.address = address;
@@ -2951,14 +2971,12 @@
                             const existingItemIndex = window.state.items.findIndex(i => i.store === storeName && i.name === itemName);
                             
                             if (existingItemIndex > -1) {
-                                // 覆寫已存在的餐點資訊
                                 window.state.items[existingItemIndex].price = price;
                                 window.state.items[existingItemIndex].cat = catObj.id;
                                 window.state.items[existingItemIndex].subCat = subCat;
                                 window.state.items[existingItemIndex].customOptionIds = customOptionIds;
                                 window.state.items[existingItemIndex].updateDate = window.getFormattedDate();
                             } else {
-                                // 新增餐點
                                 window.state.items.push({
                                     id: Date.now().toString() + Math.random().toString(36).substring(2, 8),
                                     cat: catObj.id,
@@ -2969,7 +2987,8 @@
                                     img: DEFAULT_IMG,
                                     isLocked: true,
                                     customOptionIds: customOptionIds,
-                                    updateDate: window.getFormattedDate()
+                                    updateDate: window.getFormattedDate(),
+                                    isSoldOut: false
                                 });
                                 importedCount++;
                             }
@@ -2985,7 +3004,7 @@
                         console.error(error);
                         alert('❌ 檔案解析失敗，請確認檔案格式是否正確！');
                     }
-                    event.target.value = ''; // 清空檔案選擇器
+                    event.target.value = ''; 
                 };
                 reader.readAsArrayBuffer(file);
             });
@@ -3027,7 +3046,7 @@
 
                 sortedCart.forEach((c, idx) => {
                     const row = sheet.addRow({
-                        time: idx ===0 ? `${order.date} ${order.time}` : '',
+                        time: idx === 0 ? `${order.date} ${order.time}` : '',
                         store: c.storeName || '綜合店家',
                         user: c.userName,
                         item: c.itemName,
@@ -3042,14 +3061,13 @@
                         cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
                         cell.border = { top: {style:'thin', color:{argb:'FFE2E8F0'}}, bottom: {style:'thin', color:{argb:'FFE2E8F0'}} };
                         
-                        // 讓結單時間與該單總計粗體顯示
                         if(idx === 0 && (cell._column._key === 'time' || cell._column._key === 'total')) {
                             cell.font = { bold: true, color: { argb: 'FF0F172A' } };
                         }
                     });
                 });
                 
-                isEven = !isEven; // 切換底色
+                isEven = !isEven;
             });
 
             const buffer = await workbook.xlsx.writeBuffer();
@@ -3099,7 +3117,7 @@
                 });
             });
             
-            sheet.addRow({}); // 留空行
+            sheet.addRow({}); 
             const totalRow = sheet.addRow({ store: '結算總計', subtotal: order.total });
             totalRow.getCell('subtotal').font = { bold: true, color: { argb: 'FFDC2626' } };
 

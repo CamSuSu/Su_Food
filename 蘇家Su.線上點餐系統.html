@@ -5,12 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Su.線上點餐系統</title>
     <link rel="icon" href="images/sufood.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="images/sufood.ico" type="image/x-icon">
+    
+    <link rel="apple-touch-icon" href="images/sufood.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="images/sufood.png">
     <link rel="apple-touch-icon" sizes="180x180" href="images/sufood.png">
+    <link rel="apple-touch-icon-precomposed" href="images/sufood.png">
+
+    <link rel="icon" type="image/png" sizes="192x192" href="images/sufood.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="images/sufood.png">
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Su.線上點餐">
-    <link rel="icon" type="image/png" sizes="192x192" href="images/sufood.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="images/sufood.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Su.線上點餐">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,10 +28,38 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <style>
+        <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        html { overscroll-behavior-y: none; }
-        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-top: 64px; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; overflow-x: clip; width: 100%; }
-        .fixed-gpu { transform: translateZ(0); backface-visibility: hidden; perspective: 1000; }
+        
+        /* ========== 行動裝置 Fixed Layout 穩定修復區塊 ========== */
+        html { 
+            overscroll-behavior-y: none; 
+            overflow-x: hidden; 
+            width: 100vw; 
+        }
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            transition: background 0.3s; 
+            padding-top: 64px; 
+            padding-bottom: 80px; 
+            text-rendering: optimizeLegibility; 
+            -webkit-font-smoothing: antialiased; 
+            width: 100%; 
+            position: relative; 
+            /* 移除了 overflow-x: clip，避免在手機上破壞 fixed 元素的基準點計算 */
+        }
+        .fixed-gpu { 
+            /* 移除了 transform: translateZ(0) 
+               避免與 Tailwind 的 backdrop-blur 產生衝突，解決 iOS 滑動破圖/消失的問題 */
+            will-change: transform, opacity; 
+        }
+        nav.fixed {
+            /* 針對頂部導覽列強制給予 3D 加速，避免手機瀏覽器上下滑動、網址列收縮時發生的跳動閃爍 */
+            transform: translate3d(0,0,0); 
+            -webkit-transform: translate3d(0,0,0);
+        }
+        /* ======================================================= */
+        
         img { -webkit-user-drag: none; }
         .admin-action { cursor: pointer; transition: 0.2s; }
         .admin-action.disabled { opacity: 0.3; pointer-events: none; }

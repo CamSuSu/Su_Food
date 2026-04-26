@@ -22,8 +22,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        html, body { overscroll-behavior: none; overscroll-behavior-y: none; }
-        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-top: 64px; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; overflow-x: clip; width: 100%; position: relative; }
+        html { overscroll-behavior-y: none; }
+        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-top: 64px; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; overflow-x: clip; width: 100%; }
+        .fixed-gpu { transform: translateZ(0); backface-visibility: hidden; perspective: 1000; }
         img { -webkit-user-drag: none; }
         .admin-action { cursor: pointer; transition: 0.2s; }
         .admin-action.disabled { opacity: 0.3; pointer-events: none; }
@@ -76,14 +77,14 @@
         </div>
     </nav>
 
-    <div class="fixed z-40 no-print pointer-events-none" style="bottom: max(16px, env(safe-area-inset-bottom)); left: 16px;">
+    <div class="fixed z-40 no-print pointer-events-none fixed-gpu" style="bottom: max(16px, env(safe-area-inset-bottom)); left: 16px;">
         <div class="bg-white/40 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
             <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
             <span class="tracking-widest">菜單更新日：<span id="global-update-date" class="font-bold"></span></span>
         </div>
     </div>
 
-    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-50 no-print bg-slate-800/90 backdrop-blur-sm" style="margin-bottom: env(safe-area-inset-bottom);">
+    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-50 no-print bg-slate-800/90 backdrop-blur-sm fixed-gpu" style="margin-bottom: env(safe-area-inset-bottom);">
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 

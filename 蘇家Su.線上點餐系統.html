@@ -2274,33 +2274,42 @@
                                 <i class="fa-solid ${iconClass} text-sm opacity-60 w-4 text-center shrink-0 transition-transform" id="bulk-icon-${item.id}"></i>
                                 <span class="font-black truncate flex-1 leading-snug" id="bulk-header-title-${item.id}">${item.name}</span>
                                 <span class="font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg text-xs shrink-0 whitespace-nowrap">$<span id="bulk-header-price-${item.id}">${item.price}</span></span>
+                            </div>
+                        </div>
+                        <div class="transition-all duration-300 ease-in-out ${bodyClass}" id="bulk-body-${item.id}">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">餐點名稱 <span class="text-red-500">*</span></label>
+                                    <input type="text" id="bulk-name-${item.id}" value="${item.name}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" oninput="document.getElementById('bulk-header-title-${item.id}').innerText = this.value || '未命名餐點'; document.getElementById('bulk-header-${item.id}').classList.add('bg-blue-50', 'border-blue-200'); document.getElementById('bulk-item-${item.id}').classList.add('border-blue-300', 'shadow-md');">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">價格 <span class="text-red-500">*</span></label>
+                                    <input type="number" id="bulk-price-${item.id}" value="${item.price}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" oninput="document.getElementById('bulk-header-price-${item.id}').innerText = this.value || '0'; document.getElementById('bulk-header-${item.id}').classList.add('bg-blue-50', 'border-blue-200'); document.getElementById('bulk-item-${item.id}').classList.add('border-blue-300', 'shadow-md');">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">分類 <span class="text-red-500">*</span></label>
+                                    <select id="bulk-subcat-${item.id}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" onchange="document.getElementById('bulk-header-${item.id}').classList.add('bg-blue-50', 'border-blue-200'); document.getElementById('bulk-item-${item.id}').classList.add('border-blue-300', 'shadow-md');">
+                                        ${extraSubCat}
+                                        ${subCatOptions}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">餐點圖片</label>
+                                    <div class="flex gap-2 w-full">
+                                        <input type="text" id="bulk-img-${item.id}" value="${item.img === DEFAULT_IMG ? '' : (item.img || '')}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold text-sm outline-none focus:border-blue-500 focus:bg-white transition" placeholder="輸入網址或上傳" oninput="document.getElementById('bulk-preview-${item.id}').src = this.value || DEFAULT_IMG; document.getElementById('bulk-header-${item.id}').classList.add('bg-blue-50', 'border-blue-200'); document.getElementById('bulk-item-${item.id}').classList.add('border-blue-300', 'shadow-md');">
+                                        <input type="file" id="bulk-file-${item.id}" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'bulk-img-${item.id}', 'bulk-preview-${item.id}'); document.getElementById('bulk-header-${item.id}').classList.add('bg-blue-50', 'border-blue-200'); document.getElementById('bulk-item-${item.id}').classList.add('border-blue-300', 'shadow-md');">
+                                        <button type="button" onclick="document.getElementById('bulk-file-${item.id}').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded-lg font-bold transition shrink-0" title="上傳圖片"><i class="fa-solid fa-upload"></i></button>
+                                        <img id="bulk-preview-${item.id}" src="${item.img || DEFAULT_IMG}" class="h-9 w-9 object-cover rounded shadow-sm border border-slate-200 shrink-0 bg-white" loading="lazy">
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">套用客製化模組</label>
+                                    <div id="bulk-opt-container-${item.id}" class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200"></div>
                                 </div>
                             </div>
-                            <div class="transition-all duration-300 ease-in-out ${bodyClass}" id="bulk-body-${item.id}">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-500 mb-1">餐點名稱 <span class="text-red-500">*</span></label>
-                                        <input type="text" id="bulk-name-${item.id}" value="${item.name}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" oninput="document.getElementById('bulk-header-title-${item.id}').innerText = this.value || '未命名餐點'; document.getElementById('bulk-header-${item.id}').classList.add('bg-blue-50', 'border-blue-200'); document.getElementById('bulk-item-${item.id}').classList.add('border-blue-300', 'shadow-md');">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-500 mb-1">價格 <span class="text-red-500">*</span></label>
-                                        <input type="number" id="bulk-price-${item.id}" value="${item.price}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" oninput="document.getElementById('bulk-header-price-${item.id}').innerText = this.value || '0'; document.getElementById('bulk-header-${item.id}').classList.add('bg-blue-50', 'border-blue-200'); document.getElementById('bulk-item-${item.id}').classList.add('border-blue-300', 'shadow-md');">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-500 mb-1">分類 <span class="text-red-500">*</span></label>
-                                        <select id="bulk-subcat-${item.id}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" onchange="document.getElementById('bulk-header-${item.id}').classList.add('bg-blue-50', 'border-blue-200'); document.getElementById('bulk-item-${item.id}').classList.add('border-blue-300', 'shadow-md');">
-                                            ${extraSubCat}
-                                            ${subCatOptions}
-                                        </select>
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <label class="block text-xs font-bold text-slate-500 mb-1">套用客製化模組</label>
-                                        <div id="bulk-opt-container-${item.id}" class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
-                });
+                        </div>
+                    </div>`;
+            });
             document.getElementById('bulk-edit-accordion-container').innerHTML = accordionHtml;
             items.forEach(item => {
                 window.renderGlobalOptionsCheckboxes(`bulk-opt-container-${item.id}`, item.customOptionIds || [], true, `bulk-${item.id}`);
@@ -2338,16 +2347,18 @@
                 const name = document.getElementById(`bulk-name-${id}`).value.trim();
                 const price = parseInt(document.getElementById(`bulk-price-${id}`).value);
                 const subCat = document.getElementById(`bulk-subcat-${id}`).value;
+                const img = document.getElementById(`bulk-img-${id}`).value.trim() || DEFAULT_IMG;
                 const checkedBoxes = document.querySelectorAll(`.inline-opt-cb-bulk-${id}:checked`);
                 const customOptionIds = Array.from(checkedBoxes).map(cb => cb.value);
                 if (!name || isNaN(price) || !subCat) continue;
-                const isChanged = (name !== oldData.name || price !== oldData.price || subCat !== oldData.subCat || JSON.stringify(customOptionIds) !== JSON.stringify(oldData.customOptionIds || []));
+                const isChanged = (name !== oldData.name || price !== oldData.price || subCat !== oldData.subCat || img !== oldData.img || JSON.stringify(customOptionIds) !== JSON.stringify(oldData.customOptionIds || []));
                 if (isChanged) {
                     const idx = window.state.items.findIndex(i => String(i.id) === String(id));
                     if(idx > -1) {
                         window.state.items[idx].name = name;
                         window.state.items[idx].price = price;
                         window.state.items[idx].subCat = subCat;
+                        window.state.items[idx].img = img;
                         window.state.items[idx].customOptionIds = customOptionIds;
                         window.state.items[idx].updateDate = window.getFormattedDate();
                         window.state.items[idx].isLocked = true;

@@ -57,6 +57,18 @@
 </head>
 <body class="bg-slate-50 text-slate-900 relative">
 
+    <div id="global-loader" class="fixed inset-0 bg-slate-50 z-[9999] flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out">
+        <div class="relative w-24 h-24 mb-6">
+            <div class="absolute inset-0 border-4 border-orange-200 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-orange-500 text-3xl">
+                <i class="fa-solid fa-utensils"></i>
+            </div>
+        </div>
+        <h2 class="text-2xl font-black text-slate-800 tracking-widest mb-2">Su.線上點餐系統</h2>
+        <p class="text-slate-500 font-bold text-sm animate-pulse">系統加載中，請稍候...</p>
+    </div>
+
     <nav class="bg-white shadow-sm border-b fixed top-0 left-0 w-full z-[100] no-print fixed-gpu">
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80 min-w-0 flex-1" onclick="showView('home')">
@@ -883,6 +895,13 @@
 
                         if (!window.hasInitialLoaded) {
                             window.hasInitialLoaded = true;
+                            // 隱藏加載動畫
+                            const loader = document.getElementById('global-loader');
+                            if (loader) {
+                                loader.classList.add('opacity-0');
+                                setTimeout(() => loader.style.display = 'none', 500);
+                            }
+
                             if (isNowActive) {
                                 window.showView('active-order');
                                 window.startTimer();
@@ -1967,8 +1986,8 @@
             }
         };
 
-        window.clearNewItemForm = function() {
-            if(confirm('確定要清空所有欄位嗎？(不會影響已儲存的資料)')) {
+        window.clearNewItemForm = function(force = false) {
+            if(force === true || confirm('確定要清空所有欄位嗎？(不會影響已儲存的資料)')) {
                 document.getElementById('admin-input-store').value = '';
                 if(window.state.categories.length > 0) document.getElementById('admin-input-cat').value = window.state.categories[0].id;
                 document.getElementById('admin-input-store-cover').value = '';
@@ -2432,7 +2451,7 @@
             window.closeModal('add-item-modal');
             await window.saveState();
             window.debouncedAdminRender();
-            window.clearNewItemForm();
+            window.clearNewItemForm(true); // 修正處：強制清除無需提示
             alert(`✅ 餐點「${itemName}」新增成功！\n\n💡 提示：為防止誤觸，新餐點已自動【上鎖】。\n若需修改或刪除，請先點擊餐點旁的鎖頭圖示解鎖。`);
         };
 

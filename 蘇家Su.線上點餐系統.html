@@ -807,22 +807,30 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    const maxW = 160; const maxH = 160;
+                    
+                    // 優化：將原本極端的 160x160 提升至 512x512，大幅改善肉眼可見的清晰度
+                    const maxW = 512; const maxH = 512;
+                    
                     let w = img.width; let h = img.height;
                     if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
                     else { if (h > maxH) { w *= maxH / h; h = maxH; } }
+                    
                     canvas.width = w; canvas.height = h;
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(0, 0, w, h);
                     ctx.drawImage(img, 0, 0, w, h);
-                    let quality = 0.6;
+                    
+                    // 優化：提高初始壓縮品質，並放寬容量限制以換取畫質
+                    let quality = 0.8;
                     const attemptCompress = () => {
                         const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        if (dataUrl.length > 15000 && quality > 0.1) {
-                            quality -= 0.15;
+                        
+                        // 將原本 15KB 的過度限制放寬到約 50KB 左右，確保圖片不失真
+                        if (dataUrl.length > 50000 && quality > 0.3) {
+                            quality -= 0.1; // 讓品質下降的幅度平緩一點，避免突然變糊
                             setTimeout(attemptCompress, 0); 
-                        } else if (dataUrl.length > 25000) { 
-                            alert('⚠️ 圖片過於複雜，為防止資料庫崩潰，請改用更簡單的圖片！');
+                        } else if (dataUrl.length > 85000) { 
+                            alert('⚠️ 圖片過於複雜，為防止資料庫崩潰，請改用更簡單的圖片或裁切後再上傳！');
                             if(event && event.target) event.target.value = '';
                         } else {
                             callback(dataUrl);

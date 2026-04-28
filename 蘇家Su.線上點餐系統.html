@@ -808,8 +808,8 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // 【黃金平衡點】解析度定為 280x280。足以應付手機螢幕排版，不會因為太小被硬拉扯而產生嚴重馬賽克
-                    const maxW = 280; const maxH = 280;
+                    // 【畫質提升】解析度提升至 400x400，確保手機上看起來邊緣銳利
+                    const maxW = 400; const maxH = 400;
                     
                     let w = img.width; let h = img.height;
                     if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
@@ -820,18 +820,19 @@
                     ctx.fillRect(0, 0, w, h);
                     ctx.drawImage(img, 0, 0, w, h);
                     
-                    // 【智慧壓縮控制】初始品質設為 0.7，兼顧畫質與容量
-                    let quality = 0.7;
+                    // 【終極畫質救星】改用 image/webp 格式！
+                    // WebP 格式在相同極小檔案大小下，畫質比 JPEG 清晰非常多
+                    let quality = 0.8;
                     const attemptCompress = () => {
-                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        const dataUrl = canvas.toDataURL('image/webp', quality);
                         
-                        // 字串長度 18000 約等於 13.5KB。與您最初的 15KB 幾乎一樣，完全不會增加 Firebase 負擔！
-                        if (dataUrl.length > 18000 && quality > 0.2) {
-                            quality -= 0.1; // 緩步降質
+                        // 將降質標準設在長度 25000 (約18KB)，極限阻擋放寬到 38000 (約28KB)
+                        // 這樣的設定可安全容納 30~40 個餐點且不觸發 Firebase 1MB 上限
+                        if (dataUrl.length > 25000 && quality > 0.3) {
+                            quality -= 0.1;
                             setTimeout(attemptCompress, 0); 
-                        } else if (dataUrl.length > 25000) { 
-                            // 極限值設在約 18KB (長度25000)，嚴格保護單一文檔 1MB 的限制
-                            alert('⚠️ 圖片過於複雜，為防止資料庫崩潰，請改用更簡單的圖片或裁切後再上傳！');
+                        } else if (dataUrl.length > 38000) { 
+                            alert('⚠️ 圖片過於複雜，為保護資料庫安全，請換一張背景較單純的圖片再上傳！');
                             if(event && event.target) event.target.value = '';
                         } else {
                             callback(dataUrl);

@@ -570,7 +570,7 @@
                             <div>
                                 <label class="block text-xs font-bold mb-1 text-slate-500">餐點圖片 (自動極限壓縮)</label>
                                 <div class="flex gap-2 mb-2">
-                                    <input id="admin-input-img-url" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 text-sm font-bold" placeholder="輸入網址或上傳">
+                                    <input id="admin-input-img-url" type="text" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 text-sm font-bold" placeholder="輸入網址或上傳" oninput="if(this.value){document.getElementById('admin-img-preview').src = this.value; document.getElementById('admin-img-preview').classList.remove('hidden');}else{document.getElementById('admin-img-preview').classList.add('hidden');}">
                                     <input type="file" id="admin-input-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'admin-input-img-url', 'admin-img-preview')">
                                     <button type="button" onclick="document.getElementById('admin-input-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button>
                                 </div>
@@ -800,7 +800,7 @@
             }
         };
 
-        window.compressImage = function(file, event, callback) {
+       window.compressImage = function(file, event, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
@@ -808,8 +808,8 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // 【黃金平衡點】解析度定為 280x280。足以應付手機螢幕排版，不會因為太小被硬拉扯而產生嚴重馬賽克
-                    const maxW = 280; const maxH = 280;
+                    // 優化：將原本極端的 160x160 提升至 512x512，大幅改善肉眼可見的清晰度
+                    const maxW = 512; const maxH = 512;
                     
                     let w = img.width; let h = img.height;
                     if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
@@ -820,17 +820,16 @@
                     ctx.fillRect(0, 0, w, h);
                     ctx.drawImage(img, 0, 0, w, h);
                     
-                    // 【智慧壓縮控制】初始品質設為 0.7，兼顧畫質與容量
-                    let quality = 0.7;
+                    // 優化：提高初始壓縮品質，並放寬容量限制以換取畫質
+                    let quality = 0.8;
                     const attemptCompress = () => {
                         const dataUrl = canvas.toDataURL('image/jpeg', quality);
                         
-                        // 字串長度 18000 約等於 13.5KB。與您最初的 15KB 幾乎一樣，完全不會增加 Firebase 負擔！
-                        if (dataUrl.length > 18000 && quality > 0.2) {
-                            quality -= 0.1; // 緩步降質
+                        // 將原本 15KB 的過度限制放寬到約 50KB 左右，確保圖片不失真
+                        if (dataUrl.length > 50000 && quality > 0.3) {
+                            quality -= 0.1; // 讓品質下降的幅度平緩一點，避免突然變糊
                             setTimeout(attemptCompress, 0); 
-                        } else if (dataUrl.length > 25000) { 
-                            // 極限值設在約 18KB (長度25000)，嚴格保護單一文檔 1MB 的限制
+                        } else if (dataUrl.length > 85000) { 
                             alert('⚠️ 圖片過於複雜，為防止資料庫崩潰，請改用更簡單的圖片或裁切後再上傳！');
                             if(event && event.target) event.target.value = '';
                         } else {
@@ -2184,6 +2183,9 @@
         
         window.clearStoreImages = async function(storeName) {
             let changedCount = 0;
+            let storeImgCleared = false;
+
+            // 1. 清除該店家的所有餐點圖片
             window.state.items.forEach(item => {
                 if ((item.store || 'Unknown') === storeName && item.img && item.img !== DEFAULT_IMG) {
                     item.img = DEFAULT_IMG;
@@ -2192,14 +2194,27 @@
                 }
             });
             
-            if (changedCount > 0) {
-                window.addAdminLog('修改', `批次清空店家「${storeName}」的 ${changedCount} 張餐點圖片`);
+            // 2. 清除店家本身的封面圖
+            const storeObj = window.state.stores.find(s => s.name === storeName);
+            if (storeObj && storeObj.coverImg) {
+                storeObj.coverImg = ''; // 清空店家圖片
+                storeImgCleared = true;
+            }
+            
+            // 3. 判斷是否有變動並儲存
+            if (changedCount > 0 || storeImgCleared) {
+                let logMsg = `批次清空店家「${storeName}」的`;
+                if (storeImgCleared) logMsg += `店家封面圖`;
+                if (storeImgCleared && changedCount > 0) logMsg += `及`;
+                if (changedCount > 0) logMsg += ` ${changedCount} 張餐點圖片`;
+
+                window.addAdminLog('修改', logMsg);
                 window.state.menuUpdateDate = window.getFormattedDate();
                 await window.saveState();
                 window.debouncedAdminRender();
-                alert(`✅ 已成功清空「${storeName}」的 ${changedCount} 張餐點圖片！`);
+                alert(`✅ 已成功清空「${storeName}」的圖片資料！\n包含：${storeImgCleared ? '店家封面圖 ' : ''}${changedCount > 0 ? ` ${changedCount} 張餐點圖片` : ''}`);
             } else {
-                alert(`店家「${storeName}」的所有餐點目前皆為預設圖片，無須清空。`);
+                alert(`店家「${storeName}」目前沒有任何圖片需要清空。`);
             }
         };
         
@@ -2415,7 +2430,7 @@
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">菜單子分類 <span class="text-red-500">*</span></label><select id="modal-edit-item-subcat" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">${window.state.subCategories.map(s => `<option value="${s}" ${s === item.subCat ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">餐點名稱 <span class="text-red-500">*</span></label><input type="text" id="modal-edit-item-name" value="${item.name}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words"></div>
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">價格 <span class="text-red-500">*</span></label><input type="number" id="modal-edit-item-price" value="${item.price}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm"></div>
-                    <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-500 mb-1">餐點圖片</label><div class="flex flex-col sm:flex-row gap-2 w-full"><input type="text" id="modal-edit-item-img" value="${item.img === DEFAULT_IMG ? '' : item.img}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="網址或上傳"><input type="file" id="modal-edit-item-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'modal-edit-item-img', 'modal-edit-item-preview')"><button type="button" onclick="document.getElementById('modal-edit-item-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button></div><img id="modal-edit-item-preview" src="${item.img || DEFAULT_IMG}" class="mt-3 h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm"></div>
+                    <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-500 mb-1">餐點圖片</label><div class="flex flex-col sm:flex-row gap-2 w-full"><input type="text" id="modal-edit-item-img" value="${item.img === DEFAULT_IMG ? '' : item.img}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="網址或上傳" oninput="document.getElementById('modal-edit-item-preview').src = this.value || '${DEFAULT_IMG}'"><input type="file" id="modal-edit-item-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'modal-edit-item-img', 'modal-edit-item-preview')"><button type="button" onclick="document.getElementById('modal-edit-item-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button></div><img id="modal-edit-item-preview" src="${item.img || DEFAULT_IMG}" class="mt-3 h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm"></div>
                     <div class="md:col-span-2 bg-white p-4 rounded-xl border border-orange-200 mt-2 shadow-sm w-full"><label class="block text-xs font-bold text-orange-600 mb-3 whitespace-normal"><i class="fa-solid fa-sliders mr-2"></i>客製化選項 (選填)</label><div id="modal-edit-item-opt-container" class="grid grid-cols-1 lg:grid-cols-2 gap-2 w-full"></div></div>
                 </div>`;
             document.getElementById('edit-item-form-container').innerHTML = html;

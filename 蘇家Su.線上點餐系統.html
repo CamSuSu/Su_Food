@@ -26,7 +26,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         html { overscroll-behavior-y: none; }
         body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-top: 64px; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; overflow-x: clip; width: 100%; position: relative; min-height: 100vh; }
-        .fixed-gpu { transform: translateZ(0); -webkit-transform: translateZ(0); backface-visibility: hidden; perspective: 1000; }
         img { -webkit-user-drag: none; }
         .admin-action { cursor: pointer; transition: 0.2s; }
         .admin-action.disabled { opacity: 0.3; pointer-events: none; }
@@ -77,7 +76,7 @@
         <p class="text-slate-500 font-bold text-sm animate-pulse">系統加載中，請稍候...</p>
     </div>
 
-    <nav class="bg-white shadow-sm border-b fixed top-0 left-0 w-full z-[100] no-print fixed-gpu">
+    <nav class="bg-white shadow-sm border-b fixed top-0 left-0 w-full z-[100] no-print">
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80 min-w-0 flex-1" onclick="showView('home')">
                 <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm shrink-0"><i class="fa-solid fa-store"></i></div>
@@ -97,14 +96,14 @@
         </div>
     </nav>
 
-    <div class="fixed z-[90] no-print pointer-events-none fixed-gpu" style="bottom: max(16px, env(safe-area-inset-bottom)); left: 16px;">
+    <div class="fixed z-[90] no-print pointer-events-none" style="bottom: max(16px, env(safe-area-inset-bottom)); left: 16px;">
         <div class="bg-white/40 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
             <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
             <span class="tracking-widest">菜單更新日：<span id="global-update-date" class="font-bold"></span></span>
         </div>
     </div>
 
-    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-[90] no-print bg-slate-800/90 backdrop-blur-sm fixed-gpu" style="margin-bottom: env(safe-area-inset-bottom);">
+    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-[90] no-print bg-slate-800/90 backdrop-blur-sm" style="margin-bottom: env(safe-area-inset-bottom);">
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 
@@ -870,6 +869,12 @@
                                 const firstItem = newData.items.find(i => i.store === s);
                                 return {name: s, phone: '', address: '', coverImg: '', hours: {}, cat: firstItem ? firstItem.cat : (newData.categories && newData.categories.length > 0 ? newData.categories[0].id : 'cat_other'), isClosed: false};
                             });
+                        }
+                        
+                        // 修正：自動過濾掉沒有任何餐點的幽靈店家
+                        if (storesDecoded) {
+                            const validStoreNames = new Set(newData.items.map(i => i.store || 'Unknown'));
+                            storesDecoded = storesDecoded.filter(s => validStoreNames.has(s.name));
                         }
                         newData.stores = storesDecoded;
 
@@ -2359,16 +2364,22 @@
                 const checkedBoxes = document.querySelectorAll(`.inline-opt-cb-bulk-${id}:checked`);
                 const customOptionIds = Array.from(checkedBoxes).map(cb => cb.value);
                 if (!name || isNaN(price) || !subCat) continue;
-                const idx = window.state.items.findIndex(i => String(i.id) === String(id));
-                if(idx > -1) {
-                    window.state.items[idx].name = name; window.state.items[idx].price = price; window.state.items[idx].subCat = subCat; window.state.items[idx].img = img; window.state.items[idx].customOptionIds = customOptionIds; window.state.items[idx].updateDate = window.getFormattedDate(); window.state.items[idx].isLocked = true;
-                    changedCount++;
+                
+                // 智慧儲存：只比對並寫入有修改的項目
+                if (oldData.name !== name || oldData.price !== price || oldData.subCat !== subCat || oldData.img !== img || JSON.stringify(oldData.customOptionIds || []) !== JSON.stringify(customOptionIds)) {
+                    const idx = window.state.items.findIndex(i => String(i.id) === String(id));
+                    if(idx > -1) {
+                        window.state.items[idx].name = name; window.state.items[idx].price = price; window.state.items[idx].subCat = subCat; window.state.items[idx].img = img; window.state.items[idx].customOptionIds = customOptionIds; window.state.items[idx].updateDate = window.getFormattedDate(); window.state.items[idx].isLocked = true;
+                        changedCount++;
+                    }
                 }
             }
             if (changedCount > 0) {
                 window.addAdminLog('修改', `批次編輯 ${changedCount} 筆餐點並自動上鎖`);
                 window.state.menuUpdateDate = window.getFormattedDate();
                 await window.saveState(); window.debouncedAdminRender(); alert(`✅ 批次儲存成功！`);
+            } else {
+                alert(`ℹ️ 沒有偵測到任何修改。`);
             }
             window.closeModal('bulk-edit-modal');
         };
@@ -2422,6 +2433,8 @@
                 const deletedItem = window.state.items.splice(idx, 1)[0];
                 window.addAdminLog('刪除', `刪除餐點「${deletedItem.name}」`);
                 window.state.menuUpdateDate = window.getFormattedDate();
+                
+                // 刪除餐點後呼叫 saveState 將觸發 onSnapshot，自動清理「無餐點的空店家」
                 await window.saveState(); window.debouncedAdminRender();
             }
         };
@@ -2525,7 +2538,6 @@
                                 window.state.stores.push(storeObj); 
                             }
                             
-                            // 正確處理匯入時的客製化選項模組
                             const optionsList = optionsStr.split(',').map(s => s.trim()).filter(s => s !== '');
                             let customOptionIds = [];
                             optionsList.forEach(optName => {

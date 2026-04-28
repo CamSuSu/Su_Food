@@ -24,18 +24,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        html { overscroll-behavior-y: none; }
-        body { font-family: 'Noto Sans TC', sans-serif; transition: background 0.3s; padding-top: 64px; padding-bottom: 80px; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; overflow-x: clip; width: 100%; position: relative; min-height: 100vh; }
+        
+        /* 引入 Su Computer Studio 置底邏輯，鎖定 body 高度，內部建立獨立滾動容器 */
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            transition: background 0.3s; 
+            text-rendering: optimizeLegibility; 
+            -webkit-font-smoothing: antialiased; 
+            overflow: hidden; 
+            width: 100vw; 
+            height: 100dvh; 
+            position: relative; 
+            overscroll-behavior-y: none;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
         img { -webkit-user-drag: none; }
         .admin-action { cursor: pointer; transition: 0.2s; }
         .admin-action.disabled { opacity: 0.3; pointer-events: none; }
         .content-vis-auto { content-visibility: auto; contain-intrinsic-size: auto 400px; }
         .category-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; will-change: transform; }
         .category-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); z-index: 10; border-color: #fb923c; }
+        
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        
         .store-header { cursor: pointer; transition: background-color 0.2s; position: relative; z-index: 5; }
         .dragging { opacity: 0.5; border: 2px dashed #10b981; }
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1em; padding-right: 2.5rem !important; }
@@ -47,9 +63,10 @@
         .chevron-icon.active { transform: rotate(180deg); }
 
         @media print { 
-            body { background: white !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            body > *:not(main) { display: none !important; }
-            main > *:not(#view-receipt) { display: none !important; }
+            body { background: white !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible !important; height: auto !important; }
+            #main-scroll-container { position: static !important; overflow: visible !important; height: auto !important; padding: 0 !important; }
+            body > *:not(#main-scroll-container) { display: none !important; }
+            #main-scroll-container > *:not(#view-receipt) { display: none !important; }
             #view-receipt { display: block !important; position: static !important; width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; }
             .no-print { display: none !important; }
             * { text-shadow: none !important; box-shadow: none !important; }
@@ -64,7 +81,7 @@
 </head>
 <body class="bg-slate-50 text-slate-900">
 
-    <div id="global-loader" class="fixed inset-0 bg-slate-50 z-[9999] flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out">
+    <div id="global-loader" class="absolute inset-0 bg-slate-50 z-[9999] flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out">
         <div class="relative w-24 h-24 mb-6">
             <div class="absolute inset-0 border-4 border-orange-200 rounded-full"></div>
             <div class="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
@@ -76,7 +93,7 @@
         <p class="text-slate-500 font-bold text-sm animate-pulse">系統加載中，請稍候...</p>
     </div>
 
-    <nav class="bg-white shadow-sm border-b fixed top-0 left-0 w-full z-[100] no-print">
+    <nav class="bg-white shadow-sm border-b absolute top-0 left-0 w-full z-[100] no-print">
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
             <div class="flex items-center gap-2 cursor-pointer transition hover:opacity-80 min-w-0 flex-1" onclick="showView('home')">
                 <div class="bg-orange-500 text-white p-2 rounded-lg shadow-sm shrink-0"><i class="fa-solid fa-store"></i></div>
@@ -96,266 +113,266 @@
         </div>
     </nav>
 
-    <div class="fixed z-[90] no-print pointer-events-none" style="bottom: max(16px, env(safe-area-inset-bottom)); left: 16px;">
+    <div class="absolute z-[90] no-print pointer-events-none" style="bottom: max(16px, env(safe-area-inset-bottom)); left: 16px;">
         <div class="bg-white/40 backdrop-blur-md shadow-sm border border-slate-200/30 rounded-xl p-2 text-[10px] text-slate-500/70 break-words pointer-events-auto inline-flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-all duration-300">
             <i class="fa-solid fa-clock-rotate-left shrink-0"></i>
             <span class="tracking-widest">菜單更新日：<span id="global-update-date" class="font-bold"></span></span>
         </div>
     </div>
 
-    <button id="btn-back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-[90] no-print bg-slate-800/90 backdrop-blur-sm" style="margin-bottom: env(safe-area-inset-bottom);">
+    <button id="btn-back-to-top" onclick="document.getElementById('main-scroll-container').scrollTo({top: 0, behavior: 'smooth'})" class="absolute bottom-6 right-6 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center text-xl hover:bg-orange-500 hover:-translate-y-1 transition-all duration-300 opacity-0 pointer-events-none z-[90] no-print bg-slate-800/90 backdrop-blur-sm" style="margin-bottom: env(safe-area-inset-bottom);">
         <i class="fa-solid fa-arrow-up"></i>
     </button>
 
-    <main class="container mx-auto px-4 py-6 md:py-8 no-print">
-        <div id="view-home" class="view-section hidden">
-            <div class="mb-8 bg-gradient-to-r from-orange-500 to-amber-500 p-8 md:p-10 rounded-3xl text-white shadow-xl relative overflow-hidden">
-                <div class="relative z-10">
-                    <h2 class="text-3xl md:text-4xl font-black mb-3">今天想吃什麼呢？</h2>
-                    <p class="opacity-95 text-lg font-bold mb-6">一起與家禾發起 團體點餐活動</p>
-                    <button onclick="openStartOrderModal()" class="bg-white text-orange-600 px-6 py-3.5 rounded-xl font-black shadow-lg hover:bg-orange-50 transition transform hover:-translate-y-1 hover:shadow-xl text-lg flex items-center w-full md:w-max justify-center">
-                        <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>發起 團體點餐活動
-                    </button>
-                </div>
-                <i class="fa-solid fa-burger absolute -right-10 -bottom-10 text-[180px] opacity-20 transform -rotate-12"></i>
-            </div>
-            
-            <div class="flex justify-between items-end mb-3 px-2">
-                <h3 class="text-lg md:text-xl font-black text-slate-700 tracking-wide">選擇店家類別</h3>
-                <span class="text-[11px] md:hidden text-slate-400 font-bold flex items-center animate-pulse tracking-widest"><i class="fa-solid fa-arrows-left-right mr-1.5"></i>滑動更多..</span>
-            </div>
-            <div class="relative w-full mb-6">
-                <div id="category-tabs" class="flex gap-3 overflow-x-auto pb-5 pt-2 px-2 custom-scrollbar snap-x snap-mandatory pr-16 scroll-smooth" style="-webkit-overflow-scrolling: touch;"></div>
-                <div class="absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent pointer-events-none"></div>
-            </div>
-            <div id="store-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
-        </div>
-
-        <div id="view-store-details" class="view-section hidden">
-            <button onclick="showView('home')" class="mb-6 text-slate-500 hover:text-orange-500 font-bold flex items-center transition bg-white px-5 py-2.5 rounded-xl shadow-sm border border-slate-200 hover:bg-orange-50">
-                <i class="fa-solid fa-arrow-left mr-2"></i>返回首頁
-            </button>
-            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row gap-6 items-center md:items-start relative overflow-hidden">
-                <div id="browse-store-cover" class="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-cover bg-center shadow-inner shrink-0 border border-slate-100"></div>
-                <div class="flex-1 w-full text-center md:text-left">
-                    <h2 id="browse-store-name" class="text-3xl md:text-4xl font-black text-slate-800 mb-3 break-words">店家名稱</h2>
-                    <div id="browse-store-info" class="flex flex-wrap justify-center md:justify-start gap-3 text-slate-600 font-bold mb-4"></div>
-                    <div id="browse-store-hours" class="mb-4 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 hidden"></div>
-                    <p class="text-orange-600 bg-orange-50 p-3 rounded-xl inline-block border border-orange-100 font-bold w-full md:w-auto break-words whitespace-normal"><i class="fa-solid fa-circle-info mr-2"></i>目前為瀏覽模式，若要訂餐請回首頁「發起點餐活動」。</p>
-                </div>
-            </div>
-            <div id="browse-menu-container"></div>
-        </div>
-
-        <div id="view-active-order" class="view-section hidden">
-            <div class="max-w-4xl mx-auto text-center mb-10">
-                <div class="inline-block w-full max-w-[90vw] md:w-auto bg-white border-4 border-red-500 px-6 py-5 md:px-12 md:py-8 rounded-[2.5rem] shadow-2xl mb-8 relative overflow-hidden transform hover:scale-[1.02] transition duration-300">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-red-500 animate-pulse"></div>
-                    <p class="text-slate-500 font-black mb-2 tracking-widest uppercase"><i class="fa-solid fa-stopwatch mr-2 text-red-500"></i>點餐活動倒數中</p>
-                    <div id="big-timer" class="text-6xl md:text-7xl font-black text-red-600 tracking-tighter drop-shadow-sm">00:00</div>
-                    <button onclick="requestPassword('輸入密碼 提早結單', pwd => { if(pwd === '24331561') window.autoCheckout(); else alert('密碼錯誤！'); })" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
-                        <i class="fa-solid fa-lock-open mr-2 text-slate-400"></i>提早結單
-                    </button>
+    <div id="main-scroll-container" class="absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden custom-scrollbar z-10" style="padding-top: 64px; padding-bottom: 80px;">
+        <main class="container mx-auto px-4 py-6 md:py-8 no-print">
+            <div id="view-home" class="view-section hidden">
+                <div class="mb-8 bg-gradient-to-r from-orange-500 to-amber-500 p-8 md:p-10 rounded-3xl text-white shadow-xl relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h2 class="text-3xl md:text-4xl font-black mb-3">今天想吃什麼呢？</h2>
+                        <p class="opacity-95 text-lg font-bold mb-6">一起與家禾發起 團體點餐活動</p>
+                        <button onclick="openStartOrderModal()" class="bg-white text-orange-600 px-6 py-3.5 rounded-xl font-black shadow-lg hover:bg-orange-50 transition transform hover:-translate-y-1 hover:shadow-xl text-lg flex items-center w-full md:w-max justify-center">
+                            <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>發起 團體點餐活動
+                        </button>
+                    </div>
+                    <i class="fa-solid fa-burger absolute -right-10 -bottom-10 text-[180px] opacity-20 transform -rotate-12"></i>
                 </div>
                 
-                <h2 id="active-store-name" class="text-4xl md:text-5xl font-black text-slate-800 mb-4 drop-shadow-sm break-words">團體點餐活動</h2>
-                <div id="active-store-info" class="flex flex-col gap-4 text-slate-600 font-bold mb-4 items-center justify-center w-full px-2"></div>
-                <p class="text-slate-500 text-sm md:text-lg mt-2 bg-orange-100 text-orange-700 inline-block px-4 py-2 md:px-6 md:py-2 rounded-full font-black shadow-sm border border-orange-200 max-w-full break-words whitespace-normal">活動期間僅限點購清單內店家之餐點</p>
+                <div class="flex justify-between items-end mb-3 px-2">
+                    <h3 class="text-lg md:text-xl font-black text-slate-700 tracking-wide">選擇店家類別</h3>
+                    <span class="text-[11px] md:hidden text-slate-400 font-bold flex items-center animate-pulse tracking-widest"><i class="fa-solid fa-arrows-left-right mr-1.5"></i>滑動更多..</span>
+                </div>
+                <div class="relative w-full mb-6">
+                    <div id="category-tabs" class="flex gap-3 overflow-x-auto pb-5 pt-2 px-2 custom-scrollbar snap-x snap-mandatory pr-16 scroll-smooth" style="-webkit-overflow-scrolling: touch;"></div>
+                    <div class="absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent pointer-events-none"></div>
+                </div>
+                <div id="store-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                <div class="lg:col-span-2">
-                    <div id="active-menu-container"></div>
+            <div id="view-store-details" class="view-section hidden">
+                <button onclick="showView('home')" class="mb-6 text-slate-500 hover:text-orange-500 font-bold flex items-center transition bg-white px-5 py-2.5 rounded-xl shadow-sm border border-slate-200 hover:bg-orange-50">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>返回首頁
+                </button>
+                <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row gap-6 items-center md:items-start relative overflow-hidden">
+                    <div id="browse-store-cover" class="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-cover bg-center shadow-inner shrink-0 border border-slate-100"></div>
+                    <div class="flex-1 w-full text-center md:text-left">
+                        <h2 id="browse-store-name" class="text-3xl md:text-4xl font-black text-slate-800 mb-3 break-words">店家名稱</h2>
+                        <div id="browse-store-info" class="flex flex-wrap justify-center md:justify-start gap-3 text-slate-600 font-bold mb-4"></div>
+                        <div id="browse-store-hours" class="mb-4 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 hidden"></div>
+                        <p class="text-orange-600 bg-orange-50 p-3 rounded-xl inline-block border border-orange-100 font-bold w-full md:w-auto break-words whitespace-normal"><i class="fa-solid fa-circle-info mr-2"></i>目前為瀏覽模式，若要訂餐請回首頁「發起點餐活動」。</p>
+                    </div>
                 </div>
-                <div class="hidden lg:block lg:col-span-1 sticky top-24">
-                    <div class="bg-white rounded-[2rem] shadow-xl p-6 md:p-8 border border-slate-100">
-                        <h3 class="text-2xl font-black mb-6 border-b-2 border-slate-100 pb-4 flex justify-between items-center text-slate-800">
-                            <span><i class="fa-solid fa-basket-shopping text-orange-500 mr-2"></i>已點餐點</span>
-                            <span class="text-white bg-orange-500 px-4 py-1.5 rounded-xl text-sm font-black shadow-sm shrink-0" id="cart-count">0 份</span>
-                        </h3>
-                        <div id="active-cart-list" class="space-y-4 mb-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
-                        <div class="border-t-2 border-slate-100 pt-6">
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-xl font-bold text-slate-500">總計金額</span>
-                                <span id="active-cart-total" class="text-4xl font-black text-red-600">$0</span>
+                <div id="browse-menu-container"></div>
+            </div>
+
+            <div id="view-active-order" class="view-section hidden">
+                <div class="max-w-4xl mx-auto text-center mb-10">
+                    <div class="inline-block w-full max-w-[90vw] md:w-auto bg-white border-4 border-red-500 px-6 py-5 md:px-12 md:py-8 rounded-[2.5rem] shadow-2xl mb-8 relative overflow-hidden transform hover:scale-[1.02] transition duration-300">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-red-500 animate-pulse"></div>
+                        <p class="text-slate-500 font-black mb-2 tracking-widest uppercase"><i class="fa-solid fa-stopwatch mr-2 text-red-500"></i>點餐活動倒數中</p>
+                        <div id="big-timer" class="text-6xl md:text-7xl font-black text-red-600 tracking-tighter drop-shadow-sm">00:00</div>
+                        <button onclick="requestPassword('輸入密碼 提早結單', pwd => { if(pwd === '24331561') window.autoCheckout(); else alert('密碼錯誤！'); })" class="mt-6 md:mt-8 w-full bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg md:text-xl font-bold shadow-lg transition flex justify-center items-center">
+                            <i class="fa-solid fa-lock-open mr-2 text-slate-400"></i>提早結單
+                        </button>
+                    </div>
+                    
+                    <h2 id="active-store-name" class="text-4xl md:text-5xl font-black text-slate-800 mb-4 drop-shadow-sm break-words">團體點餐活動</h2>
+                    <div id="active-store-info" class="flex flex-col gap-4 text-slate-600 font-bold mb-4 items-center justify-center w-full px-2"></div>
+                    <p class="text-slate-500 text-sm md:text-lg mt-2 bg-orange-100 text-orange-700 inline-block px-4 py-2 md:px-6 md:py-2 rounded-full font-black shadow-sm border border-orange-200 max-w-full break-words whitespace-normal">活動期間僅限點購清單內店家之餐點</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <div class="lg:col-span-2">
+                        <div id="active-menu-container"></div>
+                    </div>
+                    <div class="hidden lg:block lg:col-span-1 sticky top-4">
+                        <div class="bg-white rounded-[2rem] shadow-xl p-6 md:p-8 border border-slate-100">
+                            <h3 class="text-2xl font-black mb-6 border-b-2 border-slate-100 pb-4 flex justify-between items-center text-slate-800">
+                                <span><i class="fa-solid fa-basket-shopping text-orange-500 mr-2"></i>已點餐點</span>
+                                <span class="text-white bg-orange-500 px-4 py-1.5 rounded-xl text-sm font-black shadow-sm shrink-0" id="cart-count">0 份</span>
+                            </h3>
+                            <div id="active-cart-list" class="space-y-4 mb-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
+                            <div class="border-t-2 border-slate-100 pt-6">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-xl font-bold text-slate-500">總計金額</span>
+                                    <span id="active-cart-total" class="text-4xl font-black text-red-600">$0</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="view-admin" class="view-section hidden">
-            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4 border-b-2 border-slate-200 pb-4">
-                <h2 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-database text-orange-500 mr-3 text-3xl"></i>Su.資料庫管理</h2>
-                <div class="flex flex-wrap gap-3 w-full xl:w-auto">
-                    <button onclick="exportDatabaseExcel()" class="flex-1 xl:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center whitespace-nowrap"><i class="fa-solid fa-file-excel mr-2"></i>匯出 Excel</button>
-                    <label class="flex-1 xl:flex-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center cursor-pointer whitespace-nowrap mb-0">
-                        <i class="fa-solid fa-file-import mr-2"></i>匯入 Excel
-                        <input type="file" id="import-db-file" accept=".xlsx" class="hidden" onchange="importDatabaseExcel(event)">
-                    </label>
-                    <button onclick="logoutAdmin()" class="flex-1 xl:flex-none bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-slate-900 transition shadow-md flex justify-center items-center whitespace-nowrap"><i class="fa-solid fa-right-from-bracket mr-2"></i>返回前台</button>
+            <div id="view-admin" class="view-section hidden">
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4 border-b-2 border-slate-200 pb-4">
+                    <h2 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-database text-orange-500 mr-3 text-3xl"></i>Su.資料庫管理</h2>
+                    <div class="flex flex-wrap gap-3 w-full xl:w-auto">
+                        <button onclick="exportDatabaseExcel()" class="flex-1 xl:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center whitespace-nowrap"><i class="fa-solid fa-file-excel mr-2"></i>匯出 Excel</button>
+                        <label class="flex-1 xl:flex-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-5 py-2.5 rounded-xl font-bold transition shadow-sm flex justify-center items-center cursor-pointer whitespace-nowrap mb-0">
+                            <i class="fa-solid fa-file-import mr-2"></i>匯入 Excel
+                            <input type="file" id="import-db-file" accept=".xlsx" class="hidden" onchange="importDatabaseExcel(event)">
+                        </label>
+                        <button onclick="logoutAdmin()" class="flex-1 xl:flex-none bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-slate-900 transition shadow-md flex justify-center items-center whitespace-nowrap"><i class="fa-solid fa-right-from-bracket mr-2"></i>返回前台</button>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 md:gap-3 mb-8 border-b border-slate-200 pb-2">
+                    <button onclick="switchAdminTab('menu')" id="tab-btn-menu" class="px-6 py-3 rounded-xl font-black transition text-lg w-full sm:w-auto shadow-sm">菜單管理</button>
+                    <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="px-6 py-3 rounded-xl font-black transition text-lg w-full sm:w-auto shadow-sm">全域設定</button>
+                    <button onclick="switchAdminTab('history')" id="tab-btn-history" class="px-6 py-3 rounded-xl font-black transition text-lg w-full sm:w-auto shadow-sm">歷史結單紀錄</button>
+                    <button onclick="switchAdminTab('logs')" id="tab-btn-logs" class="px-6 py-3 rounded-xl font-black transition text-lg w-full sm:w-auto shadow-sm">系統操作紀錄</button>
+                </div>
+
+                <div id="admin-tab-menu" class="w-full">
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <div class="relative w-full md:flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute left-5 top-5 text-slate-400 text-lg"></i>
+                            <input type="text" id="admin-search-input" oninput="handleSearchInput()" class="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition font-bold text-slate-700 text-lg shadow-sm" placeholder="快速搜尋：店家、分類或餐點">
+                        </div>
+                        <button onclick="openAddItemModal()" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-4 px-8 rounded-2xl shadow-xl hover:from-orange-600 hover:to-amber-600 transition transform hover:-translate-y-1 text-lg flex items-center justify-center whitespace-nowrap shrink-0">
+                            <i class="fa-solid fa-square-plus mr-2"></i>新增餐點與店家
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 p-4 md:p-8 w-full">
+                        <div id="admin-data-grouped-list" class="space-y-8 w-full"></div>
+                    </div>
+                </div>
+
+                <div id="admin-tab-settings" class="hidden space-y-6 max-w-4xl mx-auto pb-10">
+                    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                        <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center"><i class="fa-solid fa-layer-group text-orange-500 mr-3"></i>系統大分類管理</div>
+                        </h3>
+                        <p class="text-slate-500 font-bold mb-4 text-sm break-words">管理首頁與店家的主分類。「其他」為系統保留分類，不可刪除。</p>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col md:flex-row gap-3">
+                            <input id="setting-new-cat" type="text" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold break-words" placeholder="輸入新的大分類 (例如: 飲料、日式)">
+                            <button onclick="addSysCat()" class="bg-orange-50 hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i>新增大分類</button>
+                        </div>
+                        <div id="setting-syscat-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner w-full"></div>
+                    </div>
+
+                    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                        <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center"><i class="fa-solid fa-list text-emerald-500 mr-3"></i>菜單子分類統一管理</div>
+                            <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100 shrink-0"><i class="fa-solid fa-arrows-up-down mr-1"></i>支援滑鼠/觸控拖曳排序</span>
+                        </h3>
+                        <p class="text-slate-500 font-bold mb-4 text-sm break-words">在此處調整的上下順序，將會全域套用到前台的菜單呈現順序。</p>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col md:flex-row gap-3">
+                            <input id="setting-new-subcat" type="text" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-emerald-500 font-bold break-words" placeholder="輸入新的子分類 (例如: 燒烤、炸物)">
+                            <button onclick="addSubcat()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i>新增子分類</button>
+                        </div>
+                        <div id="setting-subcat-list" class="flex flex-col gap-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner w-full"></div>
+                    </div>
+
+                    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                        <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center"><i class="fa-solid fa-store text-sky-500 mr-3"></i>店家顯示順序統一管理</div>
+                            <span class="text-sm font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-lg border border-sky-100 shrink-0"><i class="fa-solid fa-arrows-up-down mr-1"></i>支援滑鼠/觸控拖曳排序</span>
+                        </h3>
+                        <p class="text-slate-500 font-bold mb-4 text-sm break-words">在此處調整的上下順序，將會全域套用到前台首頁的店家呈現順序。</p>
+                        <div id="setting-store-sort-list" class="flex flex-col gap-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner w-full"></div>
+                    </div>
+
+                    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                        <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center"><i class="fa-solid fa-sliders text-blue-500 mr-3"></i>全域客製化選項管理</h3>
+                        <p class="text-slate-500 font-bold mb-4 text-sm break-words">在此建立的下拉選單模組，可在新增/編輯餐點時自由勾選套用。</p>
+                        <div class="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-blue-800 mb-1">選項群組名稱</label>
+                                    <input id="setting-opt-name" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 甜度、加料">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-blue-800 mb-1">選項內容 (請以半形逗號 , 分隔)</label>
+                                    <input id="setting-opt-choices" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 正常甜,少糖,半糖,無糖">
+                                </div>
+                                <div class="md:col-span-3 mt-1">
+                                    <label class="flex items-center gap-2 cursor-pointer font-bold text-sm text-blue-800 bg-white p-2.5 rounded-xl border border-blue-200 shadow-sm w-full sm:w-auto inline-flex hover:shadow transition">
+                                        <input type="checkbox" id="setting-opt-ismulti" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-blue-300">
+                                        允許使用者複選此選項 (若未勾選則強制為單選必填)
+                                    </label>
+                                </div>
+                            </div>
+                            <button onclick="addGlobalOption()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-md transition"><i class="fa-solid fa-folder-plus mr-2"></i>建立新選項模組</button>
+                        </div>
+                        <div id="setting-global-opt-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"></div>
+                    </div>
+
+                    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                        <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center"><i class="fa-solid fa-tags text-purple-500 mr-3"></i>快捷姓名標籤設定</h3>
+                        <label class="block text-sm font-bold mb-3 text-slate-500 break-words">編輯點餐時可快速點選的姓名標籤 (請以「半形逗號」分隔)</label>
+                        <textarea id="admin-quick-names" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-lg mb-6 resize-none h-32 break-words whitespace-pre-wrap" placeholder="例如：德,如,芬,禾,亭,卉"></textarea>
+                        <button onclick="saveQuickNames()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-2xl font-black shadow-lg transition text-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>儲存標籤設定</button>
+                    </div>
+                </div>
+
+                <div id="admin-tab-history" class="hidden bg-white p-4 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 border-b-2 border-slate-100 pb-6 gap-4">
+                        <div>
+                            <h3 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-clock-rotate-left text-orange-500 mr-3"></i>歷史訂單紀錄</h3>
+                            <p class="text-slate-500 font-bold mt-2 bg-slate-100 px-3 py-1 rounded-lg inline-block text-sm break-words whitespace-normal">系統結單後自動保留最新的 500 筆紀錄</p>
+                        </div>
+                        <div class="flex flex-col md:flex-row gap-3 w-full xl:w-auto items-center">
+                            <div class="flex gap-2 w-full md:w-auto">
+                                <select id="history-filter-year" onchange="renderHistory()" class="flex-1 md:flex-none bg-slate-50 border border-slate-200 px-3 py-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm text-slate-700">
+                                    <option value="all">全部年份</option>
+                                </select>
+                                <select id="history-filter-month" onchange="renderHistory()" class="flex-1 md:flex-none bg-slate-50 border border-slate-200 px-3 py-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm text-slate-700">
+                                    <option value="all">全部月份</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                                <button onclick="exportAllHistoryExcel()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap text-sm md:text-base"><i class="fa-solid fa-file-excel xl:mr-2"></i><span class="hidden xl:inline">全部匯出</span></button>
+                                <button onclick="exportHistoryTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap text-sm md:text-base"><i class="fa-solid fa-file-export xl:mr-2"></i><span class="hidden xl:inline">匯出 TXT</span></button>
+                                <button onclick="requestPassword('確認清空歷史紀錄？輸入管理員密碼', pwd => clearHistoryRecords(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-3 md:px-4 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap text-sm md:text-base"><i class="fa-solid fa-trash-can xl:mr-2"></i><span class="hidden xl:inline">清空</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="admin-history-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
+                </div>
+
+                <div id="admin-tab-logs" class="hidden bg-white p-4 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b-2 border-slate-100 pb-6 gap-4">
+                        <div>
+                            <h3 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-clipboard-list text-indigo-500 mr-3"></i>系統操作紀錄</h3>
+                            <p class="text-slate-500 font-bold mt-2 bg-slate-100 px-3 py-1 rounded-lg inline-block text-sm break-words whitespace-normal max-w-full">詳細記錄管理員對系統的操作動作 (最多保留 300 筆)</p>
+                        </div>
+                        <div class="flex gap-3 w-full md:w-auto">
+                            <button onclick="exportLogsTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap"><i class="fa-solid fa-file-export mr-2"></i>匯出 TXT</button>
+                            <button onclick="requestPassword('確認清空系統紀錄？輸入管理員密碼', pwd => clearAdminLogs(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
+                        </div>
+                    </div>
+                    <div id="admin-logs-list" class="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
                 </div>
             </div>
+        </main>
 
-            <div class="flex flex-wrap gap-2 md:gap-3 mb-8 border-b border-slate-200 pb-2">
-                <button onclick="switchAdminTab('menu')" id="tab-btn-menu" class="px-6 py-3 rounded-xl font-black transition text-lg w-full sm:w-auto shadow-sm">菜單管理</button>
-                <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="px-6 py-3 rounded-xl font-black transition text-lg w-full sm:w-auto shadow-sm">全域設定</button>
-                <button onclick="switchAdminTab('history')" id="tab-btn-history" class="px-6 py-3 rounded-xl font-black transition text-lg w-full sm:w-auto shadow-sm">歷史結單紀錄</button>
-                <button onclick="switchAdminTab('logs')" id="tab-btn-logs" class="px-6 py-3 rounded-xl font-black transition text-lg w-full sm:w-auto shadow-sm">系統操作紀錄</button>
-            </div>
-
-            <div id="admin-tab-menu" class="w-full">
-                <div class="flex flex-col md:flex-row gap-4 mb-6">
-                    <div class="relative w-full md:flex-1">
-                        <i class="fa-solid fa-magnifying-glass absolute left-5 top-5 text-slate-400 text-lg"></i>
-                        <input type="text" id="admin-search-input" oninput="handleSearchInput()" class="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 pl-14 pr-4 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition font-bold text-slate-700 text-lg shadow-sm" placeholder="快速搜尋：店家、分類或餐點">
-                    </div>
-                    <button onclick="openAddItemModal()" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-4 px-8 rounded-2xl shadow-xl hover:from-orange-600 hover:to-amber-600 transition transform hover:-translate-y-1 text-lg flex items-center justify-center whitespace-nowrap shrink-0">
-                        <i class="fa-solid fa-square-plus mr-2"></i>新增餐點與店家
+        <div id="view-receipt" class="view-section hidden print-no-shadow relative container mx-auto px-4">
+            <div id="receipt-capture-area" class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
+                <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">Su.線上點餐 明細總表</h2>
+                <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2 w-full break-words">
+                    <p class="font-bold text-lg md:text-xl break-words">結單時間：<span id="receipt-time" class="ml-2 text-slate-600 whitespace-nowrap"></span></p>
+                </div>
+                <div class="overflow-x-auto space-y-8 w-full" id="receipt-content"></div>
+                <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200 break-words whitespace-normal">請依照此表單內容進行點餐與收費作業</div>
+                <div id="receipt-action-buttons" data-html2canvas-ignore="true" class="flex flex-col sm:flex-row gap-4 justify-center items-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
+                    <div id="receipt-phone-buttons" class="flex flex-wrap justify-center gap-3 w-full sm:w-auto mr-auto"></div>
+                    <button id="btn-print-pdf" onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                        <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
+                    </button>
+                    <button id="btn-new-tab-receipt" onclick="openReceiptInNewTab()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>開啟並列印明細
+                    </button>
+                    <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
+                        <i class="fa-solid fa-house mr-2"></i>結束並返回首頁
                     </button>
                 </div>
-                <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 p-4 md:p-8 w-full">
-                    <div id="admin-data-grouped-list" class="space-y-8 w-full"></div>
-                </div>
-            </div>
-
-            <div id="admin-tab-settings" class="hidden space-y-6 max-w-4xl mx-auto pb-10">
-                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-center"><i class="fa-solid fa-layer-group text-orange-500 mr-3"></i>系統大分類管理</div>
-                    </h3>
-                    <p class="text-slate-500 font-bold mb-4 text-sm break-words">管理首頁與店家的主分類。「其他」為系統保留分類，不可刪除。</p>
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col md:flex-row gap-3">
-                        <input id="setting-new-cat" type="text" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold break-words" placeholder="輸入新的大分類 (例如: 飲料、日式)">
-                        <button onclick="addSysCat()" class="bg-orange-50 hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i>新增大分類</button>
-                    </div>
-                    <div id="setting-syscat-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner w-full"></div>
-                </div>
-
-                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-center"><i class="fa-solid fa-list text-emerald-500 mr-3"></i>菜單子分類統一管理</div>
-                        <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100 shrink-0"><i class="fa-solid fa-arrows-up-down mr-1"></i>支援滑鼠拖曳排序</span>
-                    </h3>
-                    <p class="text-slate-500 font-bold mb-4 text-sm break-words">在此處調整的上下順序，將會全域套用到前台的菜單呈現順序。</p>
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col md:flex-row gap-3">
-                        <input id="setting-new-subcat" type="text" class="flex-1 bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-emerald-500 font-bold break-words" placeholder="輸入新的子分類 (例如: 燒烤、炸物)">
-                        <button onclick="addSubcat()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-sm transition whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i>新增子分類</button>
-                    </div>
-                    <div id="setting-subcat-list" class="flex flex-col gap-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner w-full"></div>
-                </div>
-
-                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-center"><i class="fa-solid fa-store text-sky-500 mr-3"></i>店家顯示順序統一管理</div>
-                        <span class="text-sm font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-lg border border-sky-100 shrink-0"><i class="fa-solid fa-arrows-up-down mr-1"></i>支援滑鼠拖曳排序</span>
-                    </h3>
-                    <p class="text-slate-500 font-bold mb-4 text-sm break-words">在此處調整的上下順序，將會全域套用到前台首頁的店家呈現順序。</p>
-                    <div id="setting-store-sort-list" class="flex flex-col gap-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-inner w-full"></div>
-                </div>
-
-                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center"><i class="fa-solid fa-sliders text-blue-500 mr-3"></i>全域客製化選項管理</h3>
-                    <p class="text-slate-500 font-bold mb-4 text-sm break-words">在此建立的下拉選單模組，可在新增/編輯餐點時自由勾選套用。</p>
-                    <div class="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 mb-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-blue-800 mb-1">選項群組名稱</label>
-                                <input id="setting-opt-name" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 甜度、加料">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-blue-800 mb-1">選項內容 (請以半形逗號 , 分隔)</label>
-                                <input id="setting-opt-choices" type="text" class="w-full bg-white border border-blue-200 rounded-xl p-3 outline-none focus:border-blue-500 font-bold text-sm break-words" placeholder="例如: 正常甜,少糖,半糖,無糖">
-                            </div>
-                            <div class="md:col-span-3 mt-1">
-                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm text-blue-800 bg-white p-2.5 rounded-xl border border-blue-200 shadow-sm w-full sm:w-auto inline-flex hover:shadow transition">
-                                    <input type="checkbox" id="setting-opt-ismulti" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-blue-300">
-                                    允許使用者複選此選項 (若未勾選則強制為單選必填)
-                                </label>
-                            </div>
-                        </div>
-                        <button onclick="addGlobalOption()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-md transition"><i class="fa-solid fa-folder-plus mr-2"></i>建立新選項模組</button>
-                    </div>
-                    <div id="setting-global-opt-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"></div>
-                </div>
-
-                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                    <h3 class="text-2xl font-black text-slate-800 mb-6 border-b-2 border-slate-100 pb-4 flex items-center"><i class="fa-solid fa-tags text-purple-500 mr-3"></i>快捷姓名標籤設定</h3>
-                    <label class="block text-sm font-bold mb-3 text-slate-500 break-words">編輯點餐時可快速點選的姓名標籤 (請以「半形逗號」分隔)</label>
-                    <textarea id="admin-quick-names" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-lg mb-6 resize-none h-32 break-words whitespace-pre-wrap" placeholder="例如：德,如,芬,禾,亭,卉"></textarea>
-                    <button onclick="saveQuickNames()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-2xl font-black shadow-lg transition text-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>儲存標籤設定</button>
-                </div>
-            </div>
-
-            <div id="admin-tab-history" class="hidden bg-white p-4 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 border-b-2 border-slate-100 pb-6 gap-4">
-                    <div>
-                        <h3 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-clock-rotate-left text-orange-500 mr-3"></i>歷史訂單紀錄</h3>
-                        <p class="text-slate-500 font-bold mt-2 bg-slate-100 px-3 py-1 rounded-lg inline-block text-sm break-words whitespace-normal">系統結單後自動保留最新的 500 筆紀錄</p>
-                    </div>
-                    <div class="flex flex-col md:flex-row gap-3 w-full xl:w-auto items-center">
-                        <div class="flex gap-2 w-full md:w-auto">
-                            <select id="history-filter-year" onchange="renderHistory()" class="flex-1 md:flex-none bg-slate-50 border border-slate-200 px-3 py-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm text-slate-700">
-                                <option value="all">全部年份</option>
-                            </select>
-                            <select id="history-filter-month" onchange="renderHistory()" class="flex-1 md:flex-none bg-slate-50 border border-slate-200 px-3 py-3 rounded-xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm text-slate-700">
-                                <option value="all">全部月份</option>
-                            </select>
-                        </div>
-                        <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                            <button onclick="exportAllHistoryExcel()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap text-sm md:text-base"><i class="fa-solid fa-file-excel xl:mr-2"></i><span class="hidden xl:inline">全部匯出</span></button>
-                            <button onclick="exportHistoryTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap text-sm md:text-base"><i class="fa-solid fa-file-export xl:mr-2"></i><span class="hidden xl:inline">匯出 TXT</span></button>
-                            <button onclick="requestPassword('確認清空歷史紀錄？輸入管理員密碼', pwd => clearHistoryRecords(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-3 md:px-4 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap text-sm md:text-base"><i class="fa-solid fa-trash-can xl:mr-2"></i><span class="hidden xl:inline">清空</span></button>
-                        </div>
-                    </div>
-                </div>
-                <div id="admin-history-list" class="grid grid-cols-1 xl:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
-            </div>
-
-            <div id="admin-tab-logs" class="hidden bg-white p-4 md:p-8 rounded-[2rem] shadow-xl border border-slate-100">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b-2 border-slate-100 pb-6 gap-4">
-                    <div>
-                        <h3 class="text-3xl font-black text-slate-800 flex items-center break-words"><i class="fa-solid fa-clipboard-list text-indigo-500 mr-3"></i>系統操作紀錄</h3>
-                        <p class="text-slate-500 font-bold mt-2 bg-slate-100 px-3 py-1 rounded-lg inline-block text-sm break-words whitespace-normal max-w-full">詳細記錄管理員對系統的操作動作 (最多保留 300 筆)</p>
-                    </div>
-                    <div class="flex gap-3 w-full md:w-auto">
-                        <button onclick="exportLogsTxt()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold transition shadow-md whitespace-nowrap"><i class="fa-solid fa-file-export mr-2"></i>匯出 TXT</button>
-                        <button onclick="requestPassword('確認清空系統紀錄？輸入管理員密碼', pwd => clearAdminLogs(pwd))" class="flex-1 md:flex-none bg-red-50 text-red-600 hover:bg-red-100 px-5 py-3 rounded-xl font-bold transition border border-red-200 whitespace-nowrap"><i class="fa-solid fa-trash-can mr-2"></i>清空紀錄</button>
-                    </div>
-                </div>
-                <div id="admin-logs-list" class="space-y-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar w-full"></div>
             </div>
         </div>
-    </main>
-
-    <div id="checkout-loader" class="fixed inset-0 bg-black/80 hidden z-[500] flex flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity">
+    </div> <div id="checkout-loader" class="fixed inset-0 bg-black/80 hidden z-[500] flex flex-col items-center justify-center p-4 backdrop-blur-md transition-opacity">
         <i class="fa-solid fa-spinner fa-spin text-6xl text-orange-500 mb-6 drop-shadow-lg"></i>
         <p id="loader-title" class="text-white font-black text-2xl tracking-widest drop-shadow-md">系統結算中，請稍候...</p>
         <p id="loader-desc" class="text-slate-300 font-bold text-sm mt-2">正在為您產生明細，請勿關閉視窗</p>
-    </div>
-
-    <div id="view-receipt" class="view-section hidden print-no-shadow relative">
-        <div id="receipt-capture-area" class="max-w-4xl mx-auto bg-white p-4 sm:p-6 md:p-12 rounded-[2rem] shadow-2xl border border-slate-100 mb-8 mt-4 md:mt-8 print-no-shadow w-full">
-            <h2 class="text-3xl md:text-4xl font-black text-center mb-6 border-b-4 border-slate-800 pb-4 text-slate-800 break-words">Su.線上點餐 明細總表</h2>
-            <div class="flex flex-col md:flex-row justify-between mb-6 text-slate-800 gap-2 w-full break-words">
-                <p class="font-bold text-lg md:text-xl break-words">結單時間：<span id="receipt-time" class="ml-2 text-slate-600 whitespace-nowrap"></span></p>
-            </div>
-            <div class="overflow-x-auto space-y-8 w-full" id="receipt-content"></div>
-            <div class="text-center mt-10 text-slate-500 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200 break-words whitespace-normal">請依照此表單內容進行點餐與收費作業</div>
-            <div id="receipt-action-buttons" data-html2canvas-ignore="true" class="flex flex-col sm:flex-row gap-4 justify-center items-center no-print mt-10 border-t-2 border-dashed border-slate-200 pt-8 w-full">
-                <div id="receipt-phone-buttons" class="flex flex-wrap justify-center gap-3 w-full sm:w-auto mr-auto"></div>
-                <button id="btn-print-pdf" onclick="setTimeout(() => window.print(), 500)" class="hidden lg:flex bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
-                    <i class="fa-solid fa-file-pdf mr-2"></i>列印 / 下載 PDF
-                </button>
-                <button id="btn-new-tab-receipt" onclick="openReceiptInNewTab()" class="flex lg:hidden bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-black shadow-lg transition items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
-                    <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>開啟並列印明細
-                </button>
-                <button onclick="closeReceipt()" class="bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-8 py-4 rounded-xl font-black transition flex items-center justify-center text-lg hover:-translate-y-1 w-full sm:w-auto">
-                    <i class="fa-solid fa-house mr-2"></i>結束並返回首頁
-                </button>
-            </div>
-        </div>
     </div>
 
     <div id="cart-modal" class="fixed inset-0 bg-black/60 hidden z-[150] flex flex-col justify-end lg:justify-center items-center p-0 lg:p-4 backdrop-blur-md transition-opacity">
@@ -619,6 +636,7 @@
             </div>
         </div>
     </div>
+
 <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, runTransaction, updateDoc, deleteField, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
@@ -871,7 +889,6 @@
                             });
                         }
                         
-                        // 修正：自動過濾掉沒有任何餐點的幽靈店家
                         if (storesDecoded) {
                             const validStoreNames = new Set(newData.items.map(i => i.store || 'Unknown'));
                             storesDecoded = storesDecoded.filter(s => validStoreNames.has(s.name));
@@ -985,10 +1002,22 @@
             document.getElementById('global-update-date').innerText = window.getFormattedDate(new Date());
         };
 
-        window.addEventListener('scroll', () => {
+        // 綁定滾動事件在 main-scroll-container 上並實作半透明效果
+        let scrollTimeout;
+        const scrollContainer = document.getElementById('main-scroll-container');
+        scrollContainer.addEventListener('scroll', () => {
             const btn = document.getElementById('btn-back-to-top');
-            if (window.scrollY > 300) btn.classList.remove('opacity-0', 'pointer-events-none');
-            else btn.classList.add('opacity-0', 'pointer-events-none');
+            if (scrollContainer.scrollTop > 300) {
+                btn.classList.remove('opacity-0', 'pointer-events-none');
+                btn.style.opacity = '0.3'; // 滑動時半透明減少遮擋
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    btn.style.opacity = ''; // 停止滑動後恢復原本的不透明度
+                }, 200);
+            } else {
+                btn.classList.add('opacity-0', 'pointer-events-none');
+                btn.style.opacity = '';
+            }
         }, {passive: true});
 
         window.resetInactivityTimer = function() {
@@ -1001,7 +1030,8 @@
                 }, 600000);
             }
         };
-        ['click', 'scroll', 'keydown'].forEach(evt => document.addEventListener(evt, window.resetInactivityTimer, {passive: true}));
+        ['click', 'keydown'].forEach(evt => document.addEventListener(evt, window.resetInactivityTimer, {passive: true}));
+        scrollContainer.addEventListener('scroll', window.resetInactivityTimer, {passive: true});
 
         window.showView = function(viewName) {
             if (window.state.session && window.state.session.isActive && viewName !== 'admin' && viewName !== 'active-order' && viewName !== 'receipt') {
@@ -1010,7 +1040,10 @@
             document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
             const targetView = document.getElementById(`view-${viewName}`);
             if(targetView) targetView.classList.remove('hidden');
-            window.scrollTo({top: 0});
+            
+            // 返回頂部需控制 scroll-container 
+            scrollContainer.scrollTo({top: 0});
+            
             if (viewName === 'home') window.renderHome();
             else if (viewName === 'admin') window.renderAdmin();
             else if (viewName === 'active-order') {
@@ -1731,6 +1764,87 @@
             } else alert("❌ 密碼錯誤，拒絕執行！");
         };
 
+        // ====== 手機觸控拖曳排序共用核心函數 ======
+        window._touchDragState = { type: null, srcIdx: null, clone: null, el: null, targetIdx: null };
+
+        window.handleTouchStart = function(e, idx, type) {
+            const grip = e.currentTarget.querySelector('.fa-grip-lines');
+            // 確保只有摸到拖曳圖示時才啟動拖曳排序，以防影響清單一般滑動
+            if (e.target !== grip && !grip.contains(e.target)) return;
+            
+            e.preventDefault();
+            const el = e.currentTarget;
+            const rect = el.getBoundingClientRect();
+            
+            window._touchDragState.type = type;
+            window._touchDragState.srcIdx = idx;
+            window._touchDragState.el = el;
+            window._touchDragState.targetIdx = idx;
+
+            const clone = el.cloneNode(true);
+            clone.style.position = 'fixed';
+            clone.style.top = rect.top + 'px';
+            clone.style.left = rect.left + 'px';
+            clone.style.width = rect.width + 'px';
+            clone.style.height = rect.height + 'px';
+            clone.style.zIndex = '9999';
+            clone.style.opacity = '0.9';
+            clone.style.pointerEvents = 'none';
+            clone.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+            document.body.appendChild(clone);
+            
+            window._touchDragState.clone = clone;
+            el.classList.add('opacity-30', 'border-dashed');
+        };
+
+        window.handleTouchMove = function(e) {
+            if (!window._touchDragState.clone) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const clone = window._touchDragState.clone;
+            clone.style.top = (touch.clientY - clone.offsetHeight / 2) + 'px';
+            clone.style.left = (touch.clientX - clone.offsetWidth / 2) + 'px';
+
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (targetEl) {
+                const row = targetEl.closest('[draggable="true"]');
+                if (row && row !== window._touchDragState.el && row.parentElement === window._touchDragState.el.parentElement) {
+                    const list = row.parentElement;
+                    const children = Array.from(list.children);
+                    const targetIdx = children.indexOf(row);
+                    const currentIdx = children.indexOf(window._touchDragState.el);
+                    
+                    if (targetIdx !== -1 && currentIdx !== -1) {
+                        if (targetIdx > currentIdx) list.insertBefore(row, window._touchDragState.el);
+                        else list.insertBefore(window._touchDragState.el, row);
+                    }
+                }
+            }
+        };
+
+        window.handleTouchEnd = function(e) {
+            if (!window._touchDragState.clone) return;
+            window._touchDragState.clone.remove();
+            window._touchDragState.el.classList.remove('opacity-30', 'border-dashed');
+            
+            const type = window._touchDragState.type;
+            const srcIdx = window._touchDragState.srcIdx;
+            const el = window._touchDragState.el;
+            
+            const list = el.parentElement;
+            const children = Array.from(list.children);
+            const finalIdx = children.indexOf(el);
+
+            window._touchDragState = { type: null, srcIdx: null, clone: null, el: null, targetIdx: null };
+
+            if (finalIdx !== -1 && finalIdx !== srcIdx) {
+                if (type === 'cat') window.executeCatDrop(srcIdx, finalIdx);
+                else if (type === 'store') window.executeStoreDrop(srcIdx, finalIdx);
+                else if (type === 'subcat') window.executeSubcatDrop(srcIdx, finalIdx);
+            }
+        };
+        // ===========================================
+
         window.renderAdminSettings = function() {
             document.getElementById('admin-quick-names').value = window.state.quickNames.join(',');
             const sysCatContainer = document.getElementById('setting-syscat-list');
@@ -1739,9 +1853,9 @@
                     const isOther = c.id === 'cat_other';
                     return `
                     <div class="flex items-center justify-between bg-orange-50 text-orange-800 px-4 py-3 rounded-lg font-bold border border-orange-100 shadow-sm transition group w-full ${!isOther ? 'cursor-move hover:bg-orange-100 hover:shadow-md' : 'opacity-70'}"
-                         ${!isOther ? `draggable="true" ondragstart="handleCatDragStart(event, ${idx})" ondragover="handleCatDragOver(event)" ondrop="handleCatDrop(event, ${idx})"` : ''}>
+                         ${!isOther ? `draggable="true" ondragstart="handleCatDragStart(event, ${idx})" ondragover="handleCatDragOver(event)" ondrop="handleCatDrop(event, ${idx})" ontouchstart="handleTouchStart(event, ${idx}, 'cat')" ontouchmove="handleTouchMove(event)" ontouchend="handleTouchEnd(event)"` : ''}>
                         <div class="flex items-center gap-3 pr-2 w-full">
-                            ${!isOther ? `<i class="fa-solid fa-grip-lines text-orange-300 group-hover:text-orange-500 transition shrink-0"></i>` : ''}
+                            ${!isOther ? `<i class="fa-solid fa-grip-lines text-orange-300 group-hover:text-orange-500 transition shrink-0 p-2 -ml-2"></i>` : ''}
                             <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${c.color}"></span>
                             <span class="break-words whitespace-normal leading-snug">${c.name}</span>
                         </div>
@@ -1752,9 +1866,11 @@
             const storeSortContainer = document.getElementById('setting-store-sort-list');
             if(storeSortContainer) {
                 storeSortContainer.innerHTML = window.state.stores.map((s, idx) => `
-                    <div class="flex items-center justify-between bg-sky-50 text-sky-800 px-4 py-3 rounded-lg font-bold border border-sky-100 shadow-sm cursor-move hover:bg-sky-100 hover:shadow-md transition group w-full" draggable="true" ondragstart="handleStoreDragStart(event, ${idx})" ondragover="handleStoreDragOver(event)" ondrop="handleStoreDrop(event, ${idx})">
+                    <div class="flex items-center justify-between bg-sky-50 text-sky-800 px-4 py-3 rounded-lg font-bold border border-sky-100 shadow-sm cursor-move hover:bg-sky-100 hover:shadow-md transition group w-full" 
+                         draggable="true" ondragstart="handleStoreDragStart(event, ${idx})" ondragover="handleStoreDragOver(event)" ondrop="handleStoreDrop(event, ${idx})"
+                         ontouchstart="handleTouchStart(event, ${idx}, 'store')" ontouchmove="handleTouchMove(event)" ontouchend="handleTouchEnd(event)">
                         <div class="flex items-center gap-3 pr-2 w-full">
-                            <i class="fa-solid fa-grip-lines text-sky-300 group-hover:text-sky-500 transition shrink-0"></i>
+                            <i class="fa-solid fa-grip-lines text-sky-300 group-hover:text-sky-500 transition shrink-0 p-2 -ml-2"></i>
                             <span class="break-words whitespace-normal leading-snug">${s.name}</span>
                         </div>
                     </div>`).join('');
@@ -1762,9 +1878,11 @@
             const subCatContainer = document.getElementById('setting-subcat-list');
             if(subCatContainer) {
                 subCatContainer.innerHTML = window.state.subCategories.map((s, idx) => `
-                    <div class="flex items-center justify-between bg-emerald-50 text-emerald-700 px-4 py-3 rounded-lg font-bold border border-emerald-100 shadow-sm cursor-move hover:bg-emerald-100 hover:shadow-md transition group w-full" draggable="true" ondragstart="handleDragStart(event, ${idx})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${idx})">
+                    <div class="flex items-center justify-between bg-emerald-50 text-emerald-700 px-4 py-3 rounded-lg font-bold border border-emerald-100 shadow-sm cursor-move hover:bg-emerald-100 hover:shadow-md transition group w-full" 
+                         draggable="true" ondragstart="handleDragStart(event, ${idx})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${idx})"
+                         ontouchstart="handleTouchStart(event, ${idx}, 'subcat')" ontouchmove="handleTouchMove(event)" ontouchend="handleTouchEnd(event)">
                         <div class="flex items-center gap-3 pr-2 w-full">
-                            <i class="fa-solid fa-grip-lines text-emerald-300 group-hover:text-emerald-500 transition shrink-0"></i>
+                            <i class="fa-solid fa-grip-lines text-emerald-300 group-hover:text-emerald-500 transition shrink-0 p-2 -ml-2"></i>
                             <span class="break-words whitespace-normal leading-snug">${s}</span>
                         </div>
                         ${s === '主餐' ? '<span class="text-xs text-slate-400 bg-white px-2 py-0.5 rounded shadow-sm shrink-0">保留項目</span>' : `<i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition shrink-0" onclick="deleteSubcat(${idx})"></i>`}
@@ -1808,6 +1926,16 @@
             });
         };
 
+        window.executeSubcatDrop = async function(srcIdx, targetIdx) {
+            if(srcIdx === targetIdx) return;
+            const newArr = [...window.state.subCategories];
+            const item = newArr.splice(srcIdx, 1)[0];
+            newArr.splice(targetIdx, 0, item);
+            window.state.subCategories = newArr;
+            window.addAdminLog('修改', `調整子分類排序順序：${item} 移至第 ${targetIdx + 1} 位`);
+            window.renderAdminSettings(); await window.saveState();
+        };
+
         let draggedSubcatIndex = null;
         window.handleDragStart = function(e, idx) { draggedSubcatIndex = idx; e.dataTransfer.effectAllowed = "move"; e.target.classList.add('dragging'); };
         window.handleDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; };
@@ -1815,26 +1943,15 @@
             e.preventDefault();
             const draggedElement = document.querySelector('.dragging');
             if(draggedElement) draggedElement.classList.remove('dragging');
-            if(draggedSubcatIndex === null || draggedSubcatIndex === targetIdx) return;
-            const newArr = [...window.state.subCategories];
-            const item = newArr.splice(draggedSubcatIndex, 1)[0];
-            newArr.splice(targetIdx, 0, item);
-            window.state.subCategories = newArr;
-            window.addAdminLog('修改', `調整子分類排序順序：${item} 移至第 ${targetIdx + 1} 位`);
-            window.renderAdminSettings(); await window.saveState();
+            if(draggedSubcatIndex === null) return;
+            await window.executeSubcatDrop(draggedSubcatIndex, targetIdx);
         };
 
-        let draggedCatIndex = null;
-        window.handleCatDragStart = function(e, idx) { draggedCatIndex = idx; e.dataTransfer.effectAllowed = "move"; e.target.classList.add('dragging'); };
-        window.handleCatDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; };
-        window.handleCatDrop = async function(e, targetIdx) {
-            e.preventDefault();
-            const draggedElement = document.querySelector('.dragging');
-            if(draggedElement) draggedElement.classList.remove('dragging');
-            if(draggedCatIndex === null || draggedCatIndex === targetIdx) return;
+        window.executeCatDrop = async function(srcIdx, targetIdx) {
+            if(srcIdx === targetIdx) return;
             if(window.state.categories[targetIdx].id === 'cat_other') return; 
             const newArr = [...window.state.categories];
-            const item = newArr.splice(draggedCatIndex, 1)[0];
+            const item = newArr.splice(srcIdx, 1)[0];
             newArr.splice(targetIdx, 0, item);
             const otherIdx = newArr.findIndex(c => c.id === 'cat_other');
             if (otherIdx > -1 && otherIdx !== newArr.length - 1) {
@@ -1846,6 +1963,27 @@
             window.renderAdminSettings(); window.renderHome(); await window.saveState();
         };
 
+        let draggedCatIndex = null;
+        window.handleCatDragStart = function(e, idx) { draggedCatIndex = idx; e.dataTransfer.effectAllowed = "move"; e.target.classList.add('dragging'); };
+        window.handleCatDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; };
+        window.handleCatDrop = async function(e, targetIdx) {
+            e.preventDefault();
+            const draggedElement = document.querySelector('.dragging');
+            if(draggedElement) draggedElement.classList.remove('dragging');
+            if(draggedCatIndex === null) return;
+            await window.executeCatDrop(draggedCatIndex, targetIdx);
+        };
+
+        window.executeStoreDrop = async function(srcIdx, targetIdx) {
+            if(srcIdx === targetIdx) return;
+            const newArr = [...window.state.stores];
+            const item = newArr.splice(srcIdx, 1)[0];
+            newArr.splice(targetIdx, 0, item);
+            window.state.stores = newArr;
+            window.addAdminLog('修改', `調整店家顯示順序：${item.name} 移至第 ${targetIdx + 1} 位`);
+            window.renderAdminSettings(); await window.saveState();
+        };
+
         let draggedStoreIndex = null;
         window.handleStoreDragStart = function(e, idx) { draggedStoreIndex = idx; e.dataTransfer.effectAllowed = "move"; e.target.classList.add('dragging'); };
         window.handleStoreDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; };
@@ -1853,14 +1991,10 @@
             e.preventDefault();
             const draggedElement = document.querySelector('.dragging');
             if(draggedElement) draggedElement.classList.remove('dragging');
-            if(draggedStoreIndex === null || draggedStoreIndex === targetIdx) return;
-            const newArr = [...window.state.stores];
-            const item = newArr.splice(draggedStoreIndex, 1)[0];
-            newArr.splice(targetIdx, 0, item);
-            window.state.stores = newArr;
-            window.addAdminLog('修改', `調整店家顯示順序：${item.name} 移至第 ${targetIdx + 1} 位`);
-            window.renderAdminSettings(); await window.saveState();
+            if(draggedStoreIndex === null) return;
+            await window.executeStoreDrop(draggedStoreIndex, targetIdx);
         };
+        
         document.addEventListener('dragend', () => {
             const draggedElement = document.querySelector('.dragging');
             if(draggedElement) draggedElement.classList.remove('dragging');
@@ -2179,7 +2313,7 @@
             if (document.activeElement && document.activeElement !== document.body && document.activeElement.id !== 'admin-search-input') document.activeElement.blur();
             window.updateStoreDatalist();
             const query = document.getElementById('admin-search-input').value.toLowerCase();
-            const isSearching = query.length > 0; // 判斷是否正在搜尋
+            const isSearching = query.length > 0;
             
             let filteredItems = window.state.items;
             if (query) filteredItems = window.state.items.filter(i => i.name.toLowerCase().includes(query) || (i.store || '').toLowerCase().includes(query) || (i.subCat && i.subCat.toLowerCase().includes(query)));
@@ -2194,7 +2328,6 @@
                 const storeColor = window.getStoreColor(store);
                 const escapedStoreName = btoa(unescape(encodeURIComponent(store))).replace(/=/g, '');
                 
-                // 若正在搜尋，則預設強制展開該店家
                 const activeStateClass = isSearching ? 'active' : '';
                 
                 html += `
@@ -2434,7 +2567,6 @@
                 window.addAdminLog('刪除', `刪除餐點「${deletedItem.name}」`);
                 window.state.menuUpdateDate = window.getFormattedDate();
                 
-                // 刪除餐點後呼叫 saveState 將觸發 onSnapshot，自動清理「無餐點的空店家」
                 await window.saveState(); window.debouncedAdminRender();
             }
         };

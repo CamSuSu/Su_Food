@@ -25,6 +25,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
+        /* 引入 Su Computer Studio 置底邏輯，鎖定 body 高度，內部建立獨立滾動容器 */
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             transition: background 0.3s; 
@@ -55,6 +56,7 @@
         .dragging { opacity: 0.5; border: 2px dashed #10b981; }
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1em; padding-right: 2.5rem !important; }
         
+        /* 管理者摺疊效果 (安全高度調升至 30000px 防止大量菜單被裁切) */
         .admin-store-items-container { max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .admin-store-items-container.active { max-height: 30000px; }
         .chevron-icon { transition: transform 0.3s ease; }
@@ -462,7 +464,7 @@
                         <button type="button" onclick="selectTime('custom')" class="time-btn bg-slate-100 text-slate-600 py-2 rounded-lg font-bold transition text-sm border-2 border-transparent hover:border-orange-200 shrink-0" data-val="custom">自訂</button>
                     </div>
                     <div id="custom-time-container" class="hidden mt-2 w-full">
-                        <input id="custom-time-input" type="number" min="1" max="1440" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full bg-orange-50 border-2 border-orange-200 p-3 rounded-xl outline-none focus:border-orange-500 font-bold text-sm text-center text-orange-800 shadow-inner break-words" placeholder="輸入自訂分鐘數">
+                        <input id="custom-time-input" type="number" min="1" max="1440" class="w-full bg-orange-50 border-2 border-orange-200 p-3 rounded-xl outline-none focus:border-orange-500 font-bold text-sm text-center text-orange-800 shadow-inner break-words" placeholder="輸入自訂分鐘數">
                     </div>
                 </div>
                 <div class="pt-2 flex gap-3 w-full">
@@ -488,7 +490,7 @@
                     <p id="modal-price" class="text-2xl md:text-3xl font-black text-orange-500 ml-2 shrink-0">$0</p>
                     <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 shadow-inner shrink-0">
                         <button type="button" onclick="adjQty(-1)" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center font-bold text-2xl hover:bg-white hover:shadow rounded-lg transition text-slate-600 active:bg-slate-200">-</button>
-                        <input id="modal-qty" type="number" value="1" min="1" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value === '0') this.value = '1';" onchange="if(!this.value || parseInt(this.value, 10) < 1) this.value = 1;" class="w-12 md:w-14 text-center bg-transparent font-black text-2xl outline-none text-slate-800">
+                        <input id="modal-qty" type="number" value="1" min="1" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value === '0') this.value = '1';" onchange="if(!this.value || parseInt(this.value) < 1) this.value = 1;" class="w-12 md:w-14 text-center bg-transparent font-black text-2xl outline-none text-slate-800">
                         <button type="button" onclick="adjQty(1)" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center font-bold text-2xl hover:bg-white hover:shadow rounded-lg transition text-slate-600 active:bg-slate-200">+</button>
                     </div>
                 </div>
@@ -573,11 +575,11 @@
                                 <div class="col-span-2 sm:col-span-1 grid grid-cols-2 gap-3">
                                     <div>
                                         <label class="block text-xs font-bold mb-1 text-slate-500">價格 <span class="text-red-500">*</span></label>
-                                        <input id="admin-input-price" type="number" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold" placeholder="90">
+                                        <input id="admin-input-price" type="number" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold" placeholder="90">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-bold mb-1 text-slate-500">加大加價(選填)</label>
-                                        <input id="admin-input-upsize" type="number" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold" placeholder="例:15">
+                                        <input id="admin-input-upsize" type="number" class="w-full bg-white border border-slate-300 rounded-xl p-3 outline-none focus:border-orange-500 font-bold" placeholder="例:15">
                                     </div>
                                 </div>
                             </div>
@@ -667,7 +669,8 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
-        // [修正] 保證執行機制的節流防抖
+        // [修正 1]：重寫 debounceRender 為保證執行機制的節流防抖
+        // 解決：當多人連點時，計時器不斷重置導致畫面卡住的問題。現在即使連點，最晚每 200ms 一定會強制刷新畫面一次。
         window.debounceRender = function(fn, delay) {
             let timeoutId;
             let lastExecuted = 0;
@@ -688,16 +691,6 @@
         };
 
         window.isCheckingOut = false;
-        
-        // [新增] XSS 防護跳脫字元函數
-        window.escapeHTML = function(str) {
-            if (typeof str !== 'string') return str;
-            return str.replace(/[&<>'"]/g, function(tag) {
-                const charsToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
-                return charsToReplace[tag] || tag;
-            });
-        };
-
         window.dbCache = { itemsStr: null, storesStr: null, orderHistoryStr: null, adminLogsStr: null };
         window.bulkEditOriginalData = {};
         window.activeOrderSubcatFilter = 'all';
@@ -822,7 +815,7 @@
 
         window.pendingPwdCallback = null;
         window.requestPassword = function(msg, callback) {
-            document.getElementById('pwd-prompt-msg').innerText = window.escapeHTML(msg);
+            document.getElementById('pwd-prompt-msg').innerText = msg;
             document.getElementById('pwd-prompt-input').value = '';
             window.pendingPwdCallback = callback;
             window.openModal('pwd-prompt-modal');
@@ -1029,35 +1022,19 @@
         }
         initSystem();
 
-        // [優化] 改良版 SaveState：支援局部更新陣列，大幅節省 Firebase 讀寫流量
-        window.saveState = async function(partialKeys = null) {
+        window.saveState = async function() {
             try {
-                if (partialKeys && Array.isArray(partialKeys)) {
-                    const updateObj = {};
-                    partialKeys.forEach(key => {
-                        if (key === 'orderHistory') updateObj.orderHistoryStr = window.compressData(window.state[key]);
-                        else if (key === 'adminLogs') updateObj.adminLogsStr = window.compressData(window.state[key]);
-                        else if (key === 'items') updateObj.itemsStr = window.compressData(window.state[key]);
-                        else if (key === 'stores') updateObj.storesStr = window.compressData(window.state[key]);
-                        else updateObj[key] = window.state[key];
-                    });
-                    if (Object.keys(updateObj).length > 0) {
-                        await updateDoc(dbRef, updateObj);
-                    }
-                } else {
-                    // 全域覆寫保留做為備案
-                    const safeState = { ...window.state };
-                    safeState.orderHistoryStr = window.compressData(safeState.orderHistory);
-                    safeState.adminLogsStr = window.compressData(safeState.adminLogs);
-                    safeState.itemsStr = window.compressData(safeState.items);
-                    safeState.storesStr = window.compressData(safeState.stores);
-                    delete safeState.orderHistory;
-                    delete safeState.adminLogs;
-                    delete safeState.items;
-                    delete safeState.stores;
-                    await setDoc(dbRef, safeState, { merge: true });
-                }
-            } catch(e) { console.error("資料儲存失敗：", e); }
+                const safeState = { ...window.state };
+                safeState.orderHistoryStr = window.compressData(safeState.orderHistory);
+                safeState.adminLogsStr = window.compressData(safeState.adminLogs);
+                safeState.itemsStr = window.compressData(safeState.items);
+                safeState.storesStr = window.compressData(safeState.stores);
+                delete safeState.orderHistory;
+                delete safeState.adminLogs;
+                delete safeState.items;
+                delete safeState.stores;
+                await setDoc(dbRef, safeState, { merge: true });
+            } catch(e) {}
         };
 
         window.updateGlobalDateDisplay = function() {
@@ -1119,7 +1096,7 @@
             WEEKDAYS.forEach((day, idx) => {
                 if (hoursObj[idx] && hoursObj[idx].length > 0) {
                     hasHours = true;
-                    html += `<div class="break-words whitespace-normal"><span class="font-bold text-slate-700 bg-white px-2 py-0.5 rounded shadow-sm mr-2 border border-slate-200 shrink-0">星期${window.escapeHTML(day)}</span> ${window.escapeHTML(hoursObj[idx].join(' , '))}</div>`;
+                    html += `<div class="break-words whitespace-normal"><span class="font-bold text-slate-700 bg-white px-2 py-0.5 rounded shadow-sm mr-2 border border-slate-200 shrink-0">星期${day}</span> ${hoursObj[idx].join(' , ')}</div>`;
                 }
             });
             html += '</div></div>';
@@ -1130,8 +1107,8 @@
             let tabsHtml = `<button type="button" data-id="all" onclick="filterStore('all')" class="cat-tab snap-start bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold whitespace-nowrap shadow-md transition border border-slate-800 transform scale-105 shrink-0">全部店家</button>`;
             const regularCats = window.state.categories.filter(c => c.id !== 'cat_other');
             const otherCat = window.state.categories.find(c => c.id === 'cat_other');
-            regularCats.forEach(c => { tabsHtml += `<button type="button" data-id="${window.escapeHTML(c.id)}" onclick="filterStore('${window.escapeHTML(c.id}')" class="cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${window.escapeHTML(c.name)}</button>`; });
-            if (otherCat) tabsHtml += `<button type="button" data-id="${window.escapeHTML(otherCat.id)}" onclick="filterStore('${window.escapeHTML(otherCat.id}')" class="cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${window.escapeHTML(otherCat.name)}</button>`;
+            regularCats.forEach(c => { tabsHtml += `<button type="button" data-id="${c.id}" onclick="filterStore('${c.id}')" class="cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${c.name}</button>`; });
+            if (otherCat) tabsHtml += `<button type="button" data-id="${otherCat.id}" onclick="filterStore('${otherCat.id}')" class="cat-tab snap-start bg-white border border-slate-200 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-slate-600 hover:bg-slate-50 transition shadow-sm hover:-translate-y-0.5 shrink-0">${otherCat.name}</button>`;
             document.getElementById('category-tabs').innerHTML = tabsHtml;
             window.filterStore('all');
         };
@@ -1160,16 +1137,16 @@
                 const closedBadge = isClosed ? `<div class="absolute top-3 right-3 bg-red-600 text-white text-xs font-black px-2 py-1 rounded-lg shadow-md z-20 shadow-red-500/50 flex items-center"><i class="fa-solid fa-store-slash mr-1"></i>暫停營業</div>` : '';
                 const grayscaleCls = isClosed ? 'grayscale opacity-70' : '';
                 const pointerCls = isClosed ? 'cursor-not-allowed opacity-80' : 'cursor-pointer';
-                const onClickAction = isClosed ? `alert('該店家目前暫停營業中！')` : `openStoreBrowse('${window.escapeHTML(storeName.replace(/'/g, "\\'"))}')`;
+                const onClickAction = isClosed ? `alert('該店家目前暫停營業中！')` : `openStoreBrowse('${storeName}')`;
                 gridHtml += `
                     <div class="category-card content-vis-auto bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col relative group ${pointerCls}" onclick="${onClickAction}">
                         ${closedBadge}
                         <div class="w-full aspect-[4/3] bg-slate-100 flex justify-center items-center overflow-hidden p-2 ${grayscaleCls}">
-                            <img src="${window.escapeHTML(coverImg)}" loading="lazy" decoding="async" class="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" alt="${window.escapeHTML(storeName)}">
+                            <img src="${coverImg}" loading="lazy" decoding="async" class="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105" alt="${storeName}">
                         </div>
                         <div class="p-5 md:p-6 flex-1 flex flex-col relative z-10 bg-white">
-                            <div class="mb-3"><span class="text-[11px] font-black text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg shadow-sm border border-orange-100">${window.escapeHTML(cat ? cat.name : '綜合')}</span></div>
-                            <h3 class="text-2xl md:text-3xl font-black text-slate-800 mb-2 group-hover:text-orange-600 transition-colors leading-snug break-words">${window.escapeHTML(storeName)}</h3>
+                            <div class="mb-3"><span class="text-[11px] font-black text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg shadow-sm border border-orange-100">${cat ? cat.name : '綜合'}</span></div>
+                            <h3 class="text-2xl md:text-3xl font-black text-slate-800 mb-2 group-hover:text-orange-600 transition-colors leading-snug break-words">${storeName}</h3>
                             <div class="mt-auto pt-4 border-t border-slate-100 flex justify-between items-center w-full">
                                 <span class="text-sm md:text-base text-slate-500 font-bold"><i class="fa-solid fa-utensils mr-2 opacity-70"></i>共 ${storeItems.length} 項</span>
                                 <i class="fa-solid fa-arrow-right text-orange-500 transform translate-x-[-10px] group-hover:translate-x-0 transition-all opacity-0 group-hover:opacity-100"></i>
@@ -1188,13 +1165,14 @@
             const storeInfo = window.state.stores.find(s => s.name === storeName) || {};
             if (storeInfo.isClosed) return alert('該店家目前暫停營業中！');
             
+            // 記憶目前瀏覽的店家與過濾狀態
             if (window.browseStoreName !== storeName) window.browseSubcatFilter = 'all';
             window.browseStoreName = storeName;
 
             document.getElementById('browse-store-name').innerText = storeName;
             const infoHtml = `
-                ${storeInfo.phone ? `<a href="tel:${window.escapeHTML(storeInfo.phone)}" class="bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-sm transition text-slate-700 break-all"><i class="fa-solid fa-phone text-orange-500 mr-2"></i>${window.escapeHTML(storeInfo.phone)}</a>` : ''}
-                ${storeInfo.address ? `<span class="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-sm break-words whitespace-normal"><i class="fa-solid fa-map-location-dot text-orange-500 mr-2"></i>${window.escapeHTML(storeInfo.address)}</span>` : ''}
+                ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-sm transition text-slate-700 break-all"><i class="fa-solid fa-phone text-orange-500 mr-2"></i>${storeInfo.phone}</a>` : ''}
+                ${storeInfo.address ? `<span class="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-sm break-words whitespace-normal"><i class="fa-solid fa-map-location-dot text-orange-500 mr-2"></i>${storeInfo.address}</span>` : ''}
             `;
             document.getElementById('browse-store-info').innerHTML = infoHtml;
             const hoursHtml = window.formatStoreHoursHTML(storeInfo.hours);
@@ -1207,7 +1185,7 @@
                 const firstImgItem = storeItems.find(i => i.img && i.img !== DEFAULT_IMG);
                 coverImg = firstImgItem ? firstImgItem.img : DEFAULT_IMG;
             }
-            document.getElementById('browse-store-cover').style.backgroundImage = `url('${window.escapeHTML(coverImg)}')`;
+            document.getElementById('browse-store-cover').style.backgroundImage = `url('${coverImg}')`;
             
             window.renderBrowseMenu();
             window.showView('store-details');
@@ -1223,6 +1201,7 @@
             const storeName = window.browseStoreName;
             const storeItems = window.state.items.filter(i => (i.store || 'Unknown') === storeName);
 
+            // 取得此店家有使用的分類，並依照全域排序
             const uniqueSubCats = [...new Set(storeItems.map(i => i.subCat || '無分類'))];
             uniqueSubCats.sort((a, b) => {
                 let idxA = window.state.subCategories.indexOf(a);
@@ -1232,16 +1211,18 @@
                 return idxA - idxB;
             });
 
+            // 渲染標籤
             let tabsHtml = `<button type="button" data-id="all" onclick="filterBrowseStore('all')" class="cat-tab snap-start ${window.browseSubcatFilter === 'all' ? 'bg-slate-800 text-white shadow-md border-slate-800 transform scale-105' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'} px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition border shrink-0">全部餐點</button>`;
             
             uniqueSubCats.forEach(sub => {
                 const activeCls = window.browseSubcatFilter === sub ? 'bg-slate-800 text-white shadow-md border-slate-800 transform scale-105' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50';
-                tabsHtml += `<button type="button" data-id="${window.escapeHTML(sub)}" onclick="filterBrowseStore('${window.escapeHTML(sub.replace(/'/g, "\\'"))}')" class="cat-tab snap-start ${activeCls} px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition border shrink-0">${window.escapeHTML(sub)}</button>`;
+                tabsHtml += `<button type="button" data-id="${sub}" onclick="filterBrowseStore('${sub}')" class="cat-tab snap-start ${activeCls} px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition border shrink-0">${sub}</button>`;
             });
 
             const browseSubcatTabs = document.getElementById('browse-subcat-tabs');
             if(browseSubcatTabs) browseSubcatTabs.innerHTML = tabsHtml;
 
+            // 生成過濾後的菜單並寫入
             const menuHtml = window.generateMenuHtml(storeName, false, window.browseSubcatFilter);
             document.getElementById('browse-menu-container').innerHTML = menuHtml || '<div class="text-center py-12 text-slate-400 font-bold text-xl bg-white rounded-3xl border border-slate-200 shadow-sm mt-4">此分類目前無餐點</div>';
         };
@@ -1268,7 +1249,7 @@
             let html = '';
             sortedKeys.forEach(subCat => {
                 const subItems = grouped[subCat];
-                html += `<div class="mb-10 bg-slate-50/70 p-6 md:p-8 rounded-[2rem] border border-slate-100"><h3 class="text-2xl font-black text-slate-800 mb-6 flex items-center break-words"><span class="w-3 h-8 bg-orange-500 rounded-full mr-3 shadow-md shrink-0"></span>${window.escapeHTML(subCat)}</h3><div class="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6">`;
+                html += `<div class="mb-10 bg-slate-50/70 p-6 md:p-8 rounded-[2rem] border border-slate-100"><h3 class="text-2xl font-black text-slate-800 mb-6 flex items-center break-words"><span class="w-3 h-8 bg-orange-500 rounded-full mr-3 shadow-md shrink-0"></span>${subCat}</h3><div class="grid grid-cols-1 xl:grid-cols-2 gap-5 md:gap-6">`;
                 subItems.forEach((item, index) => {
                     const isSoldOut = item.isSoldOut === true;
                     let action, pointer;
@@ -1276,7 +1257,7 @@
                         action = `onclick="alert('此餐點目前已完售 / 暫停供應！')"`;
                         pointer = 'cursor-not-allowed opacity-60 grayscale';
                     } else if (isActiveMode) {
-                        action = `onclick="openOrderModal('${window.escapeHTML(item.id.replace(/'/g, "\\'"))}')"`;
+                        action = `onclick="openOrderModal('${item.id}')"`;
                         pointer = 'cursor-pointer hover:bg-orange-50 hover:shadow-xl hover:-translate-y-1.5 ring-4 ring-transparent hover:ring-orange-300';
                     } else {
                         action = `onclick="alert('請發起活動才能點餐喔！')"`;
@@ -1303,8 +1284,8 @@
                             if (appliedOpts.length > 0) {
                                 optsContent += appliedOpts.map(opt => `
                                     <div class="bg-blue-50/70 border border-blue-100/70 p-1.5 rounded text-[10px] md:text-xs w-full leading-tight">
-                                        <span class="font-black text-blue-700 mr-1"><i class="fa-solid fa-tag mr-1 opacity-70"></i>${window.escapeHTML(opt.name)} <span class="opacity-60 font-bold">(${opt.isMulti ? '可複選' : '單選'})</span>:</span>
-                                        <span class="text-blue-600 font-bold break-words whitespace-normal">${window.escapeHTML(opt.choices.join('、'))}</span>
+                                        <span class="font-black text-blue-700 mr-1"><i class="fa-solid fa-tag mr-1 opacity-70"></i>${opt.name} <span class="opacity-60 font-bold">(${opt.isMulti ? '可複選' : '單選'})</span>:</span>
+                                        <span class="text-blue-600 font-bold break-words whitespace-normal">${opt.choices.join('、')}</span>
                                     </div>
                                 `).join('');
                             }
@@ -1322,11 +1303,11 @@
                     html += `
                         <div ${action} class="${bgColor} p-4 md:p-5 rounded-[1.5rem] shadow-sm border flex items-center gap-4 md:gap-5 transition-all duration-300 ${pointer} group">
                             <div class="relative w-24 h-24 md:w-28 md:h-28 shrink-0">
-                                <img src="${window.escapeHTML(imgUrl)}" loading="lazy" decoding="async" class="w-full h-full rounded-2xl object-cover bg-slate-100 shadow-sm border border-slate-200/50 transition transform group-hover:scale-105" alt="${window.escapeHTML(item.name)}">
+                                <img src="${imgUrl}" loading="lazy" decoding="async" class="w-full h-full rounded-2xl object-cover bg-slate-100 shadow-sm border border-slate-200/50 transition transform group-hover:scale-105" alt="${item.name}">
                                 ${imgOverlay}
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h4 class="font-black text-lg md:text-xl text-slate-800 group-hover:text-orange-700 transition-colors break-words">${window.escapeHTML(item.name)}</h4>
+                                <h4 class="font-black text-lg md:text-xl text-slate-800 group-hover:text-orange-700 transition-colors break-words">${item.name}</h4>
                                 <p class="text-orange-600 font-black text-xl md:text-2xl mt-1">$${item.price}</p>
                                 ${optionsHtmlStr}
                             </div>
@@ -1349,7 +1330,7 @@
             });
             const sel = document.getElementById('start-store-select');
             if(activeStores.length === 0) sel.innerHTML = '<option value="" disabled selected>該分類無營業中的店家</option>';
-            else sel.innerHTML = activeStores.map((s, index) => `<option value="${window.escapeHTML(s)}" class="${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}">${window.escapeHTML(s)}</option>`).join('');
+            else sel.innerHTML = activeStores.map((s, index) => `<option value="${s}" class="${index % 2 === 0 ? 'bg-white' : 'bg-slate-100'}">${s}</option>`).join('');
         };
 
         window.openStartOrderModal = function() {
@@ -1359,7 +1340,7 @@
             window.renderSelectedActivityStores();
             const catSel = document.getElementById('random-cat-select');
             let catOptions = `<option value="all" selected>全部分類</option>`;
-            window.state.categories.forEach(c => { catOptions += `<option value="${window.escapeHTML(c.id)}">${window.escapeHTML(c.name)}</option>`; });
+            window.state.categories.forEach(c => { catOptions += `<option value="${c.id}">${c.name}</option>`; });
             catSel.innerHTML = catOptions;
             window.updateStartStoreDropdown();
             window.selectTime(5); 
@@ -1368,8 +1349,8 @@
 
         window.openAddItemModal = function() {
             window.updateStoreDatalist();
-            document.getElementById('admin-input-cat').innerHTML = window.state.categories.map(c => `<option value="${window.escapeHTML(c.id)}">${window.escapeHTML(c.name)}</option>`).join('');
-            document.getElementById('admin-input-subcat').innerHTML = window.state.subCategories.map(s => `<option value="${window.escapeHTML(s)}">${window.escapeHTML(s)}</option>`).join('');
+            document.getElementById('admin-input-cat').innerHTML = window.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            document.getElementById('admin-input-subcat').innerHTML = window.state.subCategories.map(s => `<option value="${s}">${s}</option>`).join('');
             window.renderGlobalOptionsCheckboxes('admin-input-options-container', []);
             window.renderAdminStoreHours({});
             window.openModal('add-item-modal');
@@ -1383,8 +1364,8 @@
             }
             container.innerHTML = window.selectedActivityStores.map(s => `
                 <div class="flex items-center bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg border border-orange-200 shadow-sm font-bold text-sm transform transition animate-[fadeIn_0.3s] break-words whitespace-normal max-w-full">
-                    <span class="break-words">${window.escapeHTML(s)}</span>
-                    <i class="fa-solid fa-circle-xmark ml-2 text-orange-400 hover:text-red-500 cursor-pointer transition shrink-0" onclick="removeActivityStore('${window.escapeHTML(s.replace(/'/g, "\\'"))}')"></i>
+                    <span class="break-words">${s}</span>
+                    <i class="fa-solid fa-circle-xmark ml-2 text-orange-400 hover:text-red-500 cursor-pointer transition shrink-0" onclick="removeActivityStore('${s}')"></i>
                 </div>
             `).join('');
         };
@@ -1436,7 +1417,7 @@
 
         window.executeStartOrder = async function() {
             if (window.selectedActivityStores.length === 0) return alert('請至少選擇一家店加入清單才能開始活動！');
-            let mins = window.selectedTimeLimit === 'custom' ? parseInt(document.getElementById('custom-time-input').value, 10) : parseInt(window.selectedTimeLimit, 10);
+            let mins = window.selectedTimeLimit === 'custom' ? parseInt(document.getElementById('custom-time-input').value) : parseInt(window.selectedTimeLimit);
             if (!mins || mins < 1 || mins > 1440) return alert('請輸入 1 到 1440 的有效分鐘數！');
             const newSession = { isActive: true, storeNames: [...window.selectedActivityStores], storeName: window.selectedActivityStores[0], endTime: new Date().getTime() + (mins * 60000) };
             window.state.session = newSession;
@@ -1499,7 +1480,7 @@
             let tabsHtml = `<button type="button" data-id="all" onclick="filterActiveOrder('all')" class="cat-tab snap-start ${window.activeOrderSubcatFilter === 'all' ? 'bg-slate-800 text-white shadow-md border-slate-800 transform scale-105' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'} px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition border shrink-0">全部餐點</button>`;
             uniqueSubCats.forEach(sub => {
                 const activeCls = window.activeOrderSubcatFilter === sub ? 'bg-slate-800 text-white shadow-md border-slate-800 transform scale-105' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50';
-                tabsHtml += `<button type="button" data-id="${window.escapeHTML(sub)}" onclick="filterActiveOrder('${window.escapeHTML(sub.replace(/'/g, "\\'"))}')" class="cat-tab snap-start ${activeCls} px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition border shrink-0">${window.escapeHTML(sub)}</button>`;
+                tabsHtml += `<button type="button" data-id="${sub}" onclick="filterActiveOrder('${sub}')" class="cat-tab snap-start ${activeCls} px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition border shrink-0">${sub}</button>`;
             });
 
             const activeSubcatTabs = document.getElementById('active-subcat-tabs');
@@ -1512,10 +1493,10 @@
                 infoHtml += `
                     <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-3 w-full max-w-2xl transform transition hover:scale-[1.01]">
                         <span class="bg-slate-800 text-white font-black px-3 py-1 rounded-lg text-sm shrink-0 whitespace-nowrap">店家 </span>
-                        <span class="text-xl font-black text-slate-800 shrink-0 break-words w-full sm:w-auto text-center sm:text-left">${window.escapeHTML(storeName)}</span>
+                        <span class="text-xl font-black text-slate-800 shrink-0 break-words w-full sm:w-auto text-center sm:text-left">${storeName}</span>
                         <div class="flex flex-wrap justify-center md:justify-start gap-2 text-xs w-full">
-                            ${storeInfo.phone ? `<a href="tel:${window.escapeHTML(storeInfo.phone)}" class="bg-slate-50 hover:bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 transition text-slate-700 break-all"><i class="fa-solid fa-phone text-orange-500 mr-1"></i>${window.escapeHTML(storeInfo.phone)}</a>` : ''}
-                            ${storeInfo.address ? `<span class="bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 break-words whitespace-normal"><i class="fa-solid fa-map-location-dot text-orange-500 mr-1"></i>${window.escapeHTML(storeInfo.address)}</span>` : ''}
+                            ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-slate-50 hover:bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 transition text-slate-700 break-all"><i class="fa-solid fa-phone text-orange-500 mr-1"></i>${storeInfo.phone}</a>` : ''}
+                            ${storeInfo.address ? `<span class="bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 break-words whitespace-normal"><i class="fa-solid fa-map-location-dot text-orange-500 mr-1"></i>${storeInfo.address}</span>` : ''}
                         </div>
                     </div>
                 `;
@@ -1525,7 +1506,7 @@
                     menuHtml += `
                         <div class="mb-12">
                             <div class="bg-slate-800 text-white p-5 rounded-t-[2rem] flex items-center justify-between border-b-4 border-orange-500 w-full">
-                                <h2 class="text-xl sm:text-2xl font-black break-words"><i class="fa-solid fa-store mr-3 text-orange-400"></i>${window.escapeHTML(storeName)}</h2>
+                                <h2 class="text-xl sm:text-2xl font-black break-words"><i class="fa-solid fa-store mr-3 text-orange-400"></i>${storeName}</h2>
                             </div>
                             <div class="bg-white p-3 md:p-6 rounded-b-[2rem] border border-t-0 border-slate-100 shadow-sm w-full">
                                 ${storeMenuContent}
@@ -1554,14 +1535,14 @@
 
         window.openOrderModal = function(id) {
             window.activeItemForModal = window.state.items.find(i => String(i.id) === String(id));
-            document.getElementById('modal-image').style.backgroundImage = `url('${window.escapeHTML(window.activeItemForModal.img || DEFAULT_IMG)}')`;
+            document.getElementById('modal-image').style.backgroundImage = `url('${window.activeItemForModal.img || DEFAULT_IMG}')`;
             document.getElementById('modal-store-badge').innerText = window.activeItemForModal.store;
             document.getElementById('modal-title').innerText = window.activeItemForModal.name;
             window.updateModalPrice();
             document.getElementById('modal-qty').value = 1; 
             document.getElementById('modal-user').value = ''; 
             document.getElementById('modal-note').value = '';
-            document.getElementById('quick-name-tags').innerHTML = window.state.quickNames.map(n => `<button type="button" onclick="document.getElementById('modal-user').value='${window.escapeHTML(n.replace(/'/g, "\\'"))}'" class="bg-orange-50 hover:bg-orange-500 hover:text-white text-orange-700 px-4 py-2 rounded-xl font-black text-sm transition border border-orange-200 shadow-sm active:scale-95 whitespace-nowrap">${window.escapeHTML(n)}</button>`).join('');
+            document.getElementById('quick-name-tags').innerHTML = window.state.quickNames.map(n => `<button type="button" onclick="document.getElementById('modal-user').value='${n}'" class="bg-orange-50 hover:bg-orange-500 hover:text-white text-orange-700 px-4 py-2 rounded-xl font-black text-sm transition border border-orange-200 shadow-sm active:scale-95 whitespace-nowrap">${n}</button>`).join('');
             
             let optionsHtml = '';
             if (window.activeItemForModal.upsizePrice > 0) {
@@ -1580,18 +1561,18 @@
                 appliedOptions.forEach((opt, idx) => {
                     const isMulti = opt.isMulti === true;
                     const inputType = isMulti ? 'checkbox' : 'radio';
-                    const inputName = isMulti ? '' : `name="modal-opt-${window.escapeHTML(opt.id)}"`;
+                    const inputName = isMulti ? '' : `name="modal-opt-${opt.id}"`;
                     const typeLabel = isMulti ? '(可複選)' : '(單選必填)';
                     optionsHtml += `
                         <div class="bg-orange-50/50 p-4 md:p-5 rounded-2xl border border-orange-100 shadow-inner w-full">
-                            <label class="block text-sm font-black text-orange-800 mb-3 break-words"><i class="fa-solid fa-caret-right text-orange-500 mr-2"></i>${window.escapeHTML(opt.name)} <span class="text-xs text-orange-500 font-normal ml-1">${typeLabel}</span></label>
+                            <label class="block text-sm font-black text-orange-800 mb-3 break-words"><i class="fa-solid fa-caret-right text-orange-500 mr-2"></i>${opt.name} <span class="text-xs text-orange-500 font-normal ml-1">${typeLabel}</span></label>
                             <div class="flex flex-wrap gap-2 w-full">
                                 ${opt.choices.map((c, cIdx) => {
                                     const isChecked = (!isMulti && cIdx === 0) ? 'checked' : '';
                                     return `
                                     <label class="flex items-center gap-2 cursor-pointer bg-white px-3 py-2.5 rounded-xl border border-orange-200 hover:border-orange-400 hover:shadow-sm transition">
-                                        <input type="${inputType}" ${inputName} value="${window.escapeHTML(c)}" class="modal-dynamic-opt-input w-5 h-5 text-orange-500 ${isMulti ? 'rounded' : 'rounded-full'} border-slate-300 focus:ring-orange-500 shrink-0" ${isChecked}>
-                                        <span class="text-sm font-bold text-slate-700 select-none">${window.escapeHTML(c)}</span>
+                                        <input type="${inputType}" ${inputName} value="${c}" class="modal-dynamic-opt-input w-5 h-5 text-orange-500 ${isMulti ? 'rounded' : 'rounded-full'} border-slate-300 focus:ring-orange-500 shrink-0" ${isChecked}>
+                                        <span class="text-sm font-bold text-slate-700 select-none">${c}</span>
                                     </label>
                                 `}).join('')}
                             </div>
@@ -1604,10 +1585,11 @@
 
         window.adjQty = function(val) { 
             const el = document.getElementById('modal-qty');
-            let current = parseInt(el.value, 10) || 1;
+            let current = parseInt(el.value) || 1;
             el.value = Math.max(1, current + val); 
         };
 
+        // [修正 2 & 3]：加入「樂觀更新 UI」機制，並防止 Firebase 接收到 undefined 值崩潰
         window.confirmAddToCart = async function() {
             const user = document.getElementById('modal-user').value.trim();
             if (!user) return alert('請務必輸入或點選您的姓名！');
@@ -1626,8 +1608,9 @@
             });
             if (dynamicNotes.length > 0) note = `[${dynamicNotes.join(', ')}] ` + note;
             
-            const qtyToAdd = parseInt(document.getElementById('modal-qty').value, 10) || 1;
+            const qtyToAdd = parseInt(document.getElementById('modal-qty').value) || 1;
             
+            // 安全防護 Fallback：確保所有欄位絕對不是 undefined，避免 Firebase 無聲拒絕寫入
             const newItem = { 
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
                 userName: user || '未知', 
@@ -1640,6 +1623,7 @@
             
             window.closeModal('order-modal');
 
+            // 樂觀更新 (Optimistic UI)：不管網路再爛，自己點的餐點先瞬間寫入畫面，不再苦等伺服器！
             if (!window.state.cart) window.state.cart = [];
             window.state.cart.push(newItem);
             window.updateCartUI();
@@ -1649,6 +1633,7 @@
             } 
             catch(e) { 
                 console.error("Cart update failed", e); 
+                // 若網路完全斷線導致嚴重錯誤，才撤銷本地畫面並提示
                 window.state.cart = window.state.cart.filter(c => c.id !== newItem.id);
                 window.updateCartUI();
                 alert('網路連線異常，餐點新增失敗，請確認網路狀態後重試！');
@@ -1684,14 +1669,14 @@
                         <div class="relative flex flex-col sm:flex-row sm:items-center justify-between py-2 border-b border-slate-100 last:border-0 group/item">
                             <div class="flex-1 pr-8">
                                 <p class="font-bold text-slate-700 text-sm md:text-base flex flex-wrap items-center gap-2 leading-tight">
-                                    <span class="break-words">${window.escapeHTML(c.itemName)}</span> 
+                                    <span class="break-words">${c.itemName}</span> 
                                     <span class="text-xs font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 shrink-0">x${c.qty}</span>
                                 </p>
-                                ${c.note ? `<p class="text-xs text-blue-600 mt-1.5 bg-blue-50 px-2 py-1 rounded border border-blue-100 break-words whitespace-pre-wrap"><i class="fa-solid fa-pen mr-1"></i>${window.escapeHTML(c.note)}</p>` : ''}
+                                ${c.note ? `<p class="text-xs text-blue-600 mt-1.5 bg-blue-50 px-2 py-1 rounded border border-blue-100 break-words whitespace-pre-wrap"><i class="fa-solid fa-pen mr-1"></i>${c.note}</p>` : ''}
                             </div>
                             <div class="flex items-center gap-3 mt-2 sm:mt-0">
                                 <span class="font-black text-slate-800 text-base">$${c.price * c.qty}</span>
-                                <button type="button" onclick="removeCartItem('${window.escapeHTML(idsStr)}')" class="text-slate-300 hover:text-red-500 bg-white rounded-full w-7 h-7 flex items-center justify-center lg:opacity-0 lg:group-hover/item:opacity-100 transition shadow-sm border border-slate-200 shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                <button type="button" onclick="removeCartItem('${idsStr}')" class="text-slate-300 hover:text-red-500 bg-white rounded-full w-7 h-7 flex items-center justify-center lg:opacity-0 lg:group-hover/item:opacity-100 transition shadow-sm border border-slate-200 shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
                             </div>
                         </div>`;
                 }
@@ -1699,8 +1684,8 @@
                     <div class="bg-white rounded-2xl border border-slate-200 mb-4 shadow-sm hover:shadow-md transition-all overflow-hidden">
                         <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
                             <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-xs text-slate-500 font-bold bg-white px-2 py-1 rounded shadow-sm border border-slate-100"><i class="fa-solid fa-store mr-1 text-orange-500"></i>${window.escapeHTML(group.storeName || '綜合店家')}</span>
-                                <span class="text-sm font-black text-white bg-slate-800 px-3 py-1 rounded-lg">${window.escapeHTML(group.userName)}</span>
+                                <span class="text-xs text-slate-500 font-bold bg-white px-2 py-1 rounded shadow-sm border border-slate-100"><i class="fa-solid fa-store mr-1 text-orange-500"></i>${group.storeName || '綜合店家'}</span>
+                                <span class="text-sm font-black text-white bg-slate-800 px-3 py-1 rounded-lg">${group.userName}</span>
                             </div>
                             <div class="text-right shrink-0">
                                 <span class="font-black text-slate-800 text-lg">$${group.storeTotal}</span>
@@ -1743,6 +1728,7 @@
         window.autoCheckout = async function() {
             if (window.isCheckingOut) return;
             
+            // 防呆：如果本地狀態已經不是 active，直接停止計時器與視窗顯示歷史收據，不觸發Transaction
             if (!window.state.session || !window.state.session.isActive) {
                 clearInterval(window.timerInterval);
                 document.getElementById('nav-timer').classList.add('hidden');
@@ -1801,11 +1787,13 @@
                     window.state.cart = [];
                     window.showReceiptFromHistory();
                 } else {
+                    // Transaction 傳回 null 代表已有其他裝置結單，直接顯示最新收據
                     window.state.session.isActive = false;
                     setTimeout(() => window.showReceiptFromHistory(), 1000);
                 }
             } catch(e) { 
                 console.error("結單同步時發生錯誤！", e);
+                // 若出現競爭失敗等錯誤，依然回到收據畫面以免死機
                 window.state.session.isActive = false;
                 window.showReceiptFromHistory();
             } finally {
@@ -1843,7 +1831,7 @@
                     grandTotal += storeData.total;
                     const storeInfo = window.state.stores.find(s => s.name === storeName);
                     if (storeInfo && storeInfo.phone) {
-                        phoneButtonsHtml += `<a href="tel:${window.escapeHTML(storeInfo.phone)}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 px-4 py-2 rounded-xl font-black transition flex items-center justify-center text-sm shadow-sm hover:-translate-y-0.5 whitespace-nowrap"><i class="fa-solid fa-phone-volume mr-2"></i>撥打 ${window.escapeHTML(storeName)}</a>`;
+                        phoneButtonsHtml += `<a href="tel:${storeInfo.phone}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 px-4 py-2 rounded-xl font-black transition flex items-center justify-center text-sm shadow-sm hover:-translate-y-0.5 whitespace-nowrap"><i class="fa-solid fa-phone-volume mr-2"></i>撥打 ${storeName}</a>`;
                     }
                     const userGroups = {};
                     storeData.items.forEach(c => {
@@ -1857,11 +1845,11 @@
                         userItems.forEach((c, index) => {
                             const sub = c.price * c.qty;
                             tbody += `<tr class="border-b border-slate-200 hover:bg-slate-50 transition text-[13px] sm:text-sm md:text-base">`;
-                            if (index === 0) tbody += `<td rowspan="${userItems.length}" class="py-2 px-1 sm:px-2 font-black text-slate-800 break-words align-middle border-r border-slate-100/50 w-[16%]"><span class="bg-slate-100 border border-slate-200 px-1 sm:px-2 py-0.5 sm:py-1 rounded shadow-sm inline-block break-words max-w-full leading-tight">${window.escapeHTML(c.userName)}</span></td>`;
+                            if (index === 0) tbody += `<td rowspan="${userItems.length}" class="py-2 px-1 sm:px-2 font-black text-slate-800 break-words align-middle border-r border-slate-100/50 w-[16%]"><span class="bg-slate-100 border border-slate-200 px-1 sm:px-2 py-0.5 sm:py-1 rounded shadow-sm inline-block break-words max-w-full leading-tight">${c.userName}</span></td>`;
                             tbody += `
-                                <td class="py-2 px-1 sm:px-2 font-bold text-slate-800 break-words w-[32%] leading-snug">${window.escapeHTML(c.itemName)}</td>
+                                <td class="py-2 px-1 sm:px-2 font-bold text-slate-800 break-words w-[32%] leading-snug">${c.itemName}</td>
                                 <td class="py-2 px-1 sm:px-2 font-black text-center text-slate-800 w-[40px] sm:w-[50px]">${c.qty}</td>
-                                <td class="py-2 px-1 sm:px-2 text-blue-700 text-[11px] sm:text-sm font-bold break-words whitespace-pre-wrap leading-tight w-auto text-center">${c.note ? `[${window.escapeHTML(c.note)}]` : ''}</td>
+                                <td class="py-2 px-1 sm:px-2 text-blue-700 text-[11px] sm:text-sm font-bold break-words whitespace-pre-wrap leading-tight w-auto text-center">${c.note ? `[${c.note}]` : ''}</td>
                                 <td class="py-2 px-1 sm:px-2 font-black text-right text-slate-800 w-[14%] sm:w-[12%]">$${sub}</td>
                             </tr>`;
                         });
@@ -1869,7 +1857,7 @@
                     tablesHtml += `
                         <div class="mb-8 border-2 border-slate-800 rounded-2xl overflow-hidden print-no-shadow w-full">
                             <div class="bg-slate-800 text-white p-3 sm:p-4 font-black text-base sm:text-lg md:text-xl flex flex-wrap justify-between items-center gap-2">
-                                <span class="break-words leading-tight"><i class="fa-solid fa-store mr-2 text-orange-400"></i>${window.escapeHTML(storeName)}</span>
+                                <span class="break-words leading-tight"><i class="fa-solid fa-store mr-2 text-orange-400"></i>${storeName}</span>
                                 <span class="bg-white/20 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm shrink-0">小計: $${storeData.total}</span>
                             </div>
                             <div class="w-full">
@@ -1954,10 +1942,10 @@
                 html += `
                     <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between md:items-start gap-3 hover:bg-slate-50 hover:shadow-sm transition">
                         <div class="flex items-start gap-3 w-full">
-                            <span class="${actionColor} px-3 py-1 rounded-lg text-sm font-black shadow-sm whitespace-nowrap shrink-0">${window.escapeHTML(log.action)}</span>
-                            <span class="font-bold text-slate-700 break-words whitespace-normal flex-1 leading-snug">${window.escapeHTML(log.detail)}</span>
+                            <span class="${actionColor} px-3 py-1 rounded-lg text-sm font-black shadow-sm whitespace-nowrap shrink-0">${log.action}</span>
+                            <span class="font-bold text-slate-700 break-words whitespace-normal flex-1 leading-snug">${log.detail}</span>
                         </div>
-                        <span class="font-bold text-slate-400 text-sm whitespace-nowrap shrink-0 md:mt-1"><i class="fa-regular fa-clock mr-1"></i>${window.escapeHTML(log.date)} ${window.escapeHTML(log.time)}</span>
+                        <span class="font-bold text-slate-400 text-sm whitespace-nowrap shrink-0 md:mt-1"><i class="fa-regular fa-clock mr-1"></i>${log.date} ${log.time}</span>
                     </div>`;
             });
             document.getElementById('admin-logs-list').innerHTML = html;
@@ -1979,14 +1967,16 @@
             if(pwd === "suting") {
                 window.state.adminLogs = [];
                 window.addAdminLog('清空', '最高權限管理員已手動清空所有操作紀錄');
-                await window.saveState(['adminLogs']); window.renderAdminLogs(); alert("✅ 系統操作紀錄已成功清空！");
+                await window.saveState(); window.renderAdminLogs(); alert("✅ 系統操作紀錄已成功清空！");
             } else alert("❌ 密碼錯誤，拒絕執行！");
         };
 
+        // ====== 手機觸控拖曳排序共用核心函數 ======
         window._touchDragState = { type: null, srcIdx: null, clone: null, el: null, targetIdx: null };
 
         window.handleTouchStart = function(e, idx, type) {
             const grip = e.currentTarget.querySelector('.fa-grip-lines');
+            // 確保只有摸到拖曳圖示時才啟動拖曳排序，以防影響清單一般滑動
             if (e.target !== grip && !grip.contains(e.target)) return;
             
             e.preventDefault();
@@ -2060,6 +2050,7 @@
                 else if (type === 'subcat') window.executeSubcatDrop(srcIdx, finalIdx);
             }
         };
+        // ===========================================
 
         window.renderAdminSettings = function() {
             document.getElementById('admin-quick-names').value = window.state.quickNames.join(',');
@@ -2072,10 +2063,10 @@
                          ${!isOther ? `draggable="true" ondragstart="handleCatDragStart(event, ${idx})" ondragover="handleCatDragOver(event)" ondrop="handleCatDrop(event, ${idx})" ontouchstart="handleTouchStart(event, ${idx}, 'cat')" ontouchmove="handleTouchMove(event)" ontouchend="handleTouchEnd(event)"` : ''}>
                         <div class="flex items-center gap-3 pr-2 w-full">
                             ${!isOther ? `<i class="fa-solid fa-grip-lines text-orange-300 group-hover:text-orange-500 transition shrink-0 p-2 -ml-2"></i>` : ''}
-                            <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${window.escapeHTML(c.color)}"></span>
-                            <span class="break-words whitespace-normal leading-snug">${window.escapeHTML(c.name)}</span>
+                            <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${c.color}"></span>
+                            <span class="break-words whitespace-normal leading-snug">${c.name}</span>
                         </div>
-                        ${!isOther ? `<i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition shrink-0" onclick="deleteSysCat('${window.escapeHTML(c.id)}')"></i>` : '<span class="text-xs text-slate-400 bg-white px-2 py-0.5 rounded shadow-sm shrink-0">系統保留</span>'}
+                        ${!isOther ? `<i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition shrink-0" onclick="deleteSysCat('${c.id}')"></i>` : '<span class="text-xs text-slate-400 bg-white px-2 py-0.5 rounded shadow-sm shrink-0">系統保留</span>'}
                     </div>`;
                 }).join('');
             }
@@ -2087,7 +2078,7 @@
                          ontouchstart="handleTouchStart(event, ${idx}, 'store')" ontouchmove="handleTouchMove(event)" ontouchend="handleTouchEnd(event)">
                         <div class="flex items-center gap-3 pr-2 w-full">
                             <i class="fa-solid fa-grip-lines text-sky-300 group-hover:text-sky-500 transition shrink-0 p-2 -ml-2"></i>
-                            <span class="break-words whitespace-normal leading-snug">${window.escapeHTML(s.name)}</span>
+                            <span class="break-words whitespace-normal leading-snug">${s.name}</span>
                         </div>
                     </div>`).join('');
             }
@@ -2099,7 +2090,7 @@
                          ontouchstart="handleTouchStart(event, ${idx}, 'subcat')" ontouchmove="handleTouchMove(event)" ontouchend="handleTouchEnd(event)">
                         <div class="flex items-center gap-3 pr-2 w-full">
                             <i class="fa-solid fa-grip-lines text-emerald-300 group-hover:text-emerald-500 transition shrink-0 p-2 -ml-2"></i>
-                            <span class="break-words whitespace-normal leading-snug">${window.escapeHTML(s)}</span>
+                            <span class="break-words whitespace-normal leading-snug">${s}</span>
                         </div>
                         ${s === '主餐' ? '<span class="text-xs text-slate-400 bg-white px-2 py-0.5 rounded shadow-sm shrink-0">保留項目</span>' : `<i class="fa-solid fa-times-circle cursor-pointer opacity-50 hover:opacity-100 hover:text-red-500 transition shrink-0" onclick="deleteSubcat(${idx})"></i>`}
                     </div>`).join('');
@@ -2110,9 +2101,9 @@
                 else {
                     globalOptContainer.innerHTML = window.state.globalOptions.map(opt => `
                         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group hover:border-blue-300 transition hover:shadow-md transform hover:-translate-y-0.5 w-full">
-                            <h4 class="font-black text-slate-800 text-lg mb-2 flex items-center pr-6 break-words"><i class="fa-solid fa-caret-right text-blue-500 mr-2 shrink-0"></i>${window.escapeHTML(opt.name)} <span class="text-xs ml-2 ${opt.isMulti ? 'text-emerald-600 bg-emerald-50' : 'text-blue-600 bg-blue-50'} px-2 py-0.5 rounded shadow-sm border ${opt.isMulti ? 'border-emerald-100' : 'border-blue-100'}">${opt.isMulti ? '可複選' : '單選必填'}</span></h4>
-                            <div class="flex flex-wrap gap-2 w-full">${opt.choices.map(c => `<span class="text-xs font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 shadow-sm break-words whitespace-normal max-w-full leading-tight">${window.escapeHTML(c)}</span>`).join('')}</div>
-                            <button type="button" onclick="requestPassword('輸入通用密碼確認刪除選項模組', pwd => { if(pwd==='suting') deleteGlobalOption('${window.escapeHTML(opt.id.replace(/'/g, "\\'"))}'); else alert('密碼錯誤') })" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition opacity-100 md:opacity-0 md:group-hover:opacity-100 bg-white rounded-full p-1 shadow-sm border border-slate-100 shrink-0"><i class="fa-solid fa-trash-can"></i></button>
+                            <h4 class="font-black text-slate-800 text-lg mb-2 flex items-center pr-6 break-words"><i class="fa-solid fa-caret-right text-blue-500 mr-2 shrink-0"></i>${opt.name} <span class="text-xs ml-2 ${opt.isMulti ? 'text-emerald-600 bg-emerald-50' : 'text-blue-600 bg-blue-50'} px-2 py-0.5 rounded shadow-sm border ${opt.isMulti ? 'border-emerald-100' : 'border-blue-100'}">${opt.isMulti ? '可複選' : '單選必填'}</span></h4>
+                            <div class="flex flex-wrap gap-2 w-full">${opt.choices.map(c => `<span class="text-xs font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 shadow-sm break-words whitespace-normal max-w-full leading-tight">${c}</span>`).join('')}</div>
+                            <button type="button" onclick="requestPassword('輸入通用密碼確認刪除選項模組', pwd => { if(pwd==='suting') deleteGlobalOption('${opt.id}'); else alert('密碼錯誤') })" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition opacity-100 md:opacity-0 md:group-hover:opacity-100 bg-white rounded-full p-1 shadow-sm border border-slate-100 shrink-0"><i class="fa-solid fa-trash-can"></i></button>
                         </div>`).join('');
                 }
             }
@@ -2124,7 +2115,7 @@
             if(window.state.categories.some(c => c.name === name)) return alert('該分類已存在！');
             window.state.categories.push({ id: 'cat_' + Date.now(), name: name, color: THEME_COLORS[Math.floor(Math.random()*THEME_COLORS.length)] });
             window.addAdminLog('設定', `新增系統大分類「${name}」`);
-            window.saveState(['categories', 'adminLogs']); window.renderAdminSettings(); document.getElementById('setting-new-cat').value = '';
+            window.saveState(); window.renderAdminSettings(); document.getElementById('setting-new-cat').value = '';
         };
 
         window.deleteSysCat = function(id) {
@@ -2137,7 +2128,7 @@
                     window.state.items.forEach(i => { if(i.cat === id) i.cat = 'cat_other'; });
                     window.state.categories = window.state.categories.filter(c => c.id !== id);
                     window.addAdminLog('刪除', `刪除系統大分類「${catToDelete.name}」並轉移關聯店家`);
-                    await window.saveState(['categories', 'stores', 'items', 'adminLogs']); window.renderAdminSettings(); alert(`✅ 已成功刪除大分類，原關聯店家已移至「其他」。`);
+                    await window.saveState(); window.renderAdminSettings(); alert(`✅ 已成功刪除大分類，原關聯店家已移至「其他」。`);
                 } else alert('❌ 密碼錯誤，拒絕執行！');
             });
         };
@@ -2149,7 +2140,7 @@
             newArr.splice(targetIdx, 0, item);
             window.state.subCategories = newArr;
             window.addAdminLog('修改', `調整子分類排序順序：${item} 移至第 ${targetIdx + 1} 位`);
-            window.renderAdminSettings(); await window.saveState(['subCategories', 'adminLogs']);
+            window.renderAdminSettings(); await window.saveState();
         };
 
         let draggedSubcatIndex = null;
@@ -2176,7 +2167,7 @@
             }
             window.state.categories = newArr;
             window.addAdminLog('修改', `調整大分類排序順序：${item.name} 移至第 ${targetIdx + 1} 位`);
-            window.renderAdminSettings(); window.renderHome(); await window.saveState(['categories', 'adminLogs']);
+            window.renderAdminSettings(); window.renderHome(); await window.saveState();
         };
 
         let draggedCatIndex = null;
@@ -2197,7 +2188,7 @@
             newArr.splice(targetIdx, 0, item);
             window.state.stores = newArr;
             window.addAdminLog('修改', `調整店家顯示順序：${item.name} 移至第 ${targetIdx + 1} 位`);
-            window.renderAdminSettings(); await window.saveState(['stores', 'adminLogs']);
+            window.renderAdminSettings(); await window.saveState();
         };
 
         let draggedStoreIndex = null;
@@ -2219,7 +2210,7 @@
         window.saveQuickNames = function() {
             const val = document.getElementById('admin-quick-names').value;
             window.state.quickNames = val.split(',').map(s => s.trim()).filter(s => s !== '');
-            window.saveState(['quickNames']); alert("✅ 快捷姓名標籤儲存成功！");
+            window.saveState(); alert("✅ 快捷姓名標籤儲存成功！");
         };
 
         window.addSubcat = function() {
@@ -2228,7 +2219,7 @@
             if(window.state.subCategories.includes(name)) return alert('該子分類已存在！');
             window.state.subCategories.push(name);
             window.addAdminLog('設定', `新增全域菜單子分類「${name}」`);
-            window.saveState(['subCategories', 'adminLogs']); window.renderAdminSettings(); document.getElementById('setting-new-subcat').value = '';
+            window.saveState(); window.renderAdminSettings(); document.getElementById('setting-new-subcat').value = '';
         };
 
         window.deleteSubcat = function(idx) {
@@ -2237,7 +2228,7 @@
             if(confirm(`確定刪除子分類「${window.state.subCategories[idx]}」？(現有餐點的分類仍會保留文字)`)) {
                 window.addAdminLog('設定', `刪除全域菜單子分類「${window.state.subCategories[idx]}」`);
                 window.state.subCategories.splice(idx, 1);
-                window.saveState(['subCategories', 'adminLogs']); window.renderAdminSettings();
+                window.saveState(); window.renderAdminSettings();
             }
         };
 
@@ -2250,7 +2241,7 @@
             if (choices.length === 0) return alert('選項內容無效！');
             window.state.globalOptions.push({ id: 'gopt_' + Date.now(), name, choices, isMulti });
             window.addAdminLog('設定', `建立全域客製化選項模組「${name}」`);
-            window.saveState(['globalOptions', 'adminLogs']); window.renderAdminSettings();
+            window.saveState(); window.renderAdminSettings();
             document.getElementById('setting-opt-name').value = ''; document.getElementById('setting-opt-choices').value = ''; document.getElementById('setting-opt-ismulti').checked = false;
         };
 
@@ -2259,7 +2250,7 @@
             if (optInfo) window.addAdminLog('設定', `刪除全域客製化選項模組「${optInfo.name}」`);
             window.state.globalOptions = window.state.globalOptions.filter(o => o.id !== id);
             window.state.items.forEach(i => { if(i.customOptionIds) i.customOptionIds = i.customOptionIds.filter(optId => optId !== id); });
-            window.saveState(['globalOptions', 'items', 'adminLogs']); window.renderAdminSettings(); alert("選項模組已刪除！");
+            window.saveState(); window.renderAdminSettings(); alert("選項模組已刪除！");
         };
 
         window.renderGlobalOptionsCheckboxes = function(containerId, checkedIds = [], isInline = false, itemId = null) {
@@ -2272,10 +2263,10 @@
             const checkboxClass = isInline ? `inline-opt-cb-${itemId}` : 'new-item-opt-cb';
             container.innerHTML = window.state.globalOptions.map(opt => `
                 <label class="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-xl border border-orange-100 hover:border-orange-400 hover:shadow-sm transition transform hover:-translate-y-0.5 w-full">
-                    <input type="checkbox" value="${window.escapeHTML(opt.id)}" class="${checkboxClass} w-5 h-5 text-orange-500 rounded border-slate-300 focus:ring-orange-500 shrink-0" ${checkedIds.includes(opt.id) ? 'checked' : ''}>
+                    <input type="checkbox" value="${opt.id}" class="${checkboxClass} w-5 h-5 text-orange-500 rounded border-slate-300 focus:ring-orange-500 shrink-0" ${checkedIds.includes(opt.id) ? 'checked' : ''}>
                     <div class="flex flex-col min-w-0 flex-1">
-                        <span class="text-sm font-black text-slate-800 break-words whitespace-normal leading-tight">${window.escapeHTML(opt.name)}</span>
-                        <span class="text-[10px] font-bold text-slate-400 break-words whitespace-normal w-full mt-0.5 leading-snug">${window.escapeHTML(opt.choices.join(', '))}</span>
+                        <span class="text-sm font-black text-slate-800 break-words whitespace-normal leading-tight">${opt.name}</span>
+                        <span class="text-[10px] font-bold text-slate-400 break-words whitespace-normal w-full mt-0.5 leading-snug">${opt.choices.join(', ')}</span>
                     </div>
                 </label>`).join('');
         };
@@ -2299,11 +2290,11 @@
                 const dayData = storeHours[idx] || [];
                 const checked = dayData.length > 0 ? 'checked' : '';
                 const display = checked ? 'flex' : 'none';
-                const t1 = window.escapeHTML(dayData[0] || ''); const t2 = window.escapeHTML(dayData[1] || ''); const t3 = window.escapeHTML(dayData[2] || '');
+                const t1 = dayData[0] || ''; const t2 = dayData[1] || ''; const t3 = dayData[2] || '';
                 html += `
                 <div class="flex flex-col gap-2 border-b border-slate-100 pb-3 mb-2 last:border-0 last:pb-0 last:mb-0 hover:bg-slate-50 p-2 rounded-lg transition w-full">
                     <label class="flex items-center gap-2 cursor-pointer font-black text-sm text-slate-700 w-full">
-                        <input type="checkbox" class="store-day-cb-${prefix} w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500 shrink-0" value="${idx}" onchange="toggleDayInput('${prefix}', ${idx})" ${checked}> 星期${window.escapeHTML(d)}
+                        <input type="checkbox" class="store-day-cb-${prefix} w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500 shrink-0" value="${idx}" onchange="toggleDayInput('${prefix}', ${idx})" ${checked}> 星期${d}
                     </label>
                     <div id="day-slots-${prefix}-${idx}" class="gap-2 pl-6 flex-col sm:flex-row flex-wrap w-full" style="display: ${display}">
                         <input type="text" id="slot-${prefix}-${idx}-0" value="${t1}" placeholder="例: 09:00-12:00" class="w-full sm:w-28 bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold outline-none focus:border-orange-500 shadow-sm text-center">
@@ -2370,7 +2361,7 @@
 
         window.updateStoreDatalist = function() {
             const datalist = document.getElementById('store-datalist');
-            if (datalist) datalist.innerHTML = window.state.stores.map(s => `<option value="${window.escapeHTML(s.name)}">`).join('');
+            if (datalist) datalist.innerHTML = window.state.stores.map(s => `<option value="${s.name}">`).join('');
         };
 
         let searchTimeout;
@@ -2386,7 +2377,7 @@
             });
             if (changed) {
                 window.addAdminLog('修改', `批次將店家「${storeName}」的所有餐點${lockState ? '上鎖' : '解鎖'}`);
-                await window.saveState(['items', 'adminLogs']); window.debouncedAdminRender(); alert(`✅ 已成功將店家「${storeName}」的所有餐點「${lockState ? '上鎖' : '解鎖'}」！`);
+                await window.saveState(); window.debouncedAdminRender(); alert(`✅ 已成功將店家「${storeName}」的所有餐點「${lockState ? '上鎖' : '解鎖'}」！`);
             } else alert(`店家「${storeName}」的餐點已經處於該狀態。`);
         };
         
@@ -2416,7 +2407,7 @@
 
                 window.addAdminLog('修改', logMsg);
                 window.state.menuUpdateDate = window.getFormattedDate();
-                await window.saveState(['items', 'stores', 'adminLogs', 'menuUpdateDate']);
+                await window.saveState();
                 window.debouncedAdminRender();
                 alert(`✅ 已成功清空「${storeName}」的圖片資料！\n包含：${storeImgCleared ? '店家封面圖 ' : ''}${changedCount > 0 ? ` ${changedCount} 張餐點圖片` : ''}`);
             } else {
@@ -2434,14 +2425,14 @@
             window.currentEditingStoreOriginalName = storeName;
             let html = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                    <div><label class="block text-xs font-bold text-slate-600 mb-1">店家名稱 <span class="text-red-500">*</span></label><input type="text" id="modal-edit-store-name" value="${window.escapeHTML(storeName)}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words"></div>
-                    <div><label class="block text-xs font-bold text-slate-600 mb-1">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label><select id="modal-edit-store-cat" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">${window.state.categories.map(c => `<option value="${window.escapeHTML(c.id)}" ${c.id === currentCat ? 'selected' : ''}>${window.escapeHTML(c.name)}</option>`).join('')}</select></div>
-                    <div><label class="block text-xs font-bold text-slate-600 mb-1">聯絡電話</label><input type="text" id="modal-edit-store-phone" value="${window.escapeHTML(storeMeta.phone || '')}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-all"></div>
+                    <div><label class="block text-xs font-bold text-slate-600 mb-1">店家名稱 <span class="text-red-500">*</span></label><input type="text" id="modal-edit-store-name" value="${storeName}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words"></div>
+                    <div><label class="block text-xs font-bold text-slate-600 mb-1">系統分類 (店家所屬分類) <span class="text-red-500">*</span></label><select id="modal-edit-store-cat" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">${window.state.categories.map(c => `<option value="${c.id}" ${c.id === currentCat ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
+                    <div><label class="block text-xs font-bold text-slate-600 mb-1">聯絡電話</label><input type="text" id="modal-edit-store-phone" value="${storeMeta.phone || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-all"></div>
                     <div><label class="block text-xs font-bold text-slate-600 mb-1">營業狀態</label><label class="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-300 rounded-lg p-2.5 font-bold hover:bg-slate-100 transition shadow-sm"><input type="checkbox" id="modal-edit-store-closed" class="w-5 h-5 text-red-500 rounded focus:ring-red-500" ${storeMeta.isClosed ? 'checked' : ''}><span class="text-slate-700">暫停營業 (前台無法點選)</span></label></div>
-                    <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-600 mb-1">店家封面圖</label><div class="flex flex-col sm:flex-row gap-2 w-full"><input type="text" id="modal-edit-store-img" value="${window.escapeHTML(storeMeta.coverImg || '')}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="輸入網址或上傳"><input type="file" id="modal-edit-store-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'modal-edit-store-img', null)"><button type="button" onclick="document.getElementById('modal-edit-store-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button></div></div>
-                    <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-600 mb-1">詳細地址</label><input type="text" id="modal-edit-store-address" value="${window.escapeHTML(storeMeta.address || '')}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words whitespace-normal"></div>
+                    <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-600 mb-1">店家封面圖</label><div class="flex flex-col sm:flex-row gap-2 w-full"><input type="text" id="modal-edit-store-img" value="${storeMeta.coverImg || ''}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="輸入網址或上傳"><input type="file" id="modal-edit-store-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'modal-edit-store-img', null)"><button type="button" onclick="document.getElementById('modal-edit-store-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button></div></div>
+                    <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-600 mb-1">詳細地址</label><input type="text" id="modal-edit-store-address" value="${storeMeta.address || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words whitespace-normal"></div>
                     <div class="md:col-span-2 pt-2 border-t border-slate-200"><label class="block text-xs font-black mb-2 text-slate-700"><i class="fa-regular fa-clock mr-1"></i>營業時間 (選填)</label><div id="modal-edit-store-hours" class="space-y-2 border border-slate-200 p-3 rounded-xl bg-white max-h-48 overflow-y-auto custom-scrollbar w-full">${window.generateStoreHoursHTML(storeMeta.hours || {}, 'modal-edit-store')}</div></div>
-                    <div class="md:col-span-2 pt-4 border-t border-slate-200 mt-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"><div><label class="block text-sm font-black text-slate-700"><i class="fa-solid fa-lock mr-2 text-slate-500"></i>批次餐點鎖定管理</label><p class="text-xs text-slate-500 mt-1">一鍵將此店家的所有餐點上鎖或解鎖</p></div><div class="flex gap-2 w-full sm:w-auto"><button type="button" onclick="toggleStoreItemsLock('${window.escapeHTML(storeName.replace(/'/g, "\\'"))}', false)" class="flex-1 sm:flex-none bg-white hover:bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold transition border border-red-200 shadow-sm"><i class="fa-solid fa-lock-open mr-2"></i>全部解鎖</button><button type="button" onclick="toggleStoreItemsLock('${window.escapeHTML(storeName.replace(/'/g, "\\'"))}', true)" class="flex-1 sm:flex-none bg-white hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold transition border border-slate-300 shadow-sm"><i class="fa-solid fa-lock mr-2"></i>全部上鎖</button></div></div>
+                    <div class="md:col-span-2 pt-4 border-t border-slate-200 mt-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"><div><label class="block text-sm font-black text-slate-700"><i class="fa-solid fa-lock mr-2 text-slate-500"></i>批次餐點鎖定管理</label><p class="text-xs text-slate-500 mt-1">一鍵將此店家的所有餐點上鎖或解鎖</p></div><div class="flex gap-2 w-full sm:w-auto"><button type="button" onclick="toggleStoreItemsLock('${storeName}', false)" class="flex-1 sm:flex-none bg-white hover:bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold transition border border-red-200 shadow-sm"><i class="fa-solid fa-lock-open mr-2"></i>全部解鎖</button><button type="button" onclick="toggleStoreItemsLock('${storeName}', true)" class="flex-1 sm:flex-none bg-white hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold transition border border-slate-300 shadow-sm"><i class="fa-solid fa-lock mr-2"></i>全部上鎖</button></div></div>
                 </div>`;
             document.getElementById('edit-store-form-container').innerHTML = html;
             window.openModal('edit-store-modal');
@@ -2485,7 +2476,7 @@
             });
             if (newName !== oldStoreName) window.addAdminLog('修改', `店家名稱「${oldStoreName}」更改為「${newName}」並同步更新相關屬性`);
             else window.addAdminLog('修改', `更新店家「${newName}」的資訊 (包含分類或營業狀態)`);
-            window.closeModal('edit-store-modal'); await window.saveState(['stores', 'items', 'adminLogs']); window.debouncedAdminRender();
+            window.closeModal('edit-store-modal'); await window.saveState(); window.debouncedAdminRender();
         };
 
         window.deleteEntireStore = async function(storeName) {
@@ -2494,7 +2485,7 @@
             window.state.items = window.state.items.filter(i => (i.store || 'Unknown') !== storeName);
             window.addAdminLog('刪除', `永久刪除店家「${storeName}」及其 ${itemsCount} 筆餐點`);
             window.state.menuUpdateDate = window.getFormattedDate();
-            await window.saveState(['stores', 'items', 'adminLogs', 'menuUpdateDate']); window.debouncedAdminRender(); alert(`✅ 已成功完整刪除店家「${storeName}」與 ${itemsCount} 筆餐點資料！`);
+            await window.saveState(); window.debouncedAdminRender(); alert(`✅ 已成功完整刪除店家「${storeName}」與 ${itemsCount} 筆餐點資料！`);
         };
 
         window.toggleSoldOut = async function(id) {
@@ -2508,7 +2499,7 @@
                 if (imgEl) { if (item.isSoldOut) imgEl.classList.add('grayscale', 'opacity-60'); else imgEl.classList.remove('grayscale', 'opacity-60'); }
                 const badgeEl = document.getElementById(`item-soldout-badge-${id}`);
                 if (badgeEl) { if (item.isSoldOut) badgeEl.classList.remove('hidden'); else badgeEl.classList.add('hidden'); }
-                window.addAdminLog('修改', `切換餐點「${item.name}」為 ${item.isSoldOut ? '完售' : '供應'} 狀態`); await window.saveState(['items', 'adminLogs']);
+                window.addAdminLog('修改', `切換餐點「${item.name}」為 ${item.isSoldOut ? '完售' : '供應'} 狀態`); await window.saveState();
             }
         };
 
@@ -2523,7 +2514,7 @@
                     const actionBtns = itemRow.querySelectorAll('.admin-action-btn');
                     actionBtns.forEach(btn => { if (item.isLocked) btn.classList.add('disabled'); else btn.classList.remove('disabled'); });
                 }
-                await window.saveState(['items']); 
+                await window.saveState(); 
             } 
         };
 
@@ -2562,24 +2553,24 @@
                 
                 html += `
                     <div class="content-vis-auto border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-8 bg-white w-full">
-                        <div class="store-header p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4 w-full" style="background-color: ${storeColor}" onclick="toggleAdminStoreCollapse('${window.escapeHTML(store.replace(/'/g, "\\'"))}')">
+                        <div class="store-header p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b gap-4 w-full" style="background-color: ${storeColor}" onclick="toggleAdminStoreCollapse('${store}')">
                             <div class="flex items-start md:items-center gap-4 w-full md:w-auto overflow-hidden">
-                                <div class="w-12 h-12 md:w-14 md:h-14 bg-white rounded-2xl shadow-inner bg-cover bg-center border border-slate-200 shrink-0" style="background-image: url('${window.escapeHTML(coverImg)}')"></div>
+                                <div class="w-12 h-12 md:w-14 md:h-14 bg-white rounded-2xl shadow-inner bg-cover bg-center border border-slate-200 shrink-0" style="background-image: url('${coverImg}')"></div>
                                 <div class="flex-1 min-w-0">
                                     <h4 class="text-xl md:text-2xl font-black text-slate-800 flex items-center flex-wrap gap-2 w-full">
-                                        <span class="break-words whitespace-normal leading-snug">${window.escapeHTML(store)}</span>
+                                        <span class="break-words whitespace-normal leading-snug">${store}</span>
                                         ${storeMeta.isClosed ? `<span class="bg-red-100 text-red-600 px-2 py-0.5 rounded shadow-sm text-xs font-black shrink-0"><i class="fa-solid fa-store-slash mr-1"></i>暫停營業</span>` : ''}
                                         <div class="flex flex-wrap gap-1 shrink-0 mt-1 md:mt-0" onclick="event.stopPropagation()">
-                                            <i onclick="openStoreEditModal('${window.escapeHTML(store.replace(/'/g, "\\'"))}')" class="fa-solid fa-pen-to-square text-sm text-slate-600 hover:text-orange-600 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="編輯店家資訊"></i>
-                                            <i onclick="quickAddItem('${window.escapeHTML(store.replace(/'/g, "\\'"))}')" class="fa-solid fa-plus-circle text-sm text-emerald-600 hover:text-emerald-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="新增餐點"></i>
-                                            <i onclick="openBulkEditModal('${window.escapeHTML(store.replace(/'/g, "\\'"))}')" class="fa-solid fa-list-check text-sm text-blue-600 hover:text-blue-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="批次編輯(免密碼直接進入)"></i>
-                                            <i onclick="requestPassword('確定清空圖片？輸入管理員密碼：', pwd => { if(pwd==='suting') clearStoreImages('${window.escapeHTML(store.replace(/'/g, "\\'"))}'); else alert('密碼錯誤') })" class="fa-solid fa-image text-sm text-amber-500 hover:text-amber-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="清空圖片"></i>
-                                            <i onclick="requestPassword('確認永久刪除店家？輸入密碼：', pwd => { if(pwd==='suting') deleteEntireStore('${window.escapeHTML(store.replace(/'/g, "\\'"))}'); else alert('密碼錯誤') })" class="fa-solid fa-trash text-sm text-red-500 hover:text-red-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="刪除店家"></i>
+                                            <i onclick="openStoreEditModal('${store}')" class="fa-solid fa-pen-to-square text-sm text-slate-600 hover:text-orange-600 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="編輯店家資訊"></i>
+                                            <i onclick="quickAddItem('${store}')" class="fa-solid fa-plus-circle text-sm text-emerald-600 hover:text-emerald-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="新增餐點"></i>
+                                            <i onclick="openBulkEditModal('${store}')" class="fa-solid fa-list-check text-sm text-blue-600 hover:text-blue-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="批次編輯(免密碼直接進入)"></i>
+                                            <i onclick="requestPassword('確定清空圖片？輸入管理員密碼：', pwd => { if(pwd==='suting') clearStoreImages('${store}'); else alert('密碼錯誤') })" class="fa-solid fa-image text-sm text-amber-500 hover:text-amber-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="清空圖片"></i>
+                                            <i onclick="requestPassword('確認永久刪除店家？輸入密碼：', pwd => { if(pwd==='suting') deleteEntireStore('${store}'); else alert('密碼錯誤') })" class="fa-solid fa-trash text-sm text-red-500 hover:text-red-700 cursor-pointer transition transform hover:scale-125 bg-white/60 px-2 py-1 rounded-lg shadow-sm" title="刪除店家"></i>
                                         </div>
                                     </h4>
                                     <div class="mt-1 flex flex-wrap gap-2 text-[10px] md:text-xs font-bold text-slate-700 w-full">
-                                        ${storeMeta.phone ? `<span class="bg-white/70 px-2 py-0.5 rounded transition shadow-sm break-all"><i class="fa-solid fa-phone mr-1"></i>${window.escapeHTML(storeMeta.phone)}</span>` : ''}
-                                        <span class="bg-white/70 px-2 py-0.5 rounded shadow-sm text-slate-800 shrink-0"><i class="fa-solid fa-tag mr-1"></i>${window.escapeHTML(catInfo ? catInfo.name : '綜合')}</span>
+                                        ${storeMeta.phone ? `<span class="bg-white/70 px-2 py-0.5 rounded transition shadow-sm break-all"><i class="fa-solid fa-phone mr-1"></i>${storeMeta.phone}</span>` : ''}
+                                        <span class="bg-white/70 px-2 py-0.5 rounded shadow-sm text-slate-800 shrink-0"><i class="fa-solid fa-tag mr-1"></i>${catInfo ? catInfo.name : '綜合'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -2599,27 +2590,27 @@
                     let upsizeTag = item.upsizePrice > 0 ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-200 shadow-sm whitespace-nowrap"><i class="fa-solid fa-plus-circle mr-1"></i>加大 +$${item.upsizePrice}</span>` : '';
 
                     html += `
-                    <div id="item-row-${window.escapeHTML(item.id)}" class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 pl-4 md:pl-6 border-b border-slate-200 ${rowBgClass} hover:bg-orange-50/50 transition group gap-4 w-full">
+                    <div id="item-row-${item.id}" class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 pl-4 md:pl-6 border-b border-slate-200 ${rowBgClass} hover:bg-orange-50/50 transition group gap-4 w-full">
                         <div class="flex items-center gap-3 md:gap-5 w-full sm:w-auto flex-1 overflow-hidden">
-                            <img id="item-img-${window.escapeHTML(item.id)}" src="${window.escapeHTML(imgUrl)}" loading="lazy" decoding="async" class="w-14 h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-300 shadow-sm bg-white p-0.5 shrink-0 ${item.isSoldOut ? 'grayscale opacity-60' : ''}">
+                            <img id="item-img-${item.id}" src="${imgUrl}" loading="lazy" decoding="async" class="w-14 h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-slate-300 shadow-sm bg-white p-0.5 shrink-0 ${item.isSoldOut ? 'grayscale opacity-60' : ''}">
                             <div class="min-w-0 flex-1">
                                 <p class="font-black text-slate-800 text-lg md:text-xl group-hover:text-orange-700 transition-colors flex items-center flex-wrap gap-2 leading-tight w-full">
-                                    <span class="break-words whitespace-normal">${window.escapeHTML(item.name)}</span>
-                                    <span id="item-soldout-badge-${window.escapeHTML(item.id)}" class="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded border border-red-200 shadow-sm whitespace-nowrap ${item.isSoldOut ? '' : 'hidden'}"><i class="fa-solid fa-ban mr-1"></i>已完售</span>
+                                    <span class="break-words whitespace-normal">${item.name}</span>
+                                    <span id="item-soldout-badge-${item.id}" class="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded border border-red-200 shadow-sm whitespace-nowrap ${item.isSoldOut ? '' : 'hidden'}"><i class="fa-solid fa-ban mr-1"></i>已完售</span>
                                     <span class="text-xs md:text-sm text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-lg font-black border border-orange-100 shrink-0">$${item.price}</span>
                                 </p>
                                 <p class="text-xs md:text-sm text-slate-500 mt-1.5 font-bold flex flex-wrap gap-2 items-center w-full">
-                                    <span class="bg-white px-2 py-0.5 rounded border border-slate-300 text-slate-600 shadow-sm">${window.escapeHTML(item.subCat || '無細項分類')}</span>
+                                    <span class="bg-white px-2 py-0.5 rounded border border-slate-300 text-slate-600 shadow-sm">${item.subCat || '無細項分類'}</span>
                                     ${(item.customOptionIds && item.customOptionIds.length > 0) ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-200 shadow-sm whitespace-nowrap"><i class="fa-solid fa-list-ul mr-1"></i>含選項 (${item.customOptionIds.length})</span>` : ''}
                                     ${upsizeTag}
                                 </p>
                             </div>
                         </div>
                         <div class="flex gap-4 sm:gap-6 text-xl md:text-2xl sm:pr-4 w-full sm:w-auto justify-end shrink-0 mt-2 sm:mt-0 border-t sm:border-0 border-slate-200 pt-3 sm:pt-0">
-                            <i id="lock-icon-${window.escapeHTML(item.id)}" onclick="toggleLock('${window.escapeHTML(item.id.replace(/'/g, "\\'"))}')" class="fa-solid ${lockIcon} admin-action hover:scale-125 transform transition-transform p-2 sm:p-0"></i>
-                            <i id="soldout-icon-${window.escapeHTML(item.id)}" onclick="toggleSoldOut('${window.escapeHTML(item.id.replace(/'/g, "\\'"))}')" class="fa-solid ${soldOutIcon} admin-action admin-action-btn ${actionCls} hover:scale-125 transform transition-transform p-2 sm:p-0"></i>
-                            <i onclick="openItemEditModal('${window.escapeHTML(item.id.replace(/'/g, "\\'"))}')" class="fa-solid fa-pen-to-square text-slate-400 admin-action admin-action-btn ${actionCls} hover:text-orange-500 hover:scale-110 p-2 sm:p-0"></i>
-                            <i onclick="requestPassword('確認刪除餐點', pwd => { if(pwd==='suting') deleteItem('${window.escapeHTML(item.id.replace(/'/g, "\\'"))}'); else alert('密碼錯誤') })" class="fa-solid fa-trash-can text-slate-400 admin-action admin-action-btn ${actionCls} hover:!text-red-600 hover:scale-110 p-2 sm:p-0"></i>
+                            <i id="lock-icon-${item.id}" onclick="toggleLock('${item.id}')" class="fa-solid ${lockIcon} admin-action hover:scale-125 transform transition-transform p-2 sm:p-0"></i>
+                            <i id="soldout-icon-${item.id}" onclick="toggleSoldOut('${item.id}')" class="fa-solid ${soldOutIcon} admin-action admin-action-btn ${actionCls} hover:scale-125 transform transition-transform p-2 sm:p-0"></i>
+                            <i onclick="openItemEditModal('${item.id}')" class="fa-solid fa-pen-to-square text-slate-400 admin-action admin-action-btn ${actionCls} hover:text-orange-500 hover:scale-110 p-2 sm:p-0"></i>
+                            <i onclick="requestPassword('確認刪除餐點', pwd => { if(pwd==='suting') deleteItem('${item.id}'); else alert('密碼錯誤') })" class="fa-solid fa-trash-can text-slate-400 admin-action admin-action-btn ${actionCls} hover:!text-red-600 hover:scale-110 p-2 sm:p-0"></i>
                         </div>
                     </div>`;
                 });
@@ -2637,16 +2628,16 @@
             window.currentEditingItemData = JSON.parse(JSON.stringify(item));
             let html = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">菜單子分類 <span class="text-red-500">*</span></label><select id="modal-edit-item-subcat" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">${window.state.subCategories.map(s => `<option value="${window.escapeHTML(s)}" ${s === item.subCat ? 'selected' : ''}>${window.escapeHTML(s)}</option>`).join('')}</select></div>
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">餐點名稱 <span class="text-red-500">*</span></label><input type="text" id="modal-edit-item-name" value="${window.escapeHTML(item.name)}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words"></div>
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">價格 <span class="text-red-500">*</span></label><input type="number" id="modal-edit-item-price" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, '');" value="${item.price}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm"></div>
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">加大加價 (選填)</label><input type="number" id="modal-edit-item-upsize" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, '');" value="${item.upsizePrice || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm" placeholder="例: 15"></div>
-                    <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-500 mb-1">餐點圖片</label><div class="flex flex-col sm:flex-row gap-2 w-full"><input type="text" id="modal-edit-item-img" value="${item.img === DEFAULT_IMG ? '' : window.escapeHTML(item.img)}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="網址或上傳" oninput="document.getElementById('modal-edit-item-preview').src = this.value || '${DEFAULT_IMG}'"><input type="file" id="modal-edit-item-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'modal-edit-item-img', 'modal-edit-item-preview')"><button type="button" onclick="document.getElementById('modal-edit-item-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button></div><img id="modal-edit-item-preview" src="${window.escapeHTML(item.img || DEFAULT_IMG)}" class="mt-3 h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">菜單子分類 <span class="text-red-500">*</span></label><select id="modal-edit-item-subcat" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm">${window.state.subCategories.map(s => `<option value="${s}" ${s === item.subCat ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">餐點名稱 <span class="text-red-500">*</span></label><input type="text" id="modal-edit-item-name" value="${item.name}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm break-words"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">價格 <span class="text-red-500">*</span></label><input type="number" id="modal-edit-item-price" value="${item.price}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">加大加價 (選填)</label><input type="number" id="modal-edit-item-upsize" value="${item.upsizePrice || ''}" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:border-orange-500 shadow-sm" placeholder="例: 15"></div>
+                    <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-500 mb-1">餐點圖片</label><div class="flex flex-col sm:flex-row gap-2 w-full"><input type="text" id="modal-edit-item-img" value="${item.img === DEFAULT_IMG ? '' : item.img}" class="w-full sm:flex-1 bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-sm outline-none focus:border-orange-500 shadow-sm break-all" placeholder="網址或上傳" oninput="document.getElementById('modal-edit-item-preview').src = this.value || '${DEFAULT_IMG}'"><input type="file" id="modal-edit-item-file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'modal-edit-item-img', 'modal-edit-item-preview')"><button type="button" onclick="document.getElementById('modal-edit-item-file').click()" class="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 sm:py-0 rounded-xl font-bold transition whitespace-nowrap shrink-0"><i class="fa-solid fa-upload"></i></button></div><img id="modal-edit-item-preview" src="${item.img || DEFAULT_IMG}" class="mt-3 h-24 w-24 object-cover rounded-xl border border-slate-300 shadow-sm"></div>
                     <div class="md:col-span-2 bg-white p-4 rounded-xl border border-orange-200 mt-2 shadow-sm w-full"><label class="block text-xs font-bold text-orange-600 mb-3 whitespace-normal"><i class="fa-solid fa-sliders mr-2"></i>客製化選項 (選填)</label><div id="modal-edit-item-opt-container" class="grid grid-cols-1 lg:grid-cols-2 gap-2 w-full"></div></div>
                 </div>`;
             document.getElementById('edit-item-form-container').innerHTML = html;
             window.openModal('edit-item-modal');
-            setTimeout(() => { window.renderGlobalOptionsCheckboxes(`modal-edit-item-opt-container`, item.customOptionIds || [], true, `modal-edit-${window.escapeHTML(item.id.replace(/'/g, "\\'"))}`); }, 0);
+            setTimeout(() => { window.renderGlobalOptionsCheckboxes(`modal-edit-item-opt-container`, item.customOptionIds || [], true, `modal-edit-${item.id}`); }, 0);
         };
 
         window.saveItemEditModal = async function() {
@@ -2666,8 +2657,8 @@
             const idx = window.state.items.findIndex(i => String(i.id) === String(id));
             if(idx > -1) {
                 window.state.items[idx].name = name; 
-                window.state.items[idx].price = parseInt(price, 10); 
-                window.state.items[idx].upsizePrice = upsizePriceVal ? parseInt(upsizePriceVal, 10) : 0;
+                window.state.items[idx].price = parseInt(price); 
+                window.state.items[idx].upsizePrice = upsizePriceVal ? parseInt(upsizePriceVal) : 0;
                 window.state.items[idx].subCat = subCat; 
                 window.state.items[idx].img = img; 
                 window.state.items[idx].customOptionIds = customOptionIds; 
@@ -2675,7 +2666,7 @@
                 window.state.items[idx].isLocked = true; 
                 window.addAdminLog('修改', `編輯「${name}」於「${window.state.items[idx].store}」並已上鎖`);
             }
-            window.state.menuUpdateDate = window.getFormattedDate(); window.closeModal('edit-item-modal'); await window.saveState(['items', 'adminLogs']); window.debouncedAdminRender();
+            window.state.menuUpdateDate = window.getFormattedDate(); window.closeModal('edit-item-modal'); await window.saveState(); window.debouncedAdminRender();
         };
 
         window.openBulkEditModal = function(storeName) {
@@ -2686,25 +2677,25 @@
             items.forEach(item => { window.bulkEditOriginalData[item.id] = JSON.parse(JSON.stringify(item)); });
             let accordionHtml = '';
             items.forEach((item, index) => {
-                const subCatOptions = window.state.subCategories.map(s => `<option value="${window.escapeHTML(s)}" ${s === item.subCat ? 'selected' : ''}>${window.escapeHTML(s)}</option>`).join('');
+                const subCatOptions = window.state.subCategories.map(s => `<option value="${s}" ${s === item.subCat ? 'selected' : ''}>${s}</option>`).join('');
                 const isExpanded = index === 0;
                 accordionHtml += `
-                    <div class="mb-3 border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white" id="bulk-item-${window.escapeHTML(item.id)}">
-                        <div class="px-4 py-3 cursor-pointer flex justify-between items-center transition-colors ${isExpanded ? 'bg-blue-100 text-blue-800' : 'bg-white'}" onclick="toggleBulkEditAccordion('${window.escapeHTML(item.id.replace(/'/g, "\\'"))}')" id="bulk-header-${window.escapeHTML(item.id)}">
+                    <div class="mb-3 border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white" id="bulk-item-${item.id}">
+                        <div class="px-4 py-3 cursor-pointer flex justify-between items-center transition-colors ${isExpanded ? 'bg-blue-100 text-blue-800' : 'bg-white'}" onclick="toggleBulkEditAccordion('${item.id}')" id="bulk-header-${item.id}">
                             <div class="flex items-center gap-3 w-full pr-4">
-                                <i class="fa-solid ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} text-sm opacity-60 w-4 text-center" id="bulk-icon-${window.escapeHTML(item.id)}"></i>
-                                <span class="font-black truncate flex-1" id="bulk-header-title-${window.escapeHTML(item.id)}">${window.escapeHTML(item.name)}</span>
-                                <span class="font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg text-xs">$<span id="bulk-header-price-${window.escapeHTML(item.id)}">${item.price}</span></span>
+                                <i class="fa-solid ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} text-sm opacity-60 w-4 text-center" id="bulk-icon-${item.id}"></i>
+                                <span class="font-black truncate flex-1" id="bulk-header-title-${item.id}">${item.name}</span>
+                                <span class="font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg text-xs">$<span id="bulk-header-price-${item.id}">${item.price}</span></span>
                             </div>
                         </div>
-                        <div class="transition-all duration-300 ${isExpanded ? 'max-h-[1000px] p-4 opacity-100' : 'max-h-0 p-0 opacity-0'}" id="bulk-body-${window.escapeHTML(item.id)}">
+                        <div class="transition-all duration-300 ${isExpanded ? 'max-h-[1000px] p-4 opacity-100' : 'max-h-0 p-0 opacity-0'}" id="bulk-body-${item.id}">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 mb-1">名稱 *</label><input type="text" id="bulk-name-${window.escapeHTML(item.id)}" value="${window.escapeHTML(item.name)}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" oninput="document.getElementById('bulk-header-title-${window.escapeHTML(item.id.replace(/'/g, "\\'"))}').innerText = this.value || '未命名餐點'"></div>
-                                <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 mb-1">價格 *</label><input type="number" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, '');" id="bulk-price-${window.escapeHTML(item.id)}" value="${item.price}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" oninput="document.getElementById('bulk-header-price-${window.escapeHTML(item.id.replace(/'/g, "\\'"))}').innerText = this.value || '0'"></div>
-                                <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 mb-1">加大加價 (選填)</label><input type="number" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, '');" id="bulk-upsize-${window.escapeHTML(item.id)}" value="${item.upsizePrice || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" placeholder="例如: 15"></div>
-                                <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 mb-1">分類 *</label><select id="bulk-subcat-${window.escapeHTML(item.id)}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition">${subCatOptions}</select></div>
-                                <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-500 mb-1">圖片</label><div class="flex gap-2 w-full"><input type="text" id="bulk-img-${window.escapeHTML(item.id)}" value="${item.img === DEFAULT_IMG ? '' : window.escapeHTML(item.img || '')}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold text-sm outline-none focus:border-blue-500 focus:bg-white transition" placeholder="網址或上傳" oninput="document.getElementById('bulk-preview-${window.escapeHTML(item.id.replace(/'/g, "\\'"))}').src = this.value || '${DEFAULT_IMG}'"><input type="file" id="bulk-file-${window.escapeHTML(item.id)}" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'bulk-img-${window.escapeHTML(item.id.replace(/'/g, "\\'"))}', 'bulk-preview-${window.escapeHTML(item.id.replace(/'/g, "\\'"))}')"><button type="button" onclick="document.getElementById('bulk-file-${window.escapeHTML(item.id.replace(/'/g, "\\'"))}').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded-lg font-bold shrink-0"><i class="fa-solid fa-upload"></i></button><img id="bulk-preview-${window.escapeHTML(item.id)}" src="${window.escapeHTML(item.img || DEFAULT_IMG)}" class="h-9 w-9 object-cover rounded shadow-sm border border-slate-200 shrink-0"></div></div>
-                                <div class="md:col-span-3"><label class="block text-xs font-bold text-slate-500 mb-1">客製化模組</label><div id="bulk-opt-container-${window.escapeHTML(item.id)}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200"></div></div>
+                                <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 mb-1">名稱 *</label><input type="text" id="bulk-name-${item.id}" value="${item.name}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" oninput="document.getElementById('bulk-header-title-${item.id}').innerText = this.value || '未命名餐點'"></div>
+                                <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 mb-1">價格 *</label><input type="number" id="bulk-price-${item.id}" value="${item.price}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" oninput="document.getElementById('bulk-header-price-${item.id}').innerText = this.value || '0'"></div>
+                                <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 mb-1">加大加價 (選填)</label><input type="number" id="bulk-upsize-${item.id}" value="${item.upsizePrice || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition" placeholder="例如: 15"></div>
+                                <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 mb-1">分類 *</label><select id="bulk-subcat-${item.id}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold outline-none focus:border-blue-500 focus:bg-white transition">${subCatOptions}</select></div>
+                                <div class="md:col-span-2"><label class="block text-xs font-bold text-slate-500 mb-1">圖片</label><div class="flex gap-2 w-full"><input type="text" id="bulk-img-${item.id}" value="${item.img === DEFAULT_IMG ? '' : (item.img || '')}" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold text-sm outline-none focus:border-blue-500 focus:bg-white transition" placeholder="網址或上傳" oninput="document.getElementById('bulk-preview-${item.id}').src = this.value || DEFAULT_IMG"><input type="file" id="bulk-file-${item.id}" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleImageUpload(event, 'bulk-img-${item.id}', 'bulk-preview-${item.id}')"><button type="button" onclick="document.getElementById('bulk-file-${item.id}').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded-lg font-bold shrink-0"><i class="fa-solid fa-upload"></i></button><img id="bulk-preview-${item.id}" src="${item.img || DEFAULT_IMG}" class="h-9 w-9 object-cover rounded shadow-sm border border-slate-200 shrink-0"></div></div>
+                                <div class="md:col-span-3"><label class="block text-xs font-bold text-slate-500 mb-1">客製化模組</label><div id="bulk-opt-container-${item.id}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200"></div></div>
                             </div>
                         </div>
                     </div>`;
@@ -2738,9 +2729,9 @@
             for (const id in window.bulkEditOriginalData) {
                 const oldData = window.bulkEditOriginalData[id];
                 const name = document.getElementById(`bulk-name-${id}`).value.trim();
-                const price = parseInt(document.getElementById(`bulk-price-${id}`).value, 10);
+                const price = parseInt(document.getElementById(`bulk-price-${id}`).value);
                 const upsizePriceVal = document.getElementById(`bulk-upsize-${id}`).value;
-                const upsizePrice = upsizePriceVal ? parseInt(upsizePriceVal, 10) : 0;
+                const upsizePrice = upsizePriceVal ? parseInt(upsizePriceVal) : 0;
                 const subCat = document.getElementById(`bulk-subcat-${id}`).value;
                 const img = document.getElementById(`bulk-img-${id}`).value.trim() || DEFAULT_IMG;
                 const checkedBoxes = document.querySelectorAll(`.inline-opt-cb-bulk-${id}:checked`);
@@ -2766,7 +2757,7 @@
             if (changedCount > 0) {
                 window.addAdminLog('修改', `批次編輯 ${changedCount} 筆餐點並自動上鎖`);
                 window.state.menuUpdateDate = window.getFormattedDate();
-                await window.saveState(['items', 'adminLogs', 'menuUpdateDate']); window.debouncedAdminRender(); alert(`✅ 批次儲存成功！`);
+                await window.saveState(); window.debouncedAdminRender(); alert(`✅ 批次儲存成功！`);
             } else {
                 alert(`ℹ️ 沒有偵測到任何修改。`);
             }
@@ -2782,7 +2773,7 @@
             const subCat = document.getElementById('admin-input-subcat').value;
             const itemName = document.getElementById('admin-input-item').value.trim();
             const price = document.getElementById('admin-input-price').value;
-            const upsizePriceVal = document.getElementById('admin-input-upsize').value; 
+            const upsizePriceVal = document.getElementById('admin-input-upsize').value; // 讀取新增的加大加價
             let img = document.getElementById('admin-input-img-url').value.trim() || DEFAULT_IMG;
             
             if (!storeName || !cat || !subCat || !itemName || !price) return alert("⚠️ 店家名稱、大分類、子分類、餐點名稱、價格 皆為必填！");
@@ -2813,8 +2804,8 @@
                 store: storeName, 
                 subCat: subCat, 
                 name: itemName, 
-                price: parseInt(price, 10), 
-                upsizePrice: upsizePriceVal ? parseInt(upsizePriceVal, 10) : 0, 
+                price: parseInt(price), 
+                upsizePrice: upsizePriceVal ? parseInt(upsizePriceVal) : 0, 
                 img: img, 
                 isLocked: true, 
                 isSoldOut: false, 
@@ -2825,7 +2816,7 @@
             window.state.menuUpdateDate = window.getFormattedDate();
             window.addAdminLog('新增', `新增「${itemName}」至「${storeName}」`);
             window.closeModal('add-item-modal');
-            await window.saveState(['stores', 'items', 'adminLogs', 'menuUpdateDate']); window.debouncedAdminRender();
+            await window.saveState(); window.debouncedAdminRender();
             window.clearNewItemForm(true);
             alert(`✅ 餐點「${itemName}」新增成功！`);
         };
@@ -2838,7 +2829,7 @@
                 window.addAdminLog('刪除', `刪除餐點「${deletedItem.name}」`);
                 window.state.menuUpdateDate = window.getFormattedDate();
                 
-                await window.saveState(['items', 'adminLogs', 'menuUpdateDate']); window.debouncedAdminRender();
+                await window.saveState(); window.debouncedAdminRender();
             }
         };
 
@@ -2861,18 +2852,18 @@
                     <div class="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm mb-6 w-full">
                         <div class="flex justify-between items-start border-b pb-4 mb-4 gap-4">
                             <div class="flex-1 min-w-0">
-                                <p class="font-black text-slate-800 text-lg md:text-xl truncate leading-tight"><i class="fa-solid fa-store text-orange-500 mr-2"></i>${window.escapeHTML(storesText)}</p>
-                                <p class="text-sm font-bold text-slate-500 mt-2 bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-100 shadow-sm">${window.escapeHTML(order.date)} ${window.escapeHTML(order.time)}</p>
+                                <p class="font-black text-slate-800 text-lg md:text-xl truncate leading-tight"><i class="fa-solid fa-store text-orange-500 mr-2"></i>${storesText}</p>
+                                <p class="text-sm font-bold text-slate-500 mt-2 bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-100 shadow-sm">${order.date} ${order.time}</p>
                             </div>
                             <p class="text-2xl font-black text-red-600 shrink-0">$${order.total}</p>
                         </div>
                         <div class="space-y-2 mb-6 max-h-48 overflow-y-auto custom-scrollbar pr-2 w-full">`;
                 order.cart.forEach(c => { html += `
                         <div class="flex justify-between items-center text-sm bg-slate-50 p-2.5 rounded-xl border border-slate-100 gap-2 w-full">
-                            <div class="flex-1 min-w-0"><span class="font-bold text-slate-700 truncate block">${window.escapeHTML(c.itemName)} x${c.qty}</span><span class="text-xs text-slate-500 block truncate">${window.escapeHTML(c.userName)} ${c.note ? `[${window.escapeHTML(c.note)}]` : ''}</span></div>
+                            <div class="flex-1 min-w-0"><span class="font-bold text-slate-700 truncate block">${c.itemName} x${c.qty}</span><span class="text-xs text-slate-500 block truncate">${c.userName} ${c.note ? `[${c.note}]` : ''}</span></div>
                             <span class="font-black text-slate-800 shrink-0">$${c.price * c.qty}</span>
                         </div>`; });
-                html += `</div><div class="flex gap-2"><button type="button" onclick="exportSingleHistoryExcel('${window.escapeHTML(order.id.replace(/'/g, "\\'"))}')" class="flex-1 bg-emerald-50 text-emerald-600 border border-emerald-200 px-4 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-emerald-100 transition flex items-center justify-center"><i class="fa-solid fa-file-excel mr-2"></i>匯出 Excel</button></div></div>`; });
+                html += `</div><div class="flex gap-2"><button type="button" onclick="exportSingleHistoryExcel('${order.id}')" class="flex-1 bg-emerald-50 text-emerald-600 border border-emerald-200 px-4 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-emerald-100 transition flex items-center justify-center"><i class="fa-solid fa-file-excel mr-2"></i>匯出 Excel</button></div></div>`; });
             }
             document.getElementById('admin-history-list').innerHTML = html;
         };
@@ -2886,9 +2877,10 @@
 
         window.clearHistoryRecords = async function(pwd) {
             if(!window.state.orderHistory || window.state.orderHistory.length === 0) return alert('紀錄已空');
-            if(pwd === "suting") { window.state.orderHistory = []; window.addAdminLog('清空', '手動清空歷史紀錄'); await window.saveState(['orderHistory', 'adminLogs']); window.renderHistory(); alert("✅ 歷史紀錄已清空！"); } else alert("❌ 密碼錯誤！");
+            if(pwd === "suting") { window.state.orderHistory = []; window.addAdminLog('清空', '手動清空歷史紀錄'); await window.saveState(); window.renderHistory(); alert("✅ 歷史紀錄已清空！"); } else alert("❌ 密碼錯誤！");
         };
 
+        // 更新匯出邏輯：加入匯出加大加價資訊
         window.exportDatabaseExcel = async function() {
             if (window.state.items.length === 0) return alert('無餐點可供匯出！');
             const workbook = new ExcelJS.Workbook();
@@ -2916,6 +2908,7 @@
             const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `Su.線上點餐資料庫_${window.getFormattedDate()}.xlsx`; link.click();
         };
 
+        // 更新匯入邏輯：加入匯入加大加價資訊
         window.importDatabaseExcel = async function(event) {
             const file = event.target.files[0]; if (!file) return;
             window.requestPassword('確認匯入 Excel？', async pwd => {
@@ -2933,9 +2926,9 @@
                             const subCat = row.getCell(5).value?.toString().trim() || '主餐';
                             const itemName = row.getCell(6).value?.toString().trim();
                             const priceVal = row.getCell(7).value;
-                            const price = parseInt(priceVal, 10);
+                            const price = parseInt(priceVal);
                             const upsizeVal = row.getCell(8).value;
-                            const upsizePrice = upsizeVal ? parseInt(upsizeVal, 10) : 0;
+                            const upsizePrice = upsizeVal ? parseInt(upsizeVal) : 0;
                             const optionsStr = row.getCell(9).value?.toString().trim() || '';
                             
                             if (!storeName || !itemName || isNaN(price)) return;
@@ -2989,7 +2982,7 @@
                         if (importedCount > 0) { 
                             window.addAdminLog('匯入', `從 Excel 批次匯入 / 更新了 ${importedCount} 筆餐點資料`); 
                             window.state.menuUpdateDate = window.getFormattedDate(); 
-                            await window.saveState(['items', 'categories', 'stores', 'subCategories', 'adminLogs', 'menuUpdateDate']); 
+                            await window.saveState(); 
                             window.debouncedAdminRender(); 
                             alert(`✅ 成功匯入 / 更新了 ${importedCount} 筆餐點資料！`); 
                         } else {
@@ -3034,7 +3027,7 @@
         };
 
         window.exportSingleHistoryExcel = async function(orderId) {
-            const order = window.state.orderHistory.find(o => String(o.id) === String(orderId)); if (!order) return;
+            const order = window.state.orderHistory.find(o => o.id === orderId); if (!order) return;
             const workbook = new ExcelJS.Workbook(); 
             const sheetName = `${order.date.replace(/-/g, '')}_${order.time.replace(/:/g, '')}`.substring(0, 31); 
             const sheet = workbook.addWorksheet(sheetName, {

@@ -669,11 +669,24 @@
         const db = getFirestore(app);
         const dbRef = doc(db, "su_system", "current_db");
 
+        // [修正 1]：重寫 debounceRender 為保證執行機制的節流防抖
+        // 解決：當多人連點時，計時器不斷重置導致畫面卡住的問題。現在即使連點，最晚每 200ms 一定會強制刷新畫面一次。
         window.debounceRender = function(fn, delay) {
-            let timer;
+            let timeoutId;
+            let lastExecuted = 0;
             return function(...args) {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn.apply(this, args), delay);
+                const now = Date.now();
+                const execute = () => {
+                    lastExecuted = Date.now();
+                    fn.apply(this, args);
+                };
+                if (now - lastExecuted >= delay) {
+                    if (timeoutId) clearTimeout(timeoutId);
+                    execute();
+                } else {
+                    if (timeoutId) clearTimeout(timeoutId);
+                    timeoutId = setTimeout(execute, delay - (now - lastExecuted));
+                }
             };
         };
 
@@ -1576,6 +1589,7 @@
             el.value = Math.max(1, current + val); 
         };
 
+        // [修正 2 & 3]：加入「樂觀更新 UI」機制，並防止 Firebase 接收到 undefined 值崩潰
         window.confirmAddToCart = async function() {
             const user = document.getElementById('modal-user').value.trim();
             if (!user) return alert('請務必輸入或點選您的姓名！');
@@ -1595,18 +1609,35 @@
             if (dynamicNotes.length > 0) note = `[${dynamicNotes.join(', ')}] ` + note;
             
             const qtyToAdd = parseInt(document.getElementById('modal-qty').value) || 1;
+            
+            // 安全防護 Fallback：確保所有欄位絕對不是 undefined，避免 Firebase 無聲拒絕寫入
             const newItem = { 
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
-                userName: user, 
-                itemName: window.activeItemForModal.name, 
-                storeName: window.activeItemForModal.store, 
-                price: currentPrice, 
-                qty: qtyToAdd, 
-                note: note 
+                userName: user || '未知', 
+                itemName: window.activeItemForModal.name || '未知餐點', 
+                storeName: window.activeItemForModal.store || '綜合店家', 
+                price: currentPrice || 0, 
+                qty: qtyToAdd || 1, 
+                note: note || '' 
             };
+            
             window.closeModal('order-modal');
-            try { await updateDoc(dbRef, { cart: arrayUnion(newItem) }); } 
-            catch(e) { console.error("Cart update failed", e); }
+
+            // 樂觀更新 (Optimistic UI)：不管網路再爛，自己點的餐點先瞬間寫入畫面，不再苦等伺服器！
+            if (!window.state.cart) window.state.cart = [];
+            window.state.cart.push(newItem);
+            window.updateCartUI();
+
+            try { 
+                await updateDoc(dbRef, { cart: arrayUnion(newItem) }); 
+            } 
+            catch(e) { 
+                console.error("Cart update failed", e); 
+                // 若網路完全斷線導致嚴重錯誤，才撤銷本地畫面並提示
+                window.state.cart = window.state.cart.filter(c => c.id !== newItem.id);
+                window.updateCartUI();
+                alert('網路連線異常，餐點新增失敗，請確認網路狀態後重試！');
+            }
         };
 
         window.updateCartUI = function() {
@@ -2497,7 +2528,6 @@
             }
         };
 
-        // 重新宣告覆蓋 renderAdmin 以達成：移除批次編輯的密碼驗證
         window.renderAdmin = function() {
             const listContainer = document.getElementById('admin-data-grouped-list');
             const scrollPos = window.scrollY;

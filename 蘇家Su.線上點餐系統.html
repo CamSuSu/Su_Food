@@ -162,6 +162,12 @@
                         <p class="text-orange-600 bg-orange-50 p-3 rounded-xl inline-block border border-orange-100 font-bold w-full md:w-auto break-words whitespace-normal"><i class="fa-solid fa-circle-info mr-2"></i>目前為瀏覽模式，若要訂餐請回首頁「發起點餐活動」。</p>
                     </div>
                 </div>
+                
+                <div class="relative w-full mb-6">
+                    <div id="browse-subcat-tabs" class="flex gap-3 overflow-x-auto pb-5 pt-2 px-2 custom-scrollbar snap-x snap-mandatory pr-16 scroll-smooth" style="-webkit-overflow-scrolling: touch;"></div>
+                    <div class="absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent pointer-events-none"></div>
+                </div>
+
                 <div id="browse-menu-container"></div>
             </div>
 
@@ -1138,10 +1144,18 @@
             document.getElementById('store-grid').innerHTML = gridHtml || '<div class="col-span-full text-center py-12 text-slate-400 font-bold text-xl">此分類目前無店家資料</div>';
         };
 
+        window.browseStoreName = null;
+        window.browseSubcatFilter = 'all';
+
         window.openStoreBrowse = function(storeName) {
             if (window.state.session.isActive) return;
             const storeInfo = window.state.stores.find(s => s.name === storeName) || {};
             if (storeInfo.isClosed) return alert('該店家目前暫停營業中！');
+            
+            // 記憶目前瀏覽的店家與過濾狀態
+            if (window.browseStoreName !== storeName) window.browseSubcatFilter = 'all';
+            window.browseStoreName = storeName;
+
             document.getElementById('browse-store-name').innerText = storeName;
             const infoHtml = `
                 ${storeInfo.phone ? `<a href="tel:${storeInfo.phone}" class="bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-sm transition text-slate-700 break-all"><i class="fa-solid fa-phone text-orange-500 mr-2"></i>${storeInfo.phone}</a>` : ''}
@@ -1159,8 +1173,45 @@
                 coverImg = firstImgItem ? firstImgItem.img : DEFAULT_IMG;
             }
             document.getElementById('browse-store-cover').style.backgroundImage = `url('${coverImg}')`;
-            document.getElementById('browse-menu-container').innerHTML = window.generateMenuHtml(storeName, false);
+            
+            window.renderBrowseMenu();
             window.showView('store-details');
+        };
+
+        window.filterBrowseStore = function(subCat) {
+            window.browseSubcatFilter = subCat;
+            window.renderBrowseMenu();
+        };
+
+        window.renderBrowseMenu = function() {
+            if (!window.browseStoreName) return;
+            const storeName = window.browseStoreName;
+            const storeItems = window.state.items.filter(i => (i.store || 'Unknown') === storeName);
+
+            // 取得此店家有使用的分類，並依照全域排序
+            const uniqueSubCats = [...new Set(storeItems.map(i => i.subCat || '無分類'))];
+            uniqueSubCats.sort((a, b) => {
+                let idxA = window.state.subCategories.indexOf(a);
+                let idxB = window.state.subCategories.indexOf(b);
+                if(idxA === -1) idxA = 999;
+                if(idxB === -1) idxB = 999;
+                return idxA - idxB;
+            });
+
+            // 渲染標籤
+            let tabsHtml = `<button data-id="all" onclick="filterBrowseStore('all')" class="cat-tab snap-start ${window.browseSubcatFilter === 'all' ? 'bg-slate-800 text-white shadow-md border-slate-800 transform scale-105' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'} px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition border shrink-0">全部餐點</button>`;
+            
+            uniqueSubCats.forEach(sub => {
+                const activeCls = window.browseSubcatFilter === sub ? 'bg-slate-800 text-white shadow-md border-slate-800 transform scale-105' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50';
+                tabsHtml += `<button data-id="${sub}" onclick="filterBrowseStore('${sub}')" class="cat-tab snap-start ${activeCls} px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition border shrink-0">${sub}</button>`;
+            });
+
+            const browseSubcatTabs = document.getElementById('browse-subcat-tabs');
+            if(browseSubcatTabs) browseSubcatTabs.innerHTML = tabsHtml;
+
+            // 生成過濾後的菜單並寫入
+            const menuHtml = window.generateMenuHtml(storeName, false, window.browseSubcatFilter);
+            document.getElementById('browse-menu-container').innerHTML = menuHtml || '<div class="text-center py-12 text-slate-400 font-bold text-xl bg-white rounded-3xl border border-slate-200 shadow-sm mt-4">此分類目前無餐點</div>';
         };
 
         window.generateMenuHtml = function(storeName, isActiveMode = false, subCatFilter = 'all') {

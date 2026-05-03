@@ -22,25 +22,17 @@ async function sendNotification() {
       return;
     }
 
-  // 2. 準備推播訊息內容
+  // send.js 裡面的 message 設定應該要長這樣：
     const message = {
       notification: {
         title: '🍔 Su.線上點餐活動開始囉！',
-        body: '有人發起了團體點餐～快打開系統選擇想吃的餐點吧！！',
+        body: '有人發起了點餐活動～快打開系統並選擇想吃的餐點吧！！',
       },
+      // 這是逼迫安卓瀏覽器拉高層級的關鍵
       webpush: {
-        headers: {
-          urgency: 'high' // 【關鍵】必須是小寫，強制安卓提高優先級
-        },
-        notification: {
-          vibrate: [500, 200, 500, 200, 500], // 【關鍵】安卓專屬的強烈震動模式
-          requireInteraction: true, // 讓通知停在畫面上不消失
-          icon: '/images/sufood.png'
-        },
-        fcmOptions: {
-          link: 'https://您的網域.com' // 【關鍵】請務必填寫您的網址，點擊通知才會自動開啟系統
-        }
+        headers: { Urgency: 'high' }
       },
+      // iOS 專用
       apns: {
         headers: { 'apns-priority': '10' },
         payload: { aps: { sound: 'default', contentAvailable: true } }

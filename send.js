@@ -22,27 +22,22 @@ async function sendNotification() {
       return;
     }
 
-  // 2. 準備推播訊息內容
+  // 2. 準備推播訊息內容 (雙管齊下)
     const message = {
+      // 給 iOS 和系統預設抓取的 notification
       notification: {
         title: '🍔 Su.線上點餐活動開始囉！',
+        body: '家禾發起了團體點餐，趕快打開系統選擇想吃的餐點吧！',
+      },
+      // 給安卓 Service Worker 手動抓取的 data
+      data: {
+        title: '🍔 Su.線上點餐活動開始囉！',
         body: '有人發起了點餐活動～快打開系統並選擇餐點吧！！',
+        click_action: '/'
       },
-      // 👉 給 Android PWA 看的設定
       webpush: {
-        headers: {
-          Urgency: 'high' // 讓系統知道這是重要通知
-        },
-        notification: {
-          icon: '/images/sufood.png', // 確保圖示路徑正確
-          vibrate: [300, 100, 300, 100, 300], // 安卓專屬震動
-          requireInteraction: true // 讓通知停在畫面上
-        },
-        fcmOptions: {
-          link: '/' // 【關鍵】點擊通知時自動開啟首頁
-        }
+        headers: { Urgency: 'high' } // 強制高優先級
       },
-      // 👉 給 iOS PWA 看的設定
       apns: {
         headers: { 'apns-priority': '10' },
         payload: { aps: { sound: 'default', badge: 1 } }

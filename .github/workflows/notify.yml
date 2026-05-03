@@ -1,0 +1,30 @@
+name: Send Push Notification
+
+# 觸發條件：當收到名為 'start_order_event' 的外部呼叫時啟動
+on:
+  repository_dispatch:
+    types: [start_order_event]
+
+jobs:
+  send-push:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 抓取您的專案程式碼
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. 準備 Node.js 執行環境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 3. 安裝 Firebase Admin SDK (讓 send.js 可以運作)
+      - name: Install Dependencies
+        run: npm install firebase-admin
+
+      # 4. 執行推播程式，並將保險箱的金鑰傳遞給它
+      - name: Execute Notification Script
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node send.js

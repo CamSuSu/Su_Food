@@ -22,21 +22,24 @@ async function sendNotification() {
       return;
     }
 
-   // 2. 準備推播訊息內容 (加入最高優先級設定)
+  // 2. 準備推播訊息內容
     const message = {
       notification: {
         title: '🍔 Su.線上點餐活動開始囉！',
-        body: '有人發起了團體線上點餐，趕快打開系統選擇想吃的餐點吧！',
+        body: '家禾發起了團體點餐，趕快打開系統選擇想吃的餐點吧！',
       },
-      // 針對 Android：強制喚醒並發出預設聲音
-      android: {
-        priority: 'high',
+      // 👇 【關鍵修正】這是給 Android PWA 與電腦瀏覽器看的專屬設定
+      webpush: {
+        headers: {
+          Urgency: 'high' // 強制最高優先級，這是觸發安卓「橫幅彈出 (Heads-up)」的關鍵
+        },
         notification: {
-          sound: 'default',
-          channelId: 'default'
+          vibrate: [200, 100, 200, 100, 200], // 觸發連續震動
+          requireInteraction: true, // 讓通知停留在螢幕上，直到使用者點擊或滑掉
+          icon: '/images/sufood.png',
         }
       },
-      // 針對 iOS (Apple)：強制最高優先級 (10)
+      // 👉 給 iOS PWA 看的設定 (保留不變)
       apns: {
         headers: {
           'apns-priority': '10',
@@ -50,7 +53,7 @@ async function sendNotification() {
       },
       tokens: tokens, 
     };
-
+    
     // 3. 執行批次發送
     const response = await admin.messaging().sendEachForMulticast(message);
     console.log(`成功發送 ${response.successCount} 則通知，失敗 ${response.failureCount} 則。`);

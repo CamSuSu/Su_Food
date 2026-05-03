@@ -22,16 +22,33 @@ async function sendNotification() {
       return;
     }
 
-    // 2. 準備推播訊息內容
+   // 2. 準備推播訊息內容 (加入最高優先級設定)
     const message = {
       notification: {
         title: '🍔 Su.線上點餐活動開始囉！',
-        body: '家禾發起了團體點餐，趕快打開系統選擇想吃的餐點吧！',
+        body: '有人發起了團體線上點餐，趕快打開系統選擇想吃的餐點吧！',
       },
-      // 確保 Android 與 iOS 在背景時能發出聲音
-      android: { notification: { sound: 'default' } },
-      apns: { payload: { aps: { sound: 'default' } } },
-      tokens: tokens, // 傳送給所有收集到的裝置
+      // 針對 Android：強制喚醒並發出預設聲音
+      android: {
+        priority: 'high',
+        notification: {
+          sound: 'default',
+          channelId: 'default'
+        }
+      },
+      // 針對 iOS (Apple)：強制最高優先級 (10)
+      apns: {
+        headers: {
+          'apns-priority': '10',
+        },
+        payload: {
+          aps: {
+            sound: 'default',
+            contentAvailable: true
+          }
+        }
+      },
+      tokens: tokens, 
     };
 
     // 3. 執行批次發送

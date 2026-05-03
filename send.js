@@ -28,28 +28,22 @@ async function sendNotification() {
         title: '🍔 Su.線上點餐活動開始囉！',
         body: '家禾發起了團體點餐，趕快打開系統選擇想吃的餐點吧！',
       },
-      // 👇 【關鍵修正】這是給 Android PWA 與電腦瀏覽器看的專屬設定
       webpush: {
         headers: {
-          Urgency: 'high' // 強制最高優先級，這是觸發安卓「橫幅彈出 (Heads-up)」的關鍵
+          urgency: 'high' // 【關鍵】必須是小寫，強制安卓提高優先級
         },
         notification: {
-          vibrate: [200, 100, 200, 100, 200], // 觸發連續震動
-          requireInteraction: true, // 讓通知停留在螢幕上，直到使用者點擊或滑掉
-          icon: '/images/sufood.png',
+          vibrate: [500, 200, 500, 200, 500], // 【關鍵】安卓專屬的強烈震動模式
+          requireInteraction: true, // 讓通知停在畫面上不消失
+          icon: '/images/sufood.png'
+        },
+        fcmOptions: {
+          link: 'https://您的網域.com' // 【關鍵】請務必填寫您的網址，點擊通知才會自動開啟系統
         }
       },
-      // 👉 給 iOS PWA 看的設定 (保留不變)
       apns: {
-        headers: {
-          'apns-priority': '10',
-        },
-        payload: {
-          aps: {
-            sound: 'default',
-            contentAvailable: true
-          }
-        }
+        headers: { 'apns-priority': '10' },
+        payload: { aps: { sound: 'default', contentAvailable: true } }
       },
       tokens: tokens, 
     };

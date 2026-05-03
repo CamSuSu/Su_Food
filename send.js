@@ -22,28 +22,30 @@ async function sendNotification() {
       return;
     }
 
-  // 2. 準備推播訊息內容 (統一使用原生 notification 與 webpush 設定)
-const message = {
-  notification: {
-    title: '🍔 Su.線上點餐活動開始囉！',
-    body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
-  },
-  webpush: {
-    headers: { Urgency: 'high' },
+  // 2. 準備推播訊息內容
+  const message = {
     notification: {
-      icon: '/images/sufood.png',
-      badge: '/images/sufood.png',
-      vibrate: [500, 200, 500, 200, 500]
+      title: '🍔 Su.線上點餐活動開始囉！',
+      body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
     },
-    fcmOptions: {
-      link: '/' // 點擊通知後開啟的路徑
-    }
-  },
-  apns: {
-    payload: { aps: { sound: 'default', badge: 1 } }
-  },
-  tokens: tokens, 
-};
+    // 🚀 核心修正：強制 Android 突破休眠模式，在鎖定畫面立即喚醒顯示
+    android: {
+      priority: 'high', // 突破休眠的關鍵設定
+      notification: {
+        visibility: 'public', // 允許在螢幕鎖定時顯示
+        sound: 'default',
+        defaultVibrateTimings: true // 開啟原生震動喚醒
+      }
+    },
+    webpush: {
+      headers: { Urgency: 'high' },
+      fcmOptions: { link: '/' }
+    },
+    apns: {
+      payload: { aps: { sound: 'default', badge: 1 } }
+    },
+    tokens: tokens, 
+  };
     
     // 3. 執行批次發送
     const response = await admin.messaging().sendEachForMulticast(message);

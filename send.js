@@ -22,28 +22,28 @@ async function sendNotification() {
       return;
     }
 
-  // 2. 準備推播訊息內容 (雙管齊下)
-    const message = {
-      // 給 iOS 和系統預設抓取的 notification
-      notification: {
-        title: '🍔 Su.線上點餐活動開始囉！',
-        body: '家禾發起了團體點餐，趕快打開系統選擇想吃的餐點吧！',
-      },
-      // 給安卓 Service Worker 手動抓取的 data
-      data: {
-        title: '🍔 Su.線上點餐活動開始囉！',
-        body: '有人發起了點餐活動～快打開系統並選擇餐點吧！！',
-        click_action: '/'
-      },
-      webpush: {
-        headers: { Urgency: 'high' } // 強制高優先級
-      },
-      apns: {
-        headers: { 'apns-priority': '10' },
-        payload: { aps: { sound: 'default', badge: 1 } }
-      },
-      tokens: tokens, 
-    };
+  // 2. 準備推播訊息內容 (統一使用原生 notification 與 webpush 設定)
+const message = {
+  notification: {
+    title: '🍔 Su.線上點餐活動開始囉！',
+    body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
+  },
+  webpush: {
+    headers: { Urgency: 'high' },
+    notification: {
+      icon: '/images/sufood.png',
+      badge: '/images/sufood.png',
+      vibrate: [500, 200, 500, 200, 500]
+    },
+    fcmOptions: {
+      link: '/' // 點擊通知後開啟的路徑
+    }
+  },
+  apns: {
+    payload: { aps: { sound: 'default', badge: 1 } }
+  },
+  tokens: tokens, 
+};
     
     // 3. 執行批次發送
     const response = await admin.messaging().sendEachForMulticast(message);

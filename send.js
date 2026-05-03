@@ -47,7 +47,7 @@ async function sendNotification() {
     const message = {
       notification: {
         title: '🍔 Su.線上點餐活動開始囉！',
-        body: '家禾發起了團體點餐，趕快進入系統選擇想吃的餐點吧！！',
+        body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
       },
       // 加入數據載荷，確保背景喚醒與點擊跳轉
       data: {

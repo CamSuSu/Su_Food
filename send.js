@@ -92,8 +92,8 @@ async function sendNotification() {
         },
         notification: {
           // ⚠️ 記得把下方網址換成你的真實網域 (例如: https://su-food.com/images/sufood.png)
-          icon: 'https://i.ibb.co/v44h38rP/sufood.png', 
-          badge: 'https://i.ibb.co/v44h38rP/sufood.png',
+          icon: 'https://github.com/CamSuSu/Su_Food/blob/8e7bfce703902a7bc05290c4f378b08cbe21f44d/images/sufood.png', 
+          badge: 'https://github.com/CamSuSu/Su_Food/blob/8e7bfce703902a7bc05290c4f378b08cbe21f44d/images/sufood.png',
           vibrate: [500, 250, 500, 250, 500],
           requireInteraction: true 
         },

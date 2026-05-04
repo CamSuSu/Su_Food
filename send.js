@@ -34,7 +34,14 @@ async function sendNotification() {
     // 1. 從 Firestore 讀取所有使用者的裝置 Token
     const tokensSnapshot = await db.collection('su_system_tokens').get();
     const tokens = [];
-    tokensSnapshot.forEach(doc => tokens.push(doc.id)); // 💡 修正：因為 Document ID 就是 Token，直接取 id 更快
+
+    // 💡 確保相容性：不管是舊版存的 token 欄位，還是新版存的 document ID，通通抓出來，一台都不漏！
+    tokensSnapshot.forEach(doc => {
+      const t = doc.data().token || doc.id;
+      if (t && !tokens.includes(t)) {
+        tokens.push(t);
+      }
+    });
 
     if (tokens.length === 0) {
       console.log('ℹ️ 資料庫中目前沒有任何裝置 Token，跳過發送。');
@@ -43,15 +50,14 @@ async function sendNotification() {
 
     console.log(`📡 準備對 ${tokens.length} 個裝置發送通知...`);
 
-    // 2. 準備推播訊息內容 (完美兼容 Android 鎖定喚醒 與 PWA 點擊)
-    const message = {
+    // 2. 準備推播訊息內容 (🚀 完美修復版)
+    const baseMessage = {
       notification: {
         title: '🍔 Su.線上點餐活動開始囉！',
         body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
       },
 
       data: {
-        click_action: '/', // 保留給某些舊版瀏覽器識別
         url: '/'
       },
 
@@ -59,11 +65,10 @@ async function sendNotification() {
       android: {
         priority: 'high', 
         notification: {
-          visibility: 'PUBLIC', 
+          visibility: 'public', // 💡 修復：必須是小寫 public
           channelId: 'default',
           defaultSound: true,
           defaultVibrateTimings: true
-          // 💡 已移除會導致誤判的 Flutter clickAction
         }
       },
 
@@ -91,50 +96,67 @@ async function sendNotification() {
           TTL: '86400'
         },
         notification: {
-          // ⚠️ 記得把下方網址換成你的真實網域 (例如: https://su-food.com/images/sufood.png)
-          icon: 'https://github.com/CamSuSu/Su_Food/blob/8e7bfce703902a7bc05290c4f378b08cbe21f44d/images/sufood.png', 
-          badge: 'https://github.com/CamSuSu/Su_Food/blob/8e7bfce703902a7bc05290c4f378b08cbe21f44d/images/sufood.png',
+          // 💡 修復：必須使用 GitHub Pages 的真實圖片連結，不能用 /blob/ 網頁連結
+          icon: 'https://camsusu.github.io/Su_Food/images/sufood.png', 
+          badge: 'https://camsusu.github.io/Su_Food/images/sufood.png',
           vibrate: [500, 250, 500, 250, 500],
           requireInteraction: true 
         },
-        fcm_options: {
-          link: '/' // 💡 確保 PWA 點擊通知時會正確開啟網頁或跳轉回首頁
+        // 💡 修復：Node.js Admin SDK 必須用駝峰命名 fcmOptions
+        fcmOptions: {
+          link: '/' 
         }
-      },
-      
-      tokens: tokens, 
+      }
     };
 
-    // 3. 執行批次發送 (使用 Firebase Admin SDK V11+ 建議的發送方式)
-    const response = await admin.messaging().sendEachForMulticast(message);
-    console.log(`✅ 成功發送 ${response.successCount} 則通知，失敗 ${response.failureCount} 則。`);
+    // 3. 執行批次發送 (加入 500 人分批保護機制，避免未來人數增加時直接當機)
+    const chunkSize = 500;
+    let successCount = 0;
+    let failureCount = 0;
+    const failedTokens = [];
 
-    // 4. 自動維護：清理失效的 Token (大幅優化效能版)
-    if (response.failureCount > 0) {
-      const failedTokens = [];
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          const errCode = resp.error?.code;
-          if (errCode === 'messaging/invalid-registration-token' ||
-              errCode === 'messaging/registration-token-not-registered') {
-            failedTokens.push(tokens[idx]);
+    for (let i = 0; i < tokens.length; i += chunkSize) {
+      const chunkTokens = tokens.slice(i, i + chunkSize);
+      const message = {
+        ...baseMessage,
+        tokens: chunkTokens
+      };
+
+      const response = await admin.messaging().sendEachForMulticast(message);
+      successCount += response.successCount;
+      failureCount += response.failureCount;
+
+      if (response.failureCount > 0) {
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            const errCode = resp.error?.code;
+            if (errCode === 'messaging/invalid-registration-token' ||
+                errCode === 'messaging/registration-token-not-registered') {
+              failedTokens.push(chunkTokens[idx]);
+            }
           }
-        }
-      });
-
-      if (failedTokens.length > 0) {
-        console.log(`🧹 偵測到 ${failedTokens.length} 個失效 Token，正在從 Firestore 清除...`);
-        const batch = db.batch();
-        
-        // 💡 修正：直接用 Document ID 刪除，不需浪費效能做 query 搜尋
-        failedTokens.forEach(t => {
-          const docRef = db.collection('su_system_tokens').doc(t);
-          batch.delete(docRef);
         });
-
-        await batch.commit();
-        console.log(`✅ 已自動完成失效 Token 清理。`);
       }
+    }
+
+    console.log(`✅ 成功發送 ${successCount} 則通知，失敗 ${failureCount} 則。`);
+
+    // 4. 自動維護：清理失效的 Token
+    if (failedTokens.length > 0) {
+      console.log(`🧹 偵測到 ${failedTokens.length} 個失效 Token，正在從 Firestore 清除...`);
+      const batch = db.batch();
+      
+      for (const t of failedTokens) {
+        const querySnapshot = await db.collection('su_system_tokens').where('token', '==', t).get();
+        if (!querySnapshot.empty) {
+          querySnapshot.forEach(doc => batch.delete(doc.ref));
+        } else {
+          batch.delete(db.collection('su_system_tokens').doc(t));
+        }
+      }
+      
+      await batch.commit();
+      console.log(`✅ 已自動完成失效 Token 清理。`);
     }
 
   } catch (error) {

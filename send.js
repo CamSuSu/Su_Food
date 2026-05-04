@@ -83,8 +83,8 @@ async function sendNotification() {
               title: '🍔 Su.線上點餐活動開始囉！',
               body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
             },
-            sound: 'default',
-            badge: 1
+            sound: 'default'
+            // 💡 修正：已移除 badge: 1，iOS 不會再顯示錯誤的訊息數量紅點
           }
         }
       },

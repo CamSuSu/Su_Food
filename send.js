@@ -41,63 +41,43 @@ async function sendNotification() {
 
     console.log(`📡 準備對 ${tokens.length} 個裝置發送通知...`);
 
-    // 2. 準備推播訊息內容 (🚀 整合版：全通道終極喚醒配置)
+    // 2. 準備推播訊息內容 (🚀 最終解法：純資料訊息 Data-Only Message)
     const message = {
-      // [基礎] 預設資訊，給系統備用
-      notification: {
+      // 🚨 絕對刪除這裡的 `notification: { ... }` 區塊 🚨
+      
+      // 將所有的標題與內容放進 data 裡
+      data: {
         title: '🍔 Su.線上點餐活動開始囉！',
         body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
-      },
-      data: {
-        click_action: '/index.html'
+        click_action: '/index.html' // 讓 Service Worker 知道點擊後要去哪
       },
 
-      // [Android 原生] 強制突破休眠與靜音限制
+      // [Android 原生] 強制喚醒
       android: {
         priority: 'high', 
-        notification: {
-          sound: 'default',
-          defaultVibrateTimings: true,
-          channelId: 'high_importance_channel', // 突破 Android 8.0+ 靜音限制
-          color: '#f97316'
-        }
+        // 🚨 絕對刪除這裡的 `notification: { ... }` 區塊 🚨
       },
 
-      // [iOS / APNs] iOS 設備強制喚醒 (拯救漏通知的關鍵)
+      // [iOS / APNs] 強制喚醒 (iOS PWA 同樣依賴 Data Message 喚醒)
       apns: {
         headers: {
-          'apns-priority': '10',    // 10 代表立刻發送不排隊
-          'apns-push-type': 'alert' // 警告型別通知
+          'apns-priority': '10',
+          'apns-push-type': 'background' // 改為 background 喚醒
         },
         payload: {
           aps: {
-            sound: 'default',
-            badge: 1,
-            'content-available': 1  // 允許背景喚醒
+            'content-available': 1  // 這是純資料喚醒 iOS 的金鑰
           }
         }
       },
 
-      // [Web Push / PWA] 瀏覽器核心配置 (PWA 優先吃這裡的設定)
+      // [Web Push / PWA] 給瀏覽器的最高優先級
       webpush: {
         headers: { 
-          Urgency: 'high', // <-- 突破 Android 休眠與 iOS 背景限制的最關鍵參數
+          Urgency: 'high', 
           TTL: '86400'
-        },
-        notification: {
-          title: '🍔 Su.線上點餐活動開始囉！', 
-          body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
-          icon: '/images/sufood.png',
-          badge: '/images/sufood.png',
-          requireInteraction: true,           // 強制通知停留在畫面上不自動消失
-          vibrate: [500, 250, 500, 250, 500], // 強制觸發震動引擎
-          renotify: true,                     // 🚀 關鍵：即使畫面上已經有舊通知，也要強制喚醒
-          tag: 'su-food-order',               // renotify 必須搭配 tag 使用才能生效
-          silent: false                       // 強制不靜音
-        },
-        fcmOptions: { 
-          link: '/index.html' // 點擊後喚醒 PWA 回到主頁
         }
+        // 🚨 絕對刪除這裡的 `notification: { ... }` 區塊 🚨
       },
       
       tokens: tokens, 

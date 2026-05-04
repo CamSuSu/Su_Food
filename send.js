@@ -21,9 +21,11 @@ try {
 }
 
 // 使用萬能鑰匙登入 Firebase 系統
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
 
 const db = admin.firestore();
 
@@ -32,7 +34,7 @@ async function sendNotification() {
     // 1. 從 Firestore 讀取所有使用者的裝置 Token
     const tokensSnapshot = await db.collection('su_system_tokens').get();
     const tokens = [];
-    tokensSnapshot.forEach(doc => tokens.push(doc.data().token));
+    tokensSnapshot.forEach(doc => tokens.push(doc.id)); // 💡 修正：因為 Document ID 就是 Token，直接取 id 更快
 
     if (tokens.length === 0) {
       console.log('ℹ️ 資料庫中目前沒有任何裝置 Token，跳過發送。');
@@ -41,59 +43,80 @@ async function sendNotification() {
 
     console.log(`📡 準備對 ${tokens.length} 個裝置發送通知...`);
 
-    // 2. 準備推播訊息內容 (🚀 最終解法：純資料訊息 Data-Only Message)
+    // 2. 準備推播訊息內容 (完美兼容 Android 鎖定喚醒 與 PWA 點擊)
     const message = {
-      // 🚨 絕對刪除這裡的 `notification: { ... }` 區塊 🚨
-      
-      // 將所有的標題與內容放進 data 裡
-      data: {
+      notification: {
         title: '🍔 Su.線上點餐活動開始囉！',
         body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
-        click_action: '/index.html' // 讓 Service Worker 知道點擊後要去哪
       },
 
-      // [Android 原生] 強制喚醒
+      data: {
+        click_action: '/', // 保留給某些舊版瀏覽器識別
+        url: '/'
+      },
+
+      // [Android 原生] 最高權限宣告，穿透休眠模式
       android: {
         priority: 'high', 
-        // 🚨 絕對刪除這裡的 `notification: { ... }` 區塊 🚨
+        notification: {
+          visibility: 'PUBLIC', 
+          channelId: 'default',
+          defaultSound: true,
+          defaultVibrateTimings: true
+          // 💡 已移除會導致誤判的 Flutter clickAction
+        }
       },
 
-      // [iOS / APNs] 強制喚醒 (iOS PWA 同樣依賴 Data Message 喚醒)
+      // [iOS / APNs] 強制喚醒
       apns: {
         headers: {
           'apns-priority': '10',
-          'apns-push-type': 'background' // 改為 background 喚醒
         },
         payload: {
           aps: {
-            'content-available': 1  // 這是純資料喚醒 iOS 的金鑰
+            alert: {
+              title: '🍔 Su.線上點餐活動開始囉！',
+              body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
+            },
+            sound: 'default',
+            badge: 1
           }
         }
       },
 
-      // [Web Push / PWA] 給瀏覽器的最高優先級
+      // [Web Push / PWA] 給瀏覽器的設定
       webpush: {
         headers: { 
           Urgency: 'high', 
           TTL: '86400'
+        },
+        notification: {
+          // ⚠️ 記得把下方網址換成你的真實網域 (例如: https://su-food.com/images/sufood.png)
+          icon: 'https://i.ibb.co/v44h38rP/sufood.png', 
+          badge: 'https://i.ibb.co/v44h38rP/sufood.png',
+          vibrate: [500, 250, 500, 250, 500],
+          requireInteraction: true 
+        },
+        fcm_options: {
+          link: '/' // 💡 確保 PWA 點擊通知時會正確開啟網頁或跳轉回首頁
         }
-        // 🚨 絕對刪除這裡的 `notification: { ... }` 區塊 🚨
       },
       
       tokens: tokens, 
     };
 
-    // 3. 執行批次發送
+    // 3. 執行批次發送 (使用 Firebase Admin SDK V11+ 建議的發送方式)
     const response = await admin.messaging().sendEachForMulticast(message);
     console.log(`✅ 成功發送 ${response.successCount} 則通知，失敗 ${response.failureCount} 則。`);
 
-    // 4. 自動維護：清理失效的 Token
+    // 4. 自動維護：清理失效的 Token (大幅優化效能版)
     if (response.failureCount > 0) {
       const failedTokens = [];
       response.responses.forEach((resp, idx) => {
         if (!resp.success) {
-          if (resp.error.code === 'messaging/invalid-registration-token' ||
-              resp.error.code === 'messaging/registration-token-not-registered') {
+          const errCode = resp.error?.code;
+          if (errCode === 'messaging/invalid-registration-token' ||
+              errCode === 'messaging/registration-token-not-registered') {
             failedTokens.push(tokens[idx]);
           }
         }
@@ -101,10 +124,15 @@ async function sendNotification() {
 
       if (failedTokens.length > 0) {
         console.log(`🧹 偵測到 ${failedTokens.length} 個失效 Token，正在從 Firestore 清除...`);
-        for (const t of failedTokens) {
-          const query = await db.collection('su_system_tokens').where('token', '==', t).get();
-          query.forEach(doc => doc.ref.delete());
-        }
+        const batch = db.batch();
+        
+        // 💡 修正：直接用 Document ID 刪除，不需浪費效能做 query 搜尋
+        failedTokens.forEach(t => {
+          const docRef = db.collection('su_system_tokens').doc(t);
+          batch.delete(docRef);
+        });
+
+        await batch.commit();
         console.log(`✅ 已自動完成失效 Token 清理。`);
       }
     }

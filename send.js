@@ -65,10 +65,12 @@ async function sendNotification() {
       android: {
         priority: 'high', 
         notification: {
-          visibility: 'public', // 💡 修復：必須是小寫 public
+          visibility: 'public', 
           channelId: 'default',
           defaultSound: true,
-          defaultVibrateTimings: true
+          defaultVibrateTimings: true,
+          // 💡 新增：Admin SDK 必須用駝峰命名。強制 Heads-up 彈出並喚醒螢幕
+          notificationPriority: 'PRIORITY_MAX' 
         }
       },
 
@@ -84,25 +86,26 @@ async function sendNotification() {
               body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
             },
             sound: 'default'
-            // 💡 修正：已移除 badge: 1，iOS 不會再顯示錯誤的訊息數量紅點
           }
         }
       },
 
-      // [Web Push / PWA] 給瀏覽器的設定
+      // [Web Push / PWA] 給瀏覽器的設定 (安卓手機的 Chrome PWA 主要是看這裡)
       webpush: {
         headers: { 
           Urgency: 'high', 
           TTL: '86400'
         },
         notification: {
-          // 💡 修復：必須使用 GitHub Pages 的真實圖片連結，不能用 /blob/ 網頁連結
           icon: 'https://camsusu.github.io/Su_Food/images/sufood.png', 
           badge: 'https://camsusu.github.io/Su_Food/images/sufood.png',
           vibrate: [500, 250, 500, 250, 500],
-          requireInteraction: true 
+          requireInteraction: true,
+          // 💡 新增：統一推播標籤，當 APP 在背景時，讓系統自動合併通知，解決出現兩則的問題
+          tag: 'sufood-group-order', 
+          // 💡 新增：雖然合併為一則，但依然要發出聲音與震動提醒使用者
+          renotify: true             
         },
-        // 💡 修復：Node.js Admin SDK 必須用駝峰命名 fcmOptions
         fcmOptions: {
           link: '/' 
         }

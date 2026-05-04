@@ -41,57 +41,34 @@ async function sendNotification() {
 
     console.log(`📡 準備對 ${tokens.length} 個裝置發送通知...`);
 
-    // 2. 準備推播訊息內容 (🚀 整合了 iOS/Android/Web 終極高優先級配置)
+    // 2. 準備推播訊息內容 (🚀 PWA 專用終極喚醒配置)
     const message = {
+      // 這是基本資訊，給系統備用
       notification: {
         title: '🍔 Su.線上點餐活動開始囉！',
         body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
       },
-      data: {
-        click_action: '/index.html'
-      },
       
-      // 🚀 Android 配置：強制突破休眠 (Doze) 與鎖定畫面
-      android: {
-        priority: 'high', // <-- 最高優先級，要求立即發送
-        notification: {
-          visibility: 'public',
-          sound: 'default',
-          defaultVibrateTimings: true,
-          color: '#f97316',
-          channelId: 'high_importance_channel' // 建議加上，確保 Android 8.0 以上的通道優先級
-        }
-      },
-      
-      // 🚀 Web 端 (包含 iOS/Android PWA) 配置
+      // 🚀 因為您是 PWA，瀏覽器「只會解析」 webpush 這一塊！
       webpush: {
         headers: { 
-          Urgency: 'high', // <-- 要求瀏覽器/系統立即處理
-          TTL: '86400'     // 設定存活時間(秒)，避免過期通知狂跳
+          Urgency: 'high', // <-- 突破 Android 休眠與 iOS 背景限制的最關鍵參數
+          TTL: '86400'
         },
         notification: {
-          icon: 'images/sufood.png',
-          badge: 'images/sufood.png',
-          requireInteraction: true // 強制通知持續顯示直到使用者點擊
+          // 在 webpush 裡再宣告一次，確保瀏覽器優先套用這裡的設定
+          title: '🍔 Su.線上點餐活動開始囉！', 
+          body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
+          icon: '/images/sufood.png', // 建議加上斜線，確保路徑正確
+          badge: '/images/sufood.png',
+          requireInteraction: true, // 強制通知停留在畫面上不自動消失
+          vibrate: [500, 250, 500, 250, 500], // 強制觸發震動引擎
+          renotify: true, // 🚀 關鍵：即使畫面上已經有舊通知，也要強制發出聲音/震動喚醒
+          tag: 'su-food-order', // renotify 必須搭配 tag 使用才能生效
+          silent: false // 強制不靜音
         },
         fcmOptions: { 
-          link: '/index.html' 
-        }
-      },
-      
-      // 🚀 APNS (iOS 原生與 PWA) 配置：拯救 iOS 漏通知的關鍵
-      apns: {
-        headers: {
-          'apns-priority': '10',      // <-- 🚀 關鍵：10 代表立即發送，不可延遲！(5是背景發送)
-          'apns-push-type': 'alert'   // <-- 🚀 關鍵：明確告訴蘋果這是一則需要彈出的警告通知
-        },
-        payload: { 
-          aps: { 
-            sound: 'default', 
-            badge: 1,
-            'content-available': 1,   // 允許背景喚醒
-            'mutable-content': 1      // 允許 iOS 在顯示前處理通知內容
-          } 
+          link: '/index.html' // 點擊後喚醒 PWA 回到主頁
         }
       },
       

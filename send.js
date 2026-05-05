@@ -50,10 +50,8 @@ async function sendNotification() {
 
     console.log(`📡 準備對 ${tokens.length} 個裝置發送通知...`);
 
-// 2. 準備推播訊息內容 (🚀 改為 Data-Only 純資料推播)
+    // 2. 準備推播訊息內容 (🚀 改為 Data-Only 純資料推播，徹底解決重複通知)
     const baseMessage = {
-      // 💡 關鍵：完全刪除原有的 notification { ... } 區塊，阻止 Firebase 產生雙重通知
-      
       data: {
         title: '🍔 Su.線上點餐活動開始囉！',
         body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
@@ -65,38 +63,24 @@ async function sendNotification() {
         priority: 'high'
       },
 
-      // [iOS / APNs] 強制背景喚醒
+      // [iOS / APNs] 強制背景喚醒 (確保 iOS 接收純資料推播)
       apns: {
         headers: {
           'apns-priority': '10',
         },
         payload: {
           aps: {
-            'content-available': 1, // 喚醒 iOS 接收純資料
+            'content-available': 1, 
             sound: 'default'
           }
         }
       },
 
-      // [Web Push / PWA] 給瀏覽器的設定
+      // [Web Push / PWA] 給瀏覽器的設定 (精簡版，UI 繪製全交給 SW 負責)
       webpush: {
         headers: { 
           Urgency: 'high', 
           TTL: '86400'
-        }
-      }
-    };
-        notification: {
-          icon: 'https://camsusu.github.io/Su_Food/images/sufood.png', 
-          badge: 'https://camsusu.github.io/Su_Food/images/sufood.png',
-          vibrate: [500, 250, 500, 250, 500],
-          requireInteraction: true,
-          // 💡 修正：將標籤名稱與 index.html 統一，強制系統合併重複的通知
-          tag: 'sufood-notify-event', 
-          renotify: true             
-        },
-        fcmOptions: {
-          link: '/' 
         }
       }
     };

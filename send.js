@@ -50,39 +50,69 @@ async function sendNotification() {
 
     console.log(`📡 準備對 ${tokens.length} 個裝置發送通知...`);
 
-    // 2. 準備推播訊息內容 (🚀 改為 Data-Only 純資料推播，徹底解決重複通知)
+    // 2. 準備推播訊息內容（同時支援 iOS / Android / Web）
     const baseMessage = {
-      data: {
-        title: '🍔 Su.線上點餐活動開始囉！',
-        body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
-        url: '/'
-      },
-
-      // [Android 原生] 宣告高優先級
-      android: {
-        priority: 'high'
-      },
-
-      // [iOS / APNs] 強制背景喚醒 (確保 iOS 接收純資料推播)
-      apns: {
-        headers: {
-          'apns-priority': '10',
+        // ✅ notification 區塊讓 iOS 在鎖屏能直接顯示通知
+        notification: {
+            title: '🍔 Su.線上點餐活動開始囉！',
+            body: '有人發起了點餐活動，趕快打開系統點餐吧！！'
         },
-        payload: {
-          aps: {
-            'content-available': 1, 
-            sound: 'default'
-          }
+        // data 區塊讓 SW 可以取得額外資訊
+        data: {
+            url: '/',
+            click_action: 'FLUTTER_NOTIFICATION_CLICK'
+        },
+        android: {
+            priority: 'high',
+            notification: {
+                channelId: 'su_food_urgent',
+                priority: 'max',
+                defaultVibrateTimings: true,
+                visibility: 'PUBLIC',
+                notificationPriority: 'PRIORITY_MAX',
+                sound: 'default',
+                tag: 'su-food-order',
+                icon: 'ic_notification'
+            },
+            ttl: '300s'
+        },
+        apns: {
+            headers: {
+                'apns-priority': '10',
+                'apns-push-type': 'alert',
+                'apns-expiration': '300'
+            },
+            payload: {
+                aps: {
+                    // ✅ iOS 必須有 alert 才會顯示通知
+                    alert: {
+                        title: '🍔 Su.線上點餐活動開始囉！',
+                        body: '有人發起了點餐活動，趕快打開系統點餐吧！！'
+                    },
+                    sound: 'default',
+                    badge: 1,
+                    'content-available': 1,
+                    'mutable-content': 1,
+                    'interruption-level': 'time-sensitive'
+                }
+            }
+        },
+        webpush: {
+            headers: {
+                Urgency: 'high',
+                TTL: '86400'
+            },
+            notification: {
+                title: '🍔 Su.線上點餐活動開始囉！',
+                body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
+                icon: '/images/sufood.png',
+                badge: '/images/sufood.png',
+                requireInteraction: true,
+                tag: 'su-food-order',
+                renotify: true,
+                vibrate: [200, 100, 200, 100, 200]
+            }
         }
-      },
-
-      // [Web Push / PWA] 給瀏覽器的設定 (精簡版，UI 繪製全交給 SW 負責)
-      webpush: {
-        headers: { 
-          Urgency: 'high', 
-          TTL: '86400'
-        }
-      }
     };
 
     // 3. 執行批次發送 (加入 500 人分批保護機制，避免未來人數增加時直接當機)

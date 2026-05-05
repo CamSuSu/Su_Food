@@ -77,7 +77,8 @@ async function sendNotification() {
         },
         webpush: {
             headers: {
-                Urgency: 'high'
+                urgency: 'high', // 🚨 關鍵修正：必須為全小寫，強制突破 Android 網路休眠
+                ttl: '86400'
             },
             notification: {
                 title: '🍔 Su.線上點餐活動開始囉！',
@@ -89,8 +90,7 @@ async function sendNotification() {
                 renotify: true,
                 vibrate: [500, 250, 500, 250, 500]
             }
-        }
-    };
+        }    };
 
     const chunkSize = 500;
     let successCount = 0;

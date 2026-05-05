@@ -50,53 +50,42 @@ async function sendNotification() {
 
     console.log(`📡 準備對 ${tokens.length} 個裝置發送通知...`);
 
-   // 2. 準備推播訊息內容 (🚀 完美修復版)
+// 2. 準備推播訊息內容 (🚀 改為 Data-Only 純資料推播)
     const baseMessage = {
-      notification: {
+      // 💡 關鍵：完全刪除原有的 notification { ... } 區塊，阻止 Firebase 產生雙重通知
+      
+      data: {
         title: '🍔 Su.線上點餐活動開始囉！',
         body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
-      },
-
-      data: {
         url: '/'
       },
 
-      // [Android 原生] 最高權限宣告，穿透休眠模式
+      // [Android 原生] 宣告高優先級
       android: {
-        priority: 'high', 
-        notification: {
-          visibility: 'public', 
-          channelId: 'default',
-          defaultSound: true,
-          defaultVibrateTimings: true,
-          notificationPriority: 'PRIORITY_MAX',
-          // 💡 新增：確保 Android 原生層級也能辨識標籤進行合併
-          tag: 'sufood-notify-event' 
-        }
+        priority: 'high'
       },
 
-      // [iOS / APNs] 強制喚醒
+      // [iOS / APNs] 強制背景喚醒
       apns: {
         headers: {
           'apns-priority': '10',
         },
         payload: {
           aps: {
-            alert: {
-              title: '🍔 Su.線上點餐活動開始囉！',
-              body: '有人發起了點餐活動，趕快打開系統點餐吧！！',
-            },
+            'content-available': 1, // 喚醒 iOS 接收純資料
             sound: 'default'
           }
         }
       },
 
-      // [Web Push / PWA] 給瀏覽器的設定 (安卓手機的 Chrome PWA 主要是看這裡)
+      // [Web Push / PWA] 給瀏覽器的設定
       webpush: {
         headers: { 
           Urgency: 'high', 
           TTL: '86400'
-        },
+        }
+      }
+    };
         notification: {
           icon: 'https://camsusu.github.io/Su_Food/images/sufood.png', 
           badge: 'https://camsusu.github.io/Su_Food/images/sufood.png',

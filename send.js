@@ -50,7 +50,7 @@ async function sendNotification() {
 
     console.log(`📡 準備對 ${tokens.length} 個裝置發送通知...`);
 
-    // 2. 準備推播訊息內容 (🚀 完美修復版)
+   // 2. 準備推播訊息內容 (🚀 完美修復版)
     const baseMessage = {
       notification: {
         title: '🍔 Su.線上點餐活動開始囉！',
@@ -69,8 +69,9 @@ async function sendNotification() {
           channelId: 'default',
           defaultSound: true,
           defaultVibrateTimings: true,
-          // 💡 新增：Admin SDK 必須用駝峰命名。強制 Heads-up 彈出並喚醒螢幕
-          notificationPriority: 'PRIORITY_MAX' 
+          notificationPriority: 'PRIORITY_MAX',
+          // 💡 新增：確保 Android 原生層級也能辨識標籤進行合併
+          tag: 'sufood-notify-event' 
         }
       },
 
@@ -101,9 +102,8 @@ async function sendNotification() {
           badge: 'https://camsusu.github.io/Su_Food/images/sufood.png',
           vibrate: [500, 250, 500, 250, 500],
           requireInteraction: true,
-          // 💡 新增：統一推播標籤，當 APP 在背景時，讓系統自動合併通知，解決出現兩則的問題
-          tag: 'sufood-group-order', 
-          // 💡 新增：雖然合併為一則，但依然要發出聲音與震動提醒使用者
+          // 💡 修正：將標籤名稱與 index.html 統一，強制系統合併重複的通知
+          tag: 'sufood-notify-event', 
           renotify: true             
         },
         fcmOptions: {

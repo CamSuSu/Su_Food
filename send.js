@@ -90,7 +90,8 @@ async function sendNotification() {
                 renotify: true,
                 vibrate: [500, 250, 500, 250, 500]
             }
-        }    };
+        }    
+    };
 
     const chunkSize = 500;
     let successCount = 0;

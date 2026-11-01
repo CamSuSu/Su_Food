@@ -2352,6 +2352,17 @@ document.addEventListener('click', function initOnFirstClick() {
         window.isCheckingOut = false;
 
         window.dbCache = { itemsStr: null, storesStr: null, orderHistoryStr: null, adminLogsStr: null };
+        /*
+         * 🛡️ 防回朔機制 1：版本戳記。每次修改本檔請更新這個字串。
+         * 長時間開著的舊版分頁（尤其是加到主畫面的 PWA）會一直執行舊版程式，
+         * 舊版的存檔邏輯可能用過期資料覆蓋資料庫，所以下方會定期比對線上版本，
+         * 發現不同就自動重新載入。
+         */
+        window.APP_BUILD = '2026-11-01-antirevert-1';
+        // 🛡️ 防回朔機制 2：記錄「伺服器上最後一次已知」各共用欄位的筆數，
+        // 供 saveState 判斷是否即將把有內容的欄位誤寫成空陣列。
+        window._serverCounts = {};
+        window._sharedRefreshFailedAt = 0;
 
         window.bulkEditOriginalData = {};
 
@@ -2730,24 +2741,119 @@ document.addEventListener('click', function initOnFirstClick() {
                 }
 
                 /*
-                 * 🔴 資料保護修正：初始化只在「伺服器上確實沒有這份文件／缺少必要欄位」時，
-                 * 於交易內補上「缺少的欄位」，不再用本機預設值整包覆寫既有資料
-                 * （舊寫法 setDoc(dbRef, window.state) 會連 cart / session 一起蓋掉）。
+                 * 🔴🔴🔴 關鍵修正：「點餐活動途中，時間還沒倒數完畢、也沒有人按
+                 * 提早結單，系統卻自動結單，而且畫面停留在『上一次』點餐結果」
+                 * 的根本原因──
+                 * ===================================================================
+                 * 這裡原本用的是一般的 getDoc(dbRef)，這個方法在 Firebase SDK 內部
+                 * 可能會因為網路狀況不佳、或瀏覽器/PWA 背景很久沒連線等情況，優先
+                 * 回傳「本機快取」而不是伺服器上的最新資料。如果某個裝置（例如剛從
+                 * 背景喚醒、或很久沒開過的分頁）的本機快取剛好是「活動尚未建立、
+                 * 還沒有任何 items/itemsStr」那個更早期的舊版本，就會誤判成
+                 * 「資料庫還沒初始化」，進而執行 setDoc(dbRef, window.state,
+                 * {merge:true})──而這台裝置手上的 window.state 在這個時間點，
+                 * session 還是預設的 {isActive:false}、cart 還是空陣列，於是這次
+                 * 「修補」寫入就會把當下其他人正在進行中的點餐活動 session 與購物車
+                 * 整個蓋掉，導致所有人瞬間被結算（且因為沒有真正跑過結算流程，
+                 * 不會產生新的結單紀錄，畫面只能顯示「上一次」的舊紀錄）。
+                 *
+                 * 修正方式：
+                 * 1) 改用 getDocFromServer()，強制向伺服器要一份跳過本機快取的
+                 *    當下最新資料，跟系統其他所有時間/狀態校正邏輯的做法一致，
+                 *    避免任何裝置因為本機過期快取做出錯誤判斷。
+                 * 2) 就算真的判定需要「修補」資料庫缺少的基本欄位，也絕對不能
+                 *    整包 window.state 寫回去——那會連同這台裝置手上（可能同樣
+                 *    過期）的 session／cart 一起覆蓋回資料庫。改成只修補
+                 *    items/categories/subCategories/globalOptions/quickNames/
+                 *    menuUpdateDate 這些「基本設定」欄位，完全不寫入 session 或
+                 *    cart，確保絕對不會意外打斷任何人正在進行中的點餐活動。
                  */
+                let docSnap;
+                let docSnapIsFromServer = true;
                 try {
-                    await runTransaction(db, async (tx) => {
-                        const snap0 = await tx.get(dbRef);
-                        if (!snap0.exists()) { tx.set(dbRef, window.state); return; }
-                        const d0 = snap0.data();
-                        if (!d0.items && !d0.itemsStr) {
-                            const fill = {};
-                            Object.keys(window.state).forEach(k => { if (d0[k] === undefined) fill[k] = window.state[k]; });
-                            if (Object.keys(fill).length) tx.set(dbRef, fill, { merge: true });
-                        }
-                    });
-                } catch (initErr) {
-                    console.warn('初始化檢查失敗（略過，不影響讀取）：', initErr);
+                    docSnap = await getDocFromServer(dbRef);
+                } catch (serverReadErr) {
+                    console.warn('[初始化] 無法取得伺服器最新資料，改用一般讀取方式：', serverReadErr);
+                    docSnap = await getDoc(dbRef);
+                    docSnapIsFromServer = false;
                 }
+
+                /*
+                 * 🔴 額外加強保險：上面拿到的 docSnap 若是因為
+                 * getDocFromServer() 失敗而退回 getDoc()（可能來自本機快取、
+                 * 不保證是當下最新資料），就絕對不能只因為這份「不確定新舊」
+                 * 的快照看起來「文件不存在」或「缺少 items/itemsStr」，就貿然
+                 * 寫入本機的預設值去「修補」資料庫──萬一這份快取其實只是
+                 * 過期或尚未同步，這樣寫入就會把伺服器上其他人已經設定好的
+                 * 全域分類/菜單/選項等資料整個蓋掉，變成「全域設定被恢復成
+                 * 預設值」。只有在真正確認拿到的是「伺服器當下最新資料」
+                 * （docSnapIsFromServer 為 true）時，才允許執行下面的初始化/
+                 * 補齊邏輯；否則寧可這次先略過，等待接下來的 onSnapshot
+                 * 即時監聽把真正最新的資料同步進來即可（不會寫入任何東西，
+                 * 也就不會有任何覆蓋風險）。
+                 */
+                if (!docSnapIsFromServer) {
+                    console.warn('[初始化] 本次僅取得可能過期的本機快取資料，為避免誤蓋掉伺服器上的真實設定，本次略過初始化補齊，交由即時監聽同步最新資料。');
+                } else if (!docSnap.exists()) {
+                    await setDoc(dbRef, window.state, { merge: true });
+                } else {
+
+                    const data = docSnap.data();
+
+                    /*
+                     * 🔴🔴🔴 真正根本原因（深層除錯後找到）：「匯入 Excel 或後臺修改
+                     * 全域設定後，只要有其他裝置／瀏覽器連進系統，分類與全域設定就會
+                     * 被整個清空、變回只剩『全部』『其他』的預設樣子」──
+                     * ===================================================================
+                     * 原本這裡的判斷式「只檢查 items／itemsStr 是否缺少」，但只要條件
+                     * 成立，就會把 items、categories、subCategories、globalOptions、
+                     * quickNames、menuUpdateDate「這六個完全不相關的欄位」一次全部
+                     * 寫回 Firestore。而寫回去的值，是「這個分頁剛載入、即時監聽
+                     * onSnapshot 都還沒收到任何資料前」的 window.state──也就是程式碼
+                     * 最上方宣告的原始預設值（categories 是空陣列、globalOptions 是
+                     * 空陣列）。
+                     *
+                     * 只要曾經有任何一個時間點，資料庫裡「剛好」還沒有 items／itemsStr
+                     * （最典型的情況：管理者習慣先在後台設定好系統大分類、菜單子分類、
+                     * 全域選項，還沒開始匯入任何餐點資料，這時剛好有其他裝置打開網
+                     * 頁），這段程式就會把管理者已經設定好的分類、子分類、全域選項，
+                     * 整包用空預設值覆蓋掉。而且只要之後 itemsStr 因為任何原因（例如
+                     * 某次儲存失敗、資料格式異常）又變回缺少狀態，這個覆蓋就會一次又
+                     * 一次重複發生——完全符合「不管重新匯入幾次，只要多台裝置進入又
+                     * 會恢復預設」的現象。
+                     *
+                     * 修正方式：把「哪個欄位缺少」與「該補什麼值」逐欄位分開判斷，
+                     * 絕對不能因為 items 這一個欄位缺少，就連帶覆寫其他完全無關、
+                     * 資料庫裡其實已經有正確內容的欄位。每個欄位只有在「資料庫裡這個
+                     * 欄位本身真的缺少」時，才會用本機預設值補上；已經存在的欄位一律
+                     * 原封不動，不會被觸碰。
+                     */
+                    const backfillUpdates = {};
+
+                    if (!data.items && !data.itemsStr) backfillUpdates.items = window.state.items;
+                    if (!data.categories || !Array.isArray(data.categories)) backfillUpdates.categories = window.state.categories;
+                    if (!data.subCategories) backfillUpdates.subCategories = window.state.subCategories;
+                    if (!data.globalOptions) backfillUpdates.globalOptions = window.state.globalOptions;
+                    if (!data.quickNames) backfillUpdates.quickNames = window.state.quickNames;
+                    if (!data.menuUpdateDate) backfillUpdates.menuUpdateDate = window.state.menuUpdateDate;
+
+                    if (Object.keys(backfillUpdates).length > 0) {
+                        await setDoc(dbRef, backfillUpdates, { merge: true });
+                    }
+                    // 🧹 清掉歷史累積在主文件裡的舊校時欄位（只刪這些欄位，不碰任何設定資料）
+                    try {
+                        const staleKeys = Object.keys(data).filter(k => k.indexOf('_timeSyncPing') === 0);
+                        if (staleKeys.length > 0) {
+                            const cleanup = {};
+                            staleKeys.forEach(k => { cleanup[k] = deleteField(); });
+                            await updateDoc(dbRef, cleanup);
+                            console.log('🧹 已清除舊校時欄位 ' + staleKeys.length + ' 個');
+                        }
+                    } catch (cleanErr) { console.warn('清理舊校時欄位失敗（不影響使用）：', cleanErr); }
+
+                }
+
+
 
                 onSnapshot(dbRef, (snap) => {
 
@@ -2756,14 +2862,6 @@ document.addEventListener('click', function initOnFirstClick() {
                         if (snap.exists()) {
 
                             const newData = snap.data();
-
-                            // 記錄「這台裝置目前同步到的雲端版本」，saveState 寫入前用來偵測資料是否已被其他裝置更新
-                            window._syncedJson = {
-                                categories: JSON.stringify(newData.categories === undefined ? null : newData.categories),
-                                subCategories: JSON.stringify(newData.subCategories === undefined ? null : newData.subCategories),
-                                globalOptions: JSON.stringify(newData.globalOptions === undefined ? null : newData.globalOptions),
-                                quickNames: JSON.stringify(newData.quickNames === undefined ? null : newData.quickNames)
-                            };
 
                             
 
@@ -2901,10 +2999,14 @@ document.addEventListener('click', function initOnFirstClick() {
 
                             
 
+                            window._serverCounts = {
+                                items: (newData.items || []).length,
+                                stores: (newData.stores || []).length,
+                                categories: (newData.categories || []).filter(c => c.id !== 'cat_other').length,
+                                subCategories: (newData.subCategories || []).length,
+                                globalOptions: (newData.globalOptions || []).length
+                            };
                             window.state = newData;
-
-                            
-
                             if (menuDateChanged || !window.hasInitialLoaded) {
 
                                 window.updateGlobalDateDisplay();
@@ -3082,79 +3184,129 @@ document.addEventListener('click', function initOnFirstClick() {
         }
 
         initSystem();
-
-
-
         /*
-         * 🔴🔴 資料回朔根因修正（saveState）
-         * 舊版：把「本機記憶體」中的整份 itemsStr / storesStr / orderHistoryStr… 直接 updateDoc 寫回，
-         * 只要這台裝置的資料已經落後（背景久了、連線曾中斷、其他裝置剛改過），
-         * 這次存檔就會把雲端較新的內容整個蓋回舊版，看起來就像「新增的東西回朔了」。
-         * 新版：在交易中先讀取雲端目前版本，與本機「最後同步的版本」比對；
-         *       只要不一致就拒絕寫入、提示並重新載入最新資料，絕不覆蓋較新的雲端資料。
-         * 另外：不再提供「無參數整包 setDoc 覆寫」，避免任何路徑把整份本機狀態蓋回雲端。
+         * 🛡️ 版本看門狗：定期（與回到前景時）用 no-store 重新抓一次線上 index.html，
+         * 比對 APP_BUILD；不同就代表這個分頁跑的是舊版程式，直接重新載入。
          */
-        window.saveState = async function(specificFields = null) {
-            try {
-                if (!specificFields || typeof specificFields !== 'object') {
-                    console.warn('saveState 必須指定要儲存的欄位，已略過（為避免整份資料被舊的本機狀態覆蓋）');
-                    return;
-                }
-                const updates = {};
-                const blobMap = { adminLogs: 'adminLogsStr', orderHistory: 'orderHistoryStr', items: 'itemsStr', stores: 'storesStr' };
-                const decodedKey = { adminLogs: 'adminLogsDecoded', orderHistory: 'orderHistoryDecoded', items: 'itemsDecoded', stores: 'storesDecoded' };
-                const jsonFields = ['categories', 'subCategories', 'globalOptions', 'quickNames'];
-
-                Object.keys(blobMap).forEach(k => { if (specificFields[k]) updates[blobMap[k]] = window.compressData(window.state[k]); });
-                jsonFields.forEach(k => { if (specificFields[k]) updates[k] = window.state[k]; });
-                if (specificFields.menuUpdateDate) updates.menuUpdateDate = window.state.menuUpdateDate;
-                if (specificFields.session) updates.session = window.state.session;
-                if (Object.keys(updates).length === 0) return;
-
-                // 需要做「版本比對」的欄位（操作紀錄 adminLogs 不比對，避免因多人同時寫紀錄而擋住真正的存檔）
-                const guardedBlobs = ['orderHistory', 'items', 'stores'].filter(k => specificFields[k]);
-                const guardedJson = jsonFields.filter(k => specificFields[k]);
-                const norm = v => (v === undefined || v === null) ? null : v;
-
-                await runTransaction(db, async (transaction) => {
-                    const cur = await transaction.get(dbRef);
-                    if (!cur.exists()) throw new Error('雲端資料文件不存在，已中止寫入以避免建立不完整資料');
-                    const server = cur.data();
-                    for (const k of guardedBlobs) {
-                        if (norm(server[blobMap[k]]) !== norm(window.dbCache[blobMap[k]])) {
-                            const err = new Error('STALE_DATA:' + k); err.isStale = true; throw err;
-                        }
+        (function versionWatchdog() {
+            let checking = false;
+            async function check() {
+                if (checking) return;
+                checking = true;
+                try {
+                    const res = await fetch('./index.html?_v=' + Date.now(), { cache: 'no-store' });
+                    if (!res.ok) return;
+                    const m = (await res.text()).match(/window\.APP_BUILD\s*=\s*'([^']+)'/);
+                    if (m && m[1] !== window.APP_BUILD) {
+                        const tag = document.activeElement ? document.activeElement.tagName : '';
+                        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return; // 正在輸入就先不打斷，下次再檢查
+                        console.log('偵測到新版本，重新載入：', window.APP_BUILD, '→', m[1]);
+                        location.reload();
                     }
-                    for (const k of guardedJson) {
-                        const serverSig = JSON.stringify(server[k] === undefined ? null : server[k]);
-                        if (window._syncedJson && window._syncedJson[k] !== undefined && serverSig !== window._syncedJson[k]) {
-                            const err = new Error('STALE_DATA:' + k); err.isStale = true; throw err;
-                        }
-                    }
-                    transaction.update(dbRef, updates);
-                });
-
-                // 寫入成功：立刻把「本機已同步版本」更新為剛寫入的內容，避免連續存檔被誤判為過期，
-                // 也避免稍後收到的快照用舊的解壓快取把畫面資料蓋回去。
-                Object.keys(blobMap).forEach(k => {
-                    if (specificFields[k]) {
-                        window.dbCache[blobMap[k]] = updates[blobMap[k]];
-                        window.dbCache[decodedKey[k]] = window.state[k];
-                    }
-                });
-                if (!window._syncedJson) window._syncedJson = {};
-                jsonFields.forEach(k => { if (specificFields[k]) window._syncedJson[k] = JSON.stringify(updates[k] === undefined ? null : updates[k]); });
-            } catch(e) {
-                console.error("saveState error:", e);
-                if (e && e.isStale) {
-                    alert('⚠️ 這次修改沒有儲存！\n\n雲端資料已被其他裝置（或較新的操作）更新過，為避免把較新的資料蓋掉，系統已取消這次寫入。\n\n按「確定」後會重新載入最新資料，請再操作一次。');
-                    location.reload();
-                } else {
-                    alert('⚠️ 儲存失敗！這次的修改可能沒有真的存進資料庫，稍後畫面會還原成修改前的樣子。\n\n請檢查網路連線後再試一次；若持續發生，請截圖以下錯誤訊息回報：\n' + (e && e.message ? e.message : e));
-                }
-                throw e;
+                } catch (e) { /* 離線時略過 */ }
+                finally { checking = false; }
             }
+            setTimeout(check, 5000);
+            setInterval(check, 5 * 60 * 1000);
+            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+        })();
+
+
+
+        window.saveState = async function(specificFields = null) {
+
+            try {
+
+                if (specificFields && typeof specificFields === 'object') {
+                    // 🛡️ 守門 1：剛剛向伺服器同步最新資料失敗 → 本機資料可能過期，禁止寫入共用欄位
+                    const touchesShared = ['items','stores','categories','subCategories','globalOptions','quickNames'].some(k => specificFields[k]);
+                    if (touchesShared && window._sharedRefreshFailedAt && (Date.now() - window._sharedRefreshFailedAt) < 60000) {
+                        throw new Error('無法連線到伺服器取得最新資料，為避免用舊資料覆蓋，本次修改已中止。請確認網路後重新整理頁面，再重做一次修改。');
+                    }
+                    // 🛡️ 守門 2：伺服器上原本有內容，這次卻要寫入空陣列 → 要求使用者明確確認
+                    const guardMap = { items: window.state.items, stores: window.state.stores, subCategories: window.state.subCategories, globalOptions: window.state.globalOptions,
+                                       categories: (window.state.categories || []).filter(c => c.id !== 'cat_other') };
+                    for (const k of Object.keys(guardMap)) {
+                        if (specificFields[k] && Array.isArray(guardMap[k]) && guardMap[k].length === 0 && (window._serverCounts[k] || 0) > 0) {
+                            const ok = confirm('⚠️ 偵測到異常：即將把「' + k + '」清空（資料庫目前有 ' + window._serverCounts[k] + ' 筆）。\n\n若你不是刻意刪光全部內容，請按「取消」並重新整理頁面。\n\n確定要清空嗎？');
+                            if (!ok) throw new Error('已取消：避免誤清空「' + k + '」。請重新整理頁面後再操作。');
+                        }
+                    }
+                    const updates = {};
+
+                    if (specificFields.adminLogs) updates.adminLogsStr = window.compressData(window.state.adminLogs);
+
+                    if (specificFields.orderHistory) updates.orderHistoryStr = window.compressData(window.state.orderHistory);
+
+                    if (specificFields.items) updates.itemsStr = window.compressData(window.state.items);
+
+                    if (specificFields.stores) updates.storesStr = window.compressData(window.state.stores);
+
+                    if (specificFields.categories) updates.categories = window.state.categories;
+
+                    if (specificFields.subCategories) updates.subCategories = window.state.subCategories;
+
+                    if (specificFields.globalOptions) updates.globalOptions = window.state.globalOptions;
+
+                    if (specificFields.quickNames) updates.quickNames = window.state.quickNames;
+
+                    if (specificFields.menuUpdateDate) updates.menuUpdateDate = window.state.menuUpdateDate;
+
+                    if (specificFields.session) updates.session = window.state.session;
+
+                    
+
+                    if (Object.keys(updates).length > 0) {
+
+                        await updateDoc(dbRef, updates);
+
+                        return; 
+
+                    }
+
+                }
+
+
+
+                const safeState = { ...window.state };
+
+                safeState.orderHistoryStr = window.compressData(safeState.orderHistory);
+
+                safeState.adminLogsStr = window.compressData(safeState.adminLogs);
+
+                safeState.itemsStr = window.compressData(safeState.items);
+
+                safeState.storesStr = window.compressData(safeState.stores);
+
+                delete safeState.orderHistory;
+
+                delete safeState.adminLogs;
+
+                delete safeState.items;
+
+                delete safeState.stores;
+
+                await setDoc(dbRef, safeState, { merge: true });
+
+            } catch(e) {
+
+                console.error("saveState error:", e);
+
+                // 🔴 修正：儲存失敗時不能只在 Console 留下錯誤訊息卻讓畫面看起來像成功了。
+                // 若不明確告知，管理員會誤以為修改已經存檔，等到下一次即時監聽（onSnapshot）
+                // 被其他事件觸發時（例如每 3 分鐘一次的伺服器時間校正、或任何其他裝置的變更），
+                // 畫面就會被 Firestore 上「真正、未被改動」的舊資料整個覆蓋回去，
+                // 造成「怎麼修改過幾分鐘就恢復原狀」的現象。這裡改為直接告知使用者。
+                alert('⚠️ 儲存失敗！這次的修改可能沒有真的存進資料庫，稍後可能會被還原成修改前的樣子。\n\n請檢查網路連線後再試一次；若持續發生，請截圖以下錯誤訊息回報：\n' + (e && e.message ? e.message : e));
+
+                throw e;
+
+            }
+
         };
+
+
+
         window.updateGlobalDateDisplay = function() {
 
             const fullDate = window.getFormattedDate(new Date());
@@ -4121,50 +4273,26 @@ document.addEventListener('click', function initOnFirstClick() {
          * 徹底消除多人同時對時互相干擾的問題。（同一分頁重複呼叫只會覆蓋
          * 自己專屬的欄位，不會無限增生欄位數量。）
          */
-        window._clientSyncId = (() => {
-            const gen = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-            try {
-                let id = sessionStorage.getItem('_syncId');
-                if (!id) { id = gen(); sessionStorage.setItem('_syncId', id); }
-                return id;   // 同一分頁重新整理沿用同一個欄位，不再每次載入都新增一個欄位
-            } catch (e) { return gen(); }
-        })();
-
-        /*
-         * 🔴 校時欄位清理：舊版每次載入頁面都會在主文件新增一個 _timeSyncPing_<id> 欄位且永不刪除，
-         * 欄位會無限增加，使文件越來越肥（接近 1MiB 或索引項目上限時，所有寫入都會失敗，
-         * 於是後台新增的資料在下次同步時被還原）。這裡在每次載入後清掉超過 24 小時沒更新的欄位。
-         */
-        window.cleanupStaleSyncFields = async function() {
-            try {
-                const snap = await getDocFromServer(dbRef);
-                if (!snap.exists()) return;
-                const data = snap.data();
-                const now = Date.now();
-                const myField = '_timeSyncPing_' + window._clientSyncId;
-                const keys = [];
-                for (const [k, v] of Object.entries(data)) {
-                    if (k !== '_timeSyncPing' && !k.startsWith('_timeSyncPing_')) continue;
-                    if (k === myField) continue;
-                    const ms = (v && typeof v.toMillis === 'function') ? v.toMillis() : 0;
-                    if (!ms || now - ms > 24 * 3600 * 1000) keys.push(k);
-                }
-                for (let i = 0; i < keys.length; i += 200) {
-                    const upd = {};
-                    keys.slice(i, i + 200).forEach(k => { upd[k] = deleteField(); });
-                    await updateDoc(dbRef, upd);
-                }
-                if (keys.length) console.log('🧹 已清除過期校時欄位：', keys.length);
-            } catch (e) { console.warn('清理校時欄位失敗（略過）：', e); }
-        };
+        window._clientSyncId = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 
         window.syncServerTime = async function(isRetry = false) {
             const requestStartedAt = Date.now();
             const pingField = '_timeSyncPing_' + window._clientSyncId;
             try {
-                await setDoc(dbRef, { [pingField]: serverTimestamp() }, { merge: true });
-                const snap = await getDocFromServer(dbRef);
+                // 🛡️ 校時改寫到獨立文件 su_system/time_sync：不再每次載入就在主資料文件
+                // 新增一個永遠不會刪除的欄位（會讓主文件越來越肥、也會觸發所有人的即時監聽）。
+                // 若獨立文件因安全規則無法寫入，才退回舊的主文件做法。
+                let pingRef = doc(db, 'su_system', 'time_sync');
+                try {
+                    await setDoc(pingRef, { [pingField]: serverTimestamp() }, { merge: true });
+                } catch (pingWriteErr) {
+                    pingRef = dbRef;
+                    await setDoc(pingRef, { [pingField]: serverTimestamp() }, { merge: true });
+                }
+                const snap = await getDocFromServer(pingRef);
                 const tsVal = snap.exists() ? snap.data()[pingField] : null;
+                // 讀完就刪掉自己的校時欄位，避免累積
+                setDoc(pingRef, { [pingField]: deleteField() }, { merge: true }).catch(() => {});
                 if (tsVal && typeof tsVal.toMillis === 'function') {
                     // 扣除這次來回請求的網路延遲（取來回時間的一半，粗略估計
                     // 單程延遲），讓校正結果更貼近實際時間點。
@@ -4172,7 +4300,6 @@ document.addEventListener('click', function initOnFirstClick() {
                     window.serverTimeOffset = (tsVal.toMillis() + roundTripMs / 2) - Date.now();
                     window._timeSyncFailCount = 0;
                     window._lastServerTimeSyncAt = Date.now();
-                    if (!window._syncCleanupDone) { window._syncCleanupDone = true; setTimeout(() => window.cleanupStaleSyncFields(), 8000); }
                     return true;
                 }
                 throw new Error('尚未取得有效的伺服器時間戳記');
@@ -5822,6 +5949,49 @@ document.addEventListener('click', function initOnFirstClick() {
          * 3) 補上詳細的 console log，之後若還有異常，能直接從瀏覽器主控台看到
          *    是卡在哪一步，方便排查。
          */
+        /*
+         * 🔴🔴🔴🔴 根本原因修正：「點餐活動還沒倒數完，其他人卻被自動強制結束、
+         * 畫面跳回上一次點餐結果」──
+         * ===================================================================
+         * 這裡先前只用「本機記憶體裡的 window.state.session.endTime」來判斷
+         * 時間到了沒有。但 window.state.session 是靠 onSnapshot 即時監聽被動
+         * 更新的，手機網路不穩、長時間背景、或極少數 Firestore 即時連線漏收
+         * 事件時，某一台裝置手上的 session 資料有可能是「過期的」──例如它
+         * 還留著上一輪、或某次不同步瞬間的舊 endTime，但 isActive 欄位卻仍是
+         * true。這種情況下，這台裝置的 tick() 或背景喚醒看門狗
+         * （recheckSessionOnResume）會誤判「時間到了」，呼叫這裡的
+         * confirmTimeUpThenCheckout() → autoCheckout()。
+         *
+         * 而 autoCheckout() 內的 Firestore 交易（runTransaction）只檢查
+         * 「資料庫上目前的 session.isActive 是不是 true」，完全沒有比對
+         * endTime，只要 isActive 是 true 就會把它結束掉──即使資料庫上當下
+         * 真正在跑的其實是一輪全新、還沒到期的活動。於是一台裝置的本機資料
+         * 過期，就會誤把「所有人正在進行、還沒倒數完」的活動整個強制結束，
+         * 畫面因此跳回上一次的點餐結果。
+         *
+         * 修正方式：在真正呼叫 autoCheckout() 之前，一律用 getDocFromServer()
+         * 向伺服器要一份「跳過本機快取」的當下最新 session 資料，並且完全以
+         * 這份「伺服器驗證過」的資料為準：
+         * 1) 若伺服器顯示活動其實已經不是進行中 → 代表已經被結束過了，補同步
+         *    本機狀態即可，不需要（也不能再）動作。
+         * 2) 若伺服器的 session 跟本機手上的不一樣（例如 endTime 不同，代表
+         *    本機是過期資料、伺服器上其實是全新一輪） → 直接用伺服器資料
+         *    修正本機狀態、重新啟動正確的倒數計時器，絕對不能拿本機過期的
+         *    判斷結果去結束伺服器上這一輪還沒到期的活動。
+         * 3) 只有當伺服器驗證過的 session 真的已經到期，才真正呼叫
+         *    autoCheckout() 結算。
+         * 這樣一來，任何裝置本機資料過期，最多只會誤判「自己」，並在核對
+         * 伺服器後被動修正回正確狀態，絕對不會反過來把伺服器上其他人正在
+         * 進行、還沒倒數完的活動強制結束掉。
+         *
+         * 同時，先前「任何非預期錯誤都直接兜底呼叫 autoCheckout()」的保險
+         * 機制也一併移除──那個保險機制在網路不穩時反而會繞過上面的伺服器
+         * 驗證，等於讓本機過期資料有機可乘。改成錯誤時只記錄並重新啟動倒數
+         * 計時器，讓下一次 tick（200ms 後）或 20 秒看門狗自動重試，直到成功
+         * 向伺服器驗證為止，不會有「永遠卡在 00:00」的風險，也不會有「誤判
+         * 就強制結束別人活動」的風險。手動「提早結單」是另一條直接呼叫
+         * autoCheckout() 的路徑，不受此處影響，管理員仍可隨時提早結單。
+         */
         window.confirmTimeUpThenCheckout = async function() {
             console.log('[自動結算] 偵測到倒數歸零，開始重新確認伺服器時間…');
 
@@ -5842,9 +6012,41 @@ document.addEventListener('click', function initOnFirstClick() {
                     return;
                 }
 
+                // 🔴 關鍵：不相信本機快取的 session，一律向伺服器要一份「當下
+                // 最新、跳過快取」的真實資料，所有後續判斷都以這份資料為準。
+                let serverSession = null;
+                try {
+                    const freshSnap = await getDocFromServer(dbRef);
+                    if (freshSnap.exists()) serverSession = freshSnap.data().session || null;
+                } catch (fetchErr) {
+                    console.warn('[自動結算] 無法向伺服器驗證目前活動狀態，本次不結算，稍後自動重試：', fetchErr);
+                    window.startTimer();
+                    return;
+                }
+
+                if (!serverSession || !serverSession.isActive) {
+                    // 伺服器顯示活動其實已經不是進行中（可能已被別人結束），
+                    // 補同步本機狀態即可，不需要再次結算。
+                    console.log('[自動結算] 伺服器驗證後活動已不是進行中狀態，補同步本機狀態。');
+                    if (typeof window.reconcileSessionFromServer === 'function') {
+                        await window.reconcileSessionFromServer();
+                    }
+                    return;
+                }
+
+                if (serverSession.endTime !== window.state.session.endTime) {
+                    // 伺服器上的這一輪跟本機手上的不是同一輪（本機資料過期），
+                    // 用伺服器資料修正本機狀態、重新啟動正確的倒數，絕對不能
+                    // 拿本機過期的判斷結果去結束伺服器上還沒到期的活動。
+                    console.warn('[自動結算] 偵測到本機活動資料過期（endTime 與伺服器不一致），已修正為伺服器最新狀態，不觸發結算。');
+                    window.state.session = serverSession;
+                    window.startTimer();
+                    return;
+                }
+
                 const correctedNow = Date.now() + window.serverTimeOffset;
-                const diff = window.state.session.endTime - correctedNow;
-                console.log('[自動結算] 重新確認後的剩餘時間(ms)：', diff);
+                const diff = serverSession.endTime - correctedNow;
+                console.log('[自動結算] 伺服器驗證後的剩餘時間(ms)：', diff);
 
                 if (diff > 0) {
                     // 重新確認後其實還沒到時間（先前是本地時鐘誤差造成的誤判），
@@ -5854,19 +6056,18 @@ document.addEventListener('click', function initOnFirstClick() {
                     return;
                 }
 
-                console.log('[自動結算] 確認時間已到，開始執行自動結算…');
+                console.log('[自動結算] 已向伺服器驗證確認時間真的已到，開始執行自動結算…');
                 await window.autoCheckout();
                 console.log('[自動結算] 自動結算流程已完成。');
             } catch (checkoutErr) {
-                // 🔴 保險：不論上面哪一步發生非預期錯誤，都絕對不能讓整個自動
-                // 結算流程悄悄地卡死不動——至少要留下記錄，並且仍然直接嘗試
-                // 呼叫 autoCheckout() 兜底，讓活動有機會被正確結束。
-                console.error('[自動結算] 自動結算流程發生非預期錯誤，嘗試直接兜底結算：', checkoutErr);
-                try {
-                    await window.autoCheckout();
-                } catch (fallbackErr) {
-                    console.error('[自動結算] 兜底結算也失敗，請管理者手動確認活動狀態或改用「提早結單」：', fallbackErr);
-                }
+                // 🔴 錯誤時絕對不能直接兜底呼叫 autoCheckout()──那樣等於繞過
+                // 上面「向伺服器驗證」的保護，讓本機過期或異常的資料有機會
+                // 誤判並強制結束別人正在進行、還沒倒數完的活動。改成只記錄
+                // 錯誤並重新啟動倒數計時器，讓下一次 tick（200ms 後）或 20 秒
+                // 看門狗自動重試，直到能成功向伺服器驗證為止；若持續失敗，
+                // 管理者仍可隨時用「提早結單」手動結束。
+                console.error('[自動結算] 自動結算流程發生非預期錯誤，本次不結算，將於下次 tick／看門狗自動重試：', checkoutErr);
+                window.startTimer();
             }
         };
 
@@ -7421,21 +7622,59 @@ document.addEventListener('click', function initOnFirstClick() {
          * 到本機記憶體，完全不會呼叫 updateDoc/setDoc，也完全不碰 cart、session，
          * 因此不會影響任何人正在點餐畫面上的倒數計時同步或即時餐點同步。
          */
-        window.refreshCategorySettingsFromServer = async function(includeStoresItems) {
+        /*
+         * 🔴🔴🔴 完整修正：「分類/店家/菜單/全域選項，只要有其他人連進系統，
+         * 過一陣子又會恢復成修改前的樣子（甚至變回最少的預設值）」的根本原因──
+         * ===================================================================
+         * 這套系統所有分頁/裝置共用同一份 Firestore 文件，而 categories／
+         * subCategories／globalOptions／quickNames／stores／items 這些欄位，
+         * 寫入方式都是「整包陣列/整包資料覆寫」，不是差異合併（Firestore 的
+         * updateDoc 對陣列欄位本來就是整包取代，沒辦法只改其中一筆）。
+         *
+         * 先前的修正只涵蓋了「系統大分類」與「菜單子分類」的新增/刪除/排序，
+         * 但實際上，只要是任何一個「先在本機記憶體 window.state 上直接修改
+         * （新增/刪除/切換狀態等），再呼叫 saveState() 把該欄位整包存回去」的
+         * 操作，都有一模一樣的風險：如果這個分頁已經開啟一段時間、或不是
+         * 剛剛修改過的那個分頁/裝置，它手上快取的資料就可能是「舊的」──這時
+         * 只要做任何一次操作，就會把「舊的、少了別人剛剛新增/修改內容」的
+         * 整包資料存回 Firestore，蓋掉別人剛做好的變更。全域選項
+         * （globalOptions）、店家資料（stores，含新增/編輯/刪除/排序/套餐範本）、
+         * 菜單餐點（items，含新增/編輯/上下架/上鎖/批次調整）全部都有這個問題，
+         * 這正是「新增分類或調整菜單內容，過一陣子又被恢復成預設/修改前樣子」
+         * 的真正成因。
+         *
+         * 修法：比照分類設定既有的做法，將「先向伺服器要一份當下最新資料，
+         * 再繼續操作」抽成通用函式，並在【所有】會修改上述共用欄位的操作
+         * 之前呼叫，確保每一次寫入都是建立在「當下最新」的資料之上，不會
+         * 覆蓋掉別人剛做的變更。這個函式只讀取一次伺服器資料並更新到本機
+         * 記憶體，完全不會呼叫 updateDoc/setDoc，也完全不碰 cart、session，
+         * 因此不會影響任何人正在點餐畫面上的倒數計時同步或即時餐點同步。
+         */
+        window.refreshSharedStateFromServer = async function(fields) {
+            fields = fields || {};
             try {
                 const freshSnap = await getDocFromServer(dbRef);
+                window._sharedRefreshFailedAt = 0;
                 if (freshSnap.exists()) {
                     const freshData = freshSnap.data();
-                    if (Array.isArray(freshData.categories)) window.state.categories = freshData.categories;
-                    if (Array.isArray(freshData.subCategories)) window.state.subCategories = freshData.subCategories;
-                    if (includeStoresItems) {
-                        if (freshData.storesStr) window.state.stores = window.decompressData(freshData.storesStr, window.state.stores);
-                        if (freshData.itemsStr) window.state.items = window.decompressData(freshData.itemsStr, window.state.items);
-                    }
+                    if (fields.categories && Array.isArray(freshData.categories)) window.state.categories = freshData.categories;
+                    if (fields.subCategories && Array.isArray(freshData.subCategories)) window.state.subCategories = freshData.subCategories;
+                    if (fields.globalOptions && Array.isArray(freshData.globalOptions)) window.state.globalOptions = freshData.globalOptions;
+                    if (fields.quickNames && Array.isArray(freshData.quickNames)) window.state.quickNames = freshData.quickNames;
+                    if (fields.stores && freshData.storesStr) window.state.stores = window.decompressData(freshData.storesStr, window.state.stores);
+                    if (fields.items && freshData.itemsStr) window.state.items = window.decompressData(freshData.itemsStr, window.state.items);
                 }
             } catch (syncErr) {
-                console.warn('[分類設定同步] 無法取得最新資料，將沿用目前畫面上的資料繼續操作：', syncErr);
+                // 🛡️ 取不到伺服器最新資料時，本機資料可能是過期的，記下失敗時間，
+                // saveState 會據此拒絕寫入，避免用過期資料覆蓋資料庫。
+                window._sharedRefreshFailedAt = Date.now();
+                console.warn('[全域資料同步] 無法取得最新資料，本次存檔將被中止以保護資料庫：', syncErr);
             }
+        };
+
+        // 向下相容：保留舊函式名稱，內部改呼叫通用版本。
+        window.refreshCategorySettingsFromServer = async function(includeStoresItems) {
+            await window.refreshSharedStateFromServer({ categories: true, subCategories: true, stores: !!includeStoresItems, items: !!includeStoresItems });
         };
 
         window.addSysCat = async function() {
@@ -7620,6 +7859,21 @@ document.addEventListener('click', function initOnFirstClick() {
 
             if(srcIdx === targetIdx) return;
 
+            // 🔴 排序前先確認伺服器上的店家清單是否與本機畫面一致，避免把過期的
+            // （可能少了別人剛新增/編輯好的店家）清單整包存回去、蓋掉別人的變更。
+            const draggedStoreName = window.state.stores[srcIdx] ? window.state.stores[srcIdx].name : null;
+            const localSnapshot = JSON.stringify(window.state.stores);
+            await window.refreshSharedStateFromServer({ stores: true });
+            if (JSON.stringify(window.state.stores) !== localSnapshot) {
+                const freshIdx = draggedStoreName ? window.state.stores.findIndex(s => s.name === draggedStoreName) : -1;
+                if (freshIdx === -1) {
+                    window.renderAdminSettings();
+                    alert('⚠️ 偵測到店家清單已被其他裝置更新，排序已取消，畫面已同步為最新清單，請重新拖曳一次。');
+                    return;
+                }
+                srcIdx = freshIdx;
+            }
+
             const newArr = [...window.state.stores];
 
             const item = newArr.splice(srcIdx, 1)[0];
@@ -7668,13 +7922,13 @@ document.addEventListener('click', function initOnFirstClick() {
 
 
 
-        window.saveQuickNames = function() {
+        window.saveQuickNames = async function() {
 
             const val = document.getElementById('admin-quick-names').value;
 
             window.state.quickNames = val.split(',').map(s => s.trim()).filter(s => s !== '');
 
-            window.saveState({ quickNames: true }); 
+            await window.saveState({ quickNames: true }); 
 
             alert("✅ 標籤儲存成功！");
 
@@ -7730,7 +7984,7 @@ document.addEventListener('click', function initOnFirstClick() {
 
 
 
-        window.addGlobalOption = function() {
+        window.addGlobalOption = async function() {
 
             const name = document.getElementById('setting-opt-name').value.trim();
 
@@ -7744,11 +7998,14 @@ document.addEventListener('click', function initOnFirstClick() {
 
             if (choices.length === 0) return alert('內容無效');
 
+            // 🔴 新增前先同步最新的全域選項清單，避免用本機過期版本覆蓋掉別人剛新增的選項。
+            await window.refreshSharedStateFromServer({ globalOptions: true });
+
             window.state.globalOptions.push({ id: 'gopt_' + Date.now(), name, choices, isMulti });
 
             window.addAdminLog('設定', `建立全域客製化選項模組「${name}」`);
 
-            window.saveState({ globalOptions: true, adminLogs: true }); window.renderAdminSettings();
+            await window.saveState({ globalOptions: true, adminLogs: true }); window.renderAdminSettings();
 
             document.getElementById('setting-opt-name').value = ''; document.getElementById('setting-opt-choices').value = ''; document.getElementById('setting-opt-ismulti').checked = false;
 
@@ -7756,17 +8013,22 @@ document.addEventListener('click', function initOnFirstClick() {
 
 
 
-        window.deleteGlobalOption = function(id) {
+        window.deleteGlobalOption = async function(id) {
+
+            // 🔴 刪除前先同步最新的全域選項/餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ globalOptions: true, items: true });
 
             const optInfo = window.state.globalOptions.find(o => o.id === id);
 
-            if (optInfo) window.addAdminLog('設定', `刪除選項模組「${optInfo.name}」`);
+            if (!optInfo) { alert('⚠️ 此選項已被移除或已不存在，畫面將自動更新，請重新確認。'); window.renderAdminSettings(); return; }
+
+            window.addAdminLog('設定', `刪除選項模組「${optInfo.name}」`);
 
             window.state.globalOptions = window.state.globalOptions.filter(o => o.id !== id);
 
             window.state.items.forEach(i => { if(i.customOptionIds) i.customOptionIds = i.customOptionIds.filter(optId => optId !== id); });
 
-            window.saveState({ globalOptions: true, items: true, adminLogs: true }); window.renderAdminSettings();
+            await window.saveState({ globalOptions: true, items: true, adminLogs: true }); window.renderAdminSettings();
 
             alert("已刪除！");
 
@@ -8302,6 +8564,11 @@ document.addEventListener('click', function initOnFirstClick() {
 
             if (cleanTiers.length === 0) return alert('⚠️ 請至少新增一個層級，並填入層級名稱與至少一個選項！');
 
+            // 🔴 補上遺漏的防覆蓋保護：新增/編輯套餐範本前先同步最新的店家/餐點
+            // 資料，避免用本機過期版本整包覆蓋掉別人剛做的變更（與其他所有會
+            // 修改 stores/items 的操作一致）。
+            await window.refreshSharedStateFromServer({ stores: true, items: true });
+
             const storeObj = window.state.stores.find(s => s.name === storeName);
 
             if (!storeObj) return;
@@ -8404,7 +8671,7 @@ document.addEventListener('click', function initOnFirstClick() {
 
         window.deleteStoreComboTemplate = async function(storeName, templateId) {
 
-            const storeObj = window.state.stores.find(s => s.name === storeName);
+            let storeObj = window.state.stores.find(s => s.name === storeName);
 
             if (!storeObj || !Array.isArray(storeObj.comboTemplates)) return;
 
@@ -8414,6 +8681,16 @@ document.addEventListener('click', function initOnFirstClick() {
 
             if (!confirm(`確定要永久刪除範本「${tpl.name}」嗎？（僅刪除範本本身，不影響任何已建立的餐點）`)) return;
 
+            // 🔴 補上遺漏的防覆蓋保護：刪除前先同步最新的店家/餐點資料，避免用
+            // 本機過期版本整包覆蓋掉別人剛做的變更。同步後改用最新的 storeObj
+            // 參照，避免把資料寫到已經和 window.state.stores 脫節的舊物件上。
+            await window.refreshSharedStateFromServer({ stores: true, items: true });
+            storeObj = window.state.stores.find(s => s.name === storeName);
+            if (!storeObj || !Array.isArray(storeObj.comboTemplates) || !storeObj.comboTemplates.some(t => String(t.id) === String(templateId))) {
+                alert('⚠️ 此範本已被移除或已不存在，畫面將自動更新，請重新確認。');
+                if (typeof window.debouncedAdminRender === 'function') window.debouncedAdminRender();
+                return;
+            }
             storeObj.comboTemplates = storeObj.comboTemplates.filter(t => String(t.id) !== String(templateId));
 
             // 範本刪除後，將原本套用它的餐點解除連結（餐點本身的層級/選項內容維持不變，僅是不再與此範本同步）
@@ -8664,6 +8941,9 @@ document.addEventListener('click', function initOnFirstClick() {
 
         window.toggleStoreItemsLock = async function(storeName, lockState) {
 
+            // 🔴 修改前先同步最新的餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ items: true });
+
             let changed = false;
 
             window.state.items.forEach(item => {
@@ -8687,6 +8967,9 @@ document.addEventListener('click', function initOnFirstClick() {
         
 
         window.clearStoreImages = async function(storeName) {
+
+            // 🔴 修改前先同步最新的店家/餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ items: true, stores: true });
 
             let changedCount = 0;
 
@@ -8894,7 +9177,14 @@ document.addEventListener('click', function initOnFirstClick() {
 
             if (isUnchanged) return window.closeModal('edit-store-modal');
 
+            // 🔴 儲存前先同步最新的店家/餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ stores: true, items: true });
+
+            if (newName !== oldStoreName && window.state.stores.some(s => s.name === newName)) { alert('⚠️ 已有相同名稱的店家存在！'); window.debouncedAdminRender(); return; }
+
             let storeObj = window.state.stores.find(s => s.name === oldStoreName);
+
+            if (!storeObj) { alert('⚠️ 此店家已被移除或已不存在，畫面將自動更新，請重新確認。'); window.closeModal('edit-store-modal'); window.debouncedAdminRender(); return; }
 
             if (storeObj) { storeObj.name = newName; storeObj.phone = phone; storeObj.address = address; storeObj.coverImg = coverImg; storeObj.hours = storeHours; storeObj.cat = newCat; storeObj.isClosed = isClosed; storeObj.comboModeEnabled = comboModeEnabled; }
 
@@ -8918,6 +9208,9 @@ document.addEventListener('click', function initOnFirstClick() {
 
         window.deleteEntireStore = async function(storeName) {
 
+            // 🔴 刪除前先同步最新的店家/餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ stores: true, items: true });
+
             const itemsCount = window.state.items.filter(i => (i.store || 'Unknown') === storeName).length;
 
             window.state.stores = window.state.stores.filter(s => s.name !== storeName);
@@ -8937,6 +9230,9 @@ document.addEventListener('click', function initOnFirstClick() {
 
 
         window.toggleSoldOut = async function(id) {
+
+            // 🔴 修改前先同步最新的餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ items: true });
 
             const item = window.state.items.find(i => String(i.id) === String(id));
 
@@ -8975,6 +9271,9 @@ document.addEventListener('click', function initOnFirstClick() {
 
 
         window.toggleLock = async function(id) { 
+
+            // 🔴 修改前先同步最新的餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ items: true });
 
             const item = window.state.items.find(i => String(i.id) === String(id));
 
@@ -9504,7 +9803,8 @@ document.addEventListener('click', function initOnFirstClick() {
 
             const comboTiers = isCombo ? window.getCleanComboTiers('modal-edit-item') : [];
 
-            
+            // 🔴 儲存前先同步最新的餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ items: true });
 
             const idx = window.state.items.findIndex(i => String(i.id) === String(id));
 
@@ -9736,6 +10036,9 @@ document.addEventListener('click', function initOnFirstClick() {
 
         window.saveBulkEdit = async function() {
 
+            // 🔴 儲存前先同步最新的餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ items: true });
+
             let changedCount = 0;
 
             for (const id in window.bulkEditOriginalData) {
@@ -9888,7 +10191,8 @@ document.addEventListener('click', function initOnFirstClick() {
 
             const comboTiers = isCombo ? window.getCleanComboTiers('admin') : [];
 
-            
+            // 🔴 新增前先同步最新的店家/餐點資料，避免用本機過期版本覆蓋掉別人剛做的變更。
+            await window.refreshSharedStateFromServer({ stores: true, items: true });
 
             let storeObj = window.state.stores.find(s => s.name === storeName);
 
@@ -9961,6 +10265,10 @@ document.addEventListener('click', function initOnFirstClick() {
 
 
         window.deleteItem = async function(id) {
+
+            // 🔴 補上遺漏的防覆蓋保護：刪除前先同步最新的餐點資料，避免用本機
+            // 過期版本整包覆蓋掉別人剛新增/修改好的餐點。
+            await window.refreshSharedStateFromServer({ items: true });
 
             const idx = window.state.items.findIndex(i => String(i.id) === String(id));
 

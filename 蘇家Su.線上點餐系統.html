@@ -1124,7 +1124,7 @@ document.addEventListener('click', function initOnFirstClick() {
          * 舊版的存檔邏輯可能用過期資料覆蓋資料庫，所以下方會定期比對線上版本，
          * 發現不同就自動重新載入。
          */
-        window.APP_BUILD = '2026-11-02-perf-1';
+        window.APP_BUILD = '2026-11-02-perf-2';
         // 🛡️ 防回朔機制 2：記錄「伺服器上最後一次已知」各共用欄位的筆數，
         // 供 saveState 判斷是否即將把有內容的欄位誤寫成空陣列。
         window._serverCounts = {};
